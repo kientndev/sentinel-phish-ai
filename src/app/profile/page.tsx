@@ -1,0 +1,92 @@
+"use client";
+
+import { UserCircle, Shield, Zap, History, Settings, LogOut } from "lucide-react";
+import { usePhishTank, getRankFromXP } from "../../hooks/usePhishTank";
+import { useAppContext } from "../../context/AppContext";
+import { motion } from "framer-motion";
+import XPBar from "../../components/XPBar";
+
+export default function ProfilePage() {
+  const { userXP, totalScans, threatsBlocked } = usePhishTank();
+  const { creditBalance } = useAppContext();
+  const rank = getRankFromXP(userXP);
+
+  return (
+    <main className="flex flex-col flex-1 items-center px-6 md:px-10 py-10 relative">
+      <XPBar />
+
+      <div className="max-w-4xl w-full">
+        <section className="glass-card p-10 mb-8 flex flex-col md:flex-row items-center gap-10">
+           <div className="relative">
+              <div className="w-32 h-32 rounded-3xl bg-gradient-to-tr from-[#00d2ff] to-[#a855f7] p-1 shadow-[0_0_40px_rgba(0,210,255,0.2)]">
+                 <div className="w-full h-full bg-[#0b0e14] rounded-[calc(1.5rem-2px)] flex items-center justify-center">
+                    <span className="text-5xl font-black text-white italic">G</span>
+                 </div>
+              </div>
+              <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-2 rounded-xl border-4 border-[#0b0e14]">
+                 <Shield className="w-4 h-4 fill-current" />
+              </div>
+           </div>
+
+           <div className="flex-1 text-center md:text-left">
+              <div className="flex flex-col md:flex-row items-center gap-3 mb-2">
+                 <h1 className="text-3xl font-black text-white tracking-tight italic">Guest Agent</h1>
+                 <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-[#a1a1aa]">
+                   Level {rank.level}
+                 </span>
+              </div>
+              <p className="text-[#00d2ff] font-bold text-sm mb-6 px-3 py-1 bg-[#00d2ff]/10 w-fit rounded-lg border border-[#00d2ff]/20">
+                {rank.title}
+              </p>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                 <div className="p-4 rounded-xl bg-white/2 border border-white/5">
+                    <span className="text-[10px] uppercase font-black text-[#52525b] block mb-1">Credits</span>
+                    <span className="text-xl font-black text-white">{creditBalance}</span>
+                 </div>
+                 <div className="p-4 rounded-xl bg-white/2 border border-white/5">
+                    <span className="text-[10px] uppercase font-black text-[#52525b] block mb-1">XP</span>
+                    <span className="text-xl font-black text-white">{userXP}</span>
+                 </div>
+                 <div className="p-4 rounded-xl bg-white/2 border border-white/5">
+                    <span className="text-[10px] uppercase font-black text-[#52525b] block mb-1">Scans</span>
+                    <span className="text-xl font-black text-white">{totalScans}</span>
+                 </div>
+                 <div className="p-4 rounded-xl bg-white/2 border border-white/5">
+                    <span className="text-[10px] uppercase font-black text-[#52525b] block mb-1">Blocked</span>
+                    <span className="text-xl font-black text-white font-mono text-center">{threatsBlocked}</span>
+                 </div>
+              </div>
+           </div>
+        </section>
+
+        <div className="grid md:grid-cols-2 gap-8">
+           <section className="glass-card p-6">
+              <h2 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-tight">
+                 <Zap className="w-5 h-5 text-yellow-500" />
+                 Active Achievements
+              </h2>
+              <div className="space-y-4">
+                 <div className="p-4 rounded-xl border border-dashed border-white/10 flex items-center justify-center text-[#52525b] text-xs font-bold">
+                    No badges earned yet.
+                 </div>
+              </div>
+           </section>
+
+           <section className="glass-card p-6">
+              <h2 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-tight">
+                 <Settings className="w-5 h-5 text-zinc-500" />
+                 Guest Session Preferences
+              </h2>
+              <div className="space-y-3">
+                 <div className="p-3 bg-white/2 rounded-xl flex items-center justify-between">
+                    <span className="text-sm font-medium text-zinc-400 italic">Clear Local History</span>
+                    <button className="text-[10px] font-black uppercase text-red-500 hover:text-red-400 transition-colors">WIPE DATA</button>
+                 </div>
+              </div>
+           </section>
+        </div>
+      </div>
+    </main>
+  );
+}

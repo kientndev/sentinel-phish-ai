@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0b0e14;
+  --color-foreground: #fafafa;
+  --color-card: #12151d;
+  --color-card-foreground: #fafafa;
+  --color-popover: #12151d;
+  --color-popover-foreground: #fafafa;
+  --color-primary: #10b981;
+  --color-primary-foreground: #0b0e14;
+  --color-secondary: #1e2330;
+  --color-secondary-foreground: #fafafa;
+  --color-muted: #1e2330;
+  --color-muted-foreground: #a1a1aa;
+  --color-accent: #1e2330;
+  --color-accent-foreground: #fafafa;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #fafafa;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-input: #1e2330;
+  --color-ring: #00d2ff;
+  
+  --radius-lg: 0.75rem;
+  --radius-md: calc(0.75rem - 2px);
+  --radius-sm: calc(0.75rem - 4px);
+}
+
+html {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  background: radial-gradient(ellipse at top, #0f1520 0%, #0b0e14 60%);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Animated scanline/grid overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 210, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 210, 255, 0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: grid-drift 20s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* All direct children of body stack above the grid */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes grid-drift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 48px 48px; }
+}
+
+
+/* ============================================
+   GLASSMORPHISM CARDS
+   ============================================ */
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.glass-card-inner {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+}
+
+/* ============================================
+   NEON GLOW EFFECTS — #00d2ff
+   ============================================ */
+@keyframes neon-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 6px rgba(0, 210, 255, 0.4),
+      0 0 20px rgba(0, 210, 255, 0.2),
+      0 0 40px rgba(0, 210, 255, 0.1);
+    filter: drop-shadow(0 0 8px rgba(0, 210, 255, 0.5));
+  }
+  50% {
+    text-shadow:
+      0 0 10px rgba(0, 210, 255, 0.8),
+      0 0 30px rgba(0, 210, 255, 0.5),
+      0 0 60px rgba(0, 210, 255, 0.3);
+    filter: drop-shadow(0 0 16px rgba(0, 210, 255, 0.8));
+  }
+}
+
+@keyframes icon-pulse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(0, 210, 255, 0.4));
+    color: #60a5fa;
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.9));
+    color: #00d2ff;
+  }
+}
+
+@keyframes border-glow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 10px rgba(0, 210, 255, 0.1),
+      inset 0 0 10px rgba(0, 210, 255, 0.02);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(0, 210, 255, 0.25),
+      inset 0 0 20px rgba(0, 210, 255, 0.05);
+  }
+}
+
+.neon-pulse-text {
+  animation: neon-pulse 3s ease-in-out infinite;
+}
+
+.neon-pulse-icon {
+  animation: icon-pulse-glow 3s ease-in-out infinite;
+}
+
+.neon-border-pulse {
+  animation: border-glow-pulse 3s ease-in-out infinite;
+}
+
+/* ============================================
+   HEXAGON SETTINGS BUTTON
+   ============================================ */
+.hex-clip {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+/* ============================================
+   SETTINGS MODAL
+   ============================================ */
+.modal-overlay {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 210, 255, 0.3);
+}

@@ -16,20 +16,37 @@ interface ReportedPhish {
 export default function ReportsPage() {
   const [reports, setReports] = useState<ReportedPhish[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
+
     fetch("/api/report")
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+           const errorData = await res.json().catch(() => ({}));
+           throw new Error(errorData.error || `HTTP ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
+        if (!Array.isArray(data)) {
+           console.error("Data type error: Expected array, got", typeof data);
+           throw new Error("Invalid data format received from vault.");
+        }
         setReports(data);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Failed to fetch reports:", err);
+        const isTimeout = err.message.includes("504") || err.message.includes("timeout");
+        console.error(isTimeout ? "Vault Timeout (504):" : "Vault Error:", err);
+        setError(isTimeout ? "The vault is taking too long to respond. Try refreshing in a moment." : err.message);
         setLoading(false);
       });
-  }, []);
+  }, [retryCount]);
 
   const filteredReports = reports.filter((r) => 
     r.url.toLowerCase().includes(searchTerm.toLowerCase())
@@ -101,13 +118,33 @@ export default function ReportsPage() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
+                  Array.from({ length: 12 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td colSpan={5} className="px-6 py-8">
-                        <div className="h-4 bg-white/5 rounded w-full" />
-                      </td>
+                      <td className="px-6 py-5"><div className="h-4 bg-white/5 rounded w-32" /></td>
+                      <td className="px-6 py-5"><div className="h-4 bg-white/5 rounded w-16" /></td>
+                      <td className="px-6 py-5"><div className="h-4 bg-white/5 rounded w-24" /></td>
+                      <td className="px-6 py-5"><div className="h-4 bg-white/5 rounded w-28" /></td>
+                      <td className="px-6 py-5 text-right"><div className="h-8 bg-white/5 rounded-lg w-20 ml-auto" /></td>
                     </tr>
                   ))
+                ) : error ? (
+                   <tr>
+                     <td colSpan={5} className="px-6 py-20 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                           <AlertTriangle className="w-12 h-12 text-orange-500/50" />
+                           <div className="space-y-1">
+                              <p className="text-white font-bold">{error}</p>
+                              <p className="text-xs text-[#a1a1aa]">Check your connection or the database status.</p>
+                           </div>
+                           <button 
+                             onClick={() => setRetryCount(prev => prev + 1)}
+                             className="mt-2 px-4 py-2 bg-[#00d2ff]/10 hover:bg-[#00d2ff]/20 text-[#00d2ff] text-xs font-black uppercase tracking-widest rounded-lg transition-all"
+                           >
+                             Retry Connection
+                           </button>
+                        </div>
+                     </td>
+                   </tr>
                 ) : filteredReports.length > 0 ? (
                   filteredReports.map((report, i) => (
                     <motion.tr 

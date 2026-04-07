@@ -30,12 +30,16 @@ export async function GET() {
       orderBy: {
         createdAt: "desc",
       },
-      take: 50,
+      take: 20,
     });
 
     return NextResponse.json(reports);
-  } catch (error) {
-    console.error("Fetch reports error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error: any) {
+    if (error.code === 'P1001') {
+      console.error("Database connection refused. Check your connection string and Supabase status.");
+    } else {
+      console.error("Fetch reports error:", error);
+    }
+    return NextResponse.json({ error: "Vault unreachable", details: error.message }, { status: 500 });
   }
 }

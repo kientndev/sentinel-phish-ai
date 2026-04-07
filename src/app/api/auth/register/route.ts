@@ -11,18 +11,18 @@ const registerSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    // 1. Check Database Environment
+    // 1. Connection Check: Specific env variable validation
     if (!process.env.DATABASE_URL) {
-      console.error("❌ DATABASE_URL is missing from environment variables.");
+      console.error("Database Error: DATABASE_URL environment variable is missing.");
       return NextResponse.json(
-        { error: "Configuration Error: Database connection string is missing." },
+        { error: "Database environment variable is missing." },
         { status: 500 }
       );
     }
 
     const body = await req.json();
     
-    // 2. Validate input
+    // 2. Input Validation
     const validation = registerSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
@@ -33,10 +33,7 @@ export async function POST(req: Request) {
 
     const { username, email, password } = validation.data;
 
-    // 3. Database operations
-    console.log(`Attempting to register user: ${username} (${email})`);
-
-    // Check if user already exists
+    // 3. Duplicate Check
     let existingUser;
     try {
       existingUser = await prisma.user.findFirst({
@@ -47,10 +44,10 @@ export async function POST(req: Request) {
           ],
         },
       });
-    } catch (dbError: any) {
-      console.error("❌ Database Connection Error during lookup:", dbError);
+    } catch (error: any) {
+      console.error("Database Error:", error);
       return NextResponse.json(
-        { error: "Database Connection Error. Please ensure the database is accessible." },
+        { error: "Database connection failed. Please check your connection string." },
         { status: 500 }
       );
     }
@@ -64,13 +61,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // 4. Hash password
+    // 4. Password Hashing
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 5. Create user
-    let user;
+    // 5. User Creation
     try {
-      user = await prisma.user.create({
+      const user = await prisma.user.create({
         data: {
           username,
           email,
@@ -78,27 +74,27 @@ export async function POST(req: Request) {
           name: username, 
         },
       });
-      console.log(`✅ User created successfully: ${user.id}`);
-    } catch (createError: any) {
-      console.error("❌ Database Error during user creation:", createError);
+      console.log("Account created successfully:", user.id);
+      
+      return NextResponse.json({
+        message: "User created successfully",
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        },
+      });
+    } catch (error: any) {
+      console.error("Database Error:", error);
       return NextResponse.json(
-        { error: `Database Error: ${createError.message || "Failed to create user record."}` },
+        { error: "Could not create user account. Database error occurred." },
         { status: 500 }
       );
     }
-
-    return NextResponse.json({
-      message: "User created successfully",
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-      },
-    });
   } catch (error: any) {
-    console.error("❌ Critical Registration Error:", error);
+    console.error("Critical Error:", error);
     return NextResponse.json(
-      { error: `Internal Server Error: ${error.message || "Unknown error occurred."}` },
+      { error: "Internal Server Error. Please contact support." },
       { status: 500 }
     );
   }

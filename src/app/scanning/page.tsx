@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import {
    Search, ShieldAlert, Activity, Globe, Monitor, Code,
-  Brain, Bot, CheckCircle2, MessageSquare, Send, Settings, Download, Zap, Lock
+  Brain, Bot, CheckCircle2, MessageSquare, Send, Settings, Download, Zap, Lock,
+  Eye, Bug, ShieldCheck, RefreshCw
 } from "lucide-react";
 import { sendGAEvent } from "@next/third-parties/google";
 import { usePhishTank } from "../../hooks/usePhishTank";
@@ -133,6 +134,10 @@ export default function ScanningPage() {
   const [liveGlow, setLiveGlow] = useState(false);
   const [spinnerColor, setSpinnerColor] = useState("text-[#00d2ff]");
 
+  // Reporting state
+  const [isReporting, setIsReporting] = useState(false);
+  const [reported, setReported] = useState(false);
+
   // PhishTank
   const { 
     justRankedUp, 
@@ -213,6 +218,8 @@ export default function ScanningPage() {
     setChatMessages([]);
     setChatInput("");
     setIsChatting(false);
+    setReported(false);
+    setIsReporting(false);
 
     // GUEST MOCK ENGINE
     const cleanDomain = urlToScan.replace(/^https?:\/\//i, "").split("/")[0].replace(/^www\./, "");
@@ -262,6 +269,29 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
 <footer><p>SentinelPhish AI — Built by Tri Kien | 8a1</p></footer></body></html>`;
     const win = window.open("", "_blank");
     if (win) { win.document.write(reportHtml); win.document.close(); }
+  };
+
+  const handleReportPhish = async () => {
+    if (!results || reported) return;
+    setIsReporting(true);
+    try {
+      const res = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: url.startsWith("http") ? url : `https://${url}`,
+          score: results.score,
+          status: results.status
+        }),
+      });
+      if (res.ok) {
+        setReported(true);
+      }
+    } catch (err) {
+      console.error("Reporting failed:", err);
+    } finally {
+      setIsReporting(false);
+    }
   };
 
   const getRiskColor = (score: number) => {
@@ -391,6 +421,30 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                   </div>
                 </div>
 
+                {/* VISUAL PREVIEW: Feature 1 */}
+                <div className="glass-card p-4 space-y-3">
+                   <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
+                     <Eye className="w-3.5 h-3.5 text-[#00d2ff]" />
+                     Visual Preview
+                   </h3>
+                   <div className="relative aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group">
+                      <img 
+                        src={`https://api.microlink.io/?url=${encodeURIComponent(url.startsWith("http") ? url : `https://${url}`)}&screenshot=true&embed=screenshot.url`}
+                        alt="Site Preview"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://placehold.co/600x400/0b0e14/ffffff?text=Preview+Unavailable";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
+                         <span className="text-[10px] font-medium text-white/80 line-clamp-1">{url}</span>
+                      </div>
+                   </div>
+                   <p className="text-[10px] text-[#a1a1aa] text-center italic">
+                     Analyzing visual structure for login form patterns...
+                   </p>
+                </div>
+
                 <div className="glass-card p-6 space-y-5">
                    <h3 className="font-black text-xs uppercase tracking-widest text-[#a1a1aa] flex items-center gap-2">
                      <ShieldAlert className="w-4 h-4 text-orange-400" />
@@ -416,6 +470,28 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                 >
                   <Download className="w-5 h-5 text-gray-400 group-hover:text-white" />
                   {t.downloadReport}
+                </button>
+
+                {/* REPORT BUTTON: Feature 2 */}
+                <button 
+                  onClick={handleReportPhish}
+                  disabled={isReporting || reported || results.score < 30}
+                  className={`w-full py-4 rounded-xl font-bold border transition-all flex items-center justify-center gap-2 
+                    ${reported 
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500 cursor-default" 
+                      : results.score >= 30
+                        ? "bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 shadow-lg hover:shadow-red-500/10"
+                        : "bg-white/5 border-white/10 text-gray-500 cursor-not-allowed"
+                    }`}
+                >
+                  {isReporting ? (
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                  ) : reported ? (
+                    <ShieldCheck className="w-5 h-5" />
+                  ) : (
+                    <Bug className="w-5 h-5" />
+                  )}
+                  {reported ? "Threat Reported" : "Report as Phish"}
                 </button>
               </div>
 

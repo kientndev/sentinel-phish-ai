@@ -15,6 +15,7 @@ export default function Navbar() {
   const navLinks = [
     { name: "Scanning", href: "/scanning" },
     { name: "Dashboard", href: "/dashboard" },
+    { name: "Community Vault", href: "/reports" },
     { name: "Pricing", href: "/pricing" },
   ];
 

@@ -54,3 +54,11 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+model ReportedPhish {
+  id        String   @id @default(cuid())
+  url       String
+  score     Int
+  status    String
+  createdAt DateTime @default(now())
+}

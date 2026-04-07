@@ -34,6 +34,7 @@ export default function SignupPage() {
       if (res.ok) {
         login(formData.username);
         toast.success("Welcome, " + formData.username + "! Account created successfully.");
+        setFormData({ username: "", email: "", password: "" });
         router.push("/scanning");
       } else {
         toast.error(data.error || "Something went wrong. Please try again.");

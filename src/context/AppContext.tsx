@@ -23,56 +23,66 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Sync state from localStorage
   useEffect(() => {
-    // Sync Credits
-    const savedCredits = localStorage.getItem("guest_credits");
-    if (savedCredits) {
-      setCreditBalance(parseInt(savedCredits));
-    } else {
-      setCreditBalance(800);
-      localStorage.setItem("guest_credits", "800");
-    }
+    if (typeof window !== "undefined") {
+      // Sync Credits
+      const savedCredits = localStorage.getItem("guest_credits");
+      if (savedCredits) {
+        setCreditBalance(parseInt(savedCredits));
+      } else {
+        setCreditBalance(800);
+        localStorage.setItem("guest_credits", "800");
+      }
 
-    // Sync Login State
-    const storedLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const storedUsername = localStorage.getItem("username");
-    if (storedLoggedIn && storedUsername) {
-      setIsLoggedIn(true);
-      setUsername(storedUsername);
+      // Sync Login State
+      const storedLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+      const storedUsername = localStorage.getItem("username");
+      if (storedLoggedIn && storedUsername) {
+        setIsLoggedIn(true);
+        setUsername(storedUsername);
+      }
     }
   }, []);
 
   const login = (user: string) => {
     setIsLoggedIn(true);
     setUsername(user);
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("username", user);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("username", user);
+    }
   };
 
   const logout = () => {
     setIsLoggedIn(false);
     setUsername(null);
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("username");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("username");
+    }
   };
 
   const burnCredits = async (amount: number): Promise<boolean> => {
+    const updateStorage = (val: number) => {
+      if (typeof window !== "undefined") localStorage.setItem("guest_credits", val.toString());
+    };
+
     if (creditBalance < amount) {
       const refillAmount = 800;
       const newBalance = refillAmount - amount;
       setCreditBalance(newBalance);
-      localStorage.setItem("guest_credits", newBalance.toString());
+      updateStorage(newBalance);
       return true;
     }
     const newBalance = creditBalance - amount;
     setCreditBalance(newBalance);
-    localStorage.setItem("guest_credits", newBalance.toString());
+    updateStorage(newBalance);
     return true;
   };
 
   const addCredits = async (amount: number) => {
     const newBalance = creditBalance + amount;
     setCreditBalance(newBalance);
-    localStorage.setItem("guest_credits", newBalance.toString());
+    if (typeof window !== "undefined") localStorage.setItem("guest_credits", newBalance.toString());
   };
 
   return (

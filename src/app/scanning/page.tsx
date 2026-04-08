@@ -522,7 +522,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                       </div>
                       <div>
                         <h3 className="font-black text-white">{t.aiAnalysis}</h3>
-                        <p className="text-[10px] uppercase font-bold text-[#00d2ff] tracking-[0.2em]">Powered by Gemini 1.5 Pro</p>
+                        <p className="text-[10px] uppercase font-bold text-[#00d2ff] tracking-[0.2em]">Powered by Gemini 3 Flash</p>
                       </div>
                    </div>
 

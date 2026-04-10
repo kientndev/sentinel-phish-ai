@@ -1,14 +1,32 @@
 "use client";
 
-import { UserCircle, Shield, Zap, History, Settings, LogOut } from "lucide-react";
+import { UserCircle, Shield, Zap, History, Settings, LogOut, Loader2 } from "lucide-react";
 import { usePhishTank, getRankFromXP } from "../../hooks/usePhishTank";
 import { useAppContext } from "../../context/AppContext";
 import { motion } from "framer-motion";
 import XPBar from "../../components/XPBar";
+import { useUser, UserButton } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 export default function ProfilePage() {
-  const { userXP, totalScans, threatsBlocked } = usePhishTank();
+  const { isLoaded, isSignedIn, user } = useUser();
+  const guestStats = usePhishTank();
+  const memberStats = useQuery(api.scans.getMyStats);
   const { creditBalance } = useAppContext();
+
+  if (!isLoaded) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00d2ff]" />
+      </div>
+    );
+  }
+
+  // Use member stats if signed in, otherwise guest stats
+  const totalScans = isSignedIn ? (memberStats?.totalScans ?? 0) : guestStats.totalScans;
+  const threatsBlocked = isSignedIn ? (memberStats?.threatsBlocked ?? 0) : guestStats.threatsBlocked;
+  const userXP = guestStats.userXP; // XP is still local for now as per plan
   const rank = getRankFromXP(userXP);
 
   return (
@@ -19,18 +37,24 @@ export default function ProfilePage() {
         <section className="glass-card p-10 mb-8 flex flex-col md:flex-row items-center gap-10">
            <div className="relative">
               <div className="w-32 h-32 rounded-3xl bg-gradient-to-tr from-[#00d2ff] to-[#a855f7] p-1 shadow-[0_0_40px_rgba(0,210,255,0.2)]">
-                 <div className="w-full h-full bg-[#0b0e14] rounded-[calc(1.5rem-2px)] flex items-center justify-center">
-                    <span className="text-5xl font-black text-white italic">G</span>
+                 <div className="w-full h-full bg-[#0b0e14] rounded-[calc(1.5rem-2px)] flex items-center justify-center overflow-hidden">
+                    {isSignedIn ? (
+                      <img src={user.imageUrl} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-5xl font-black text-white italic">G</span>
+                    )}
                  </div>
               </div>
-              <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-2 rounded-xl border-4 border-[#0b0e14]">
-                 <Shield className="w-4 h-4 fill-current" />
+              <div className={`absolute -bottom-2 -right-2 p-2 rounded-xl border-4 border-[#0b0e14] ${isSignedIn ? "bg-[#00d2ff]" : "bg-emerald-500"}`}>
+                 <Shield className="w-4 h-4 text-white fill-current" />
               </div>
            </div>
 
            <div className="flex-1 text-center md:text-left">
               <div className="flex flex-col md:flex-row items-center gap-3 mb-2">
-                 <h1 className="text-3xl font-black text-white tracking-tight italic">Guest Agent</h1>
+                 <h1 className="text-3xl font-black text-white tracking-tight italic">
+                   {isSignedIn ? (user.firstName || user.username) : "Guest Agent"}
+                 </h1>
                  <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-[#a1a1aa]">
                    Level {rank.level}
                  </span>
@@ -54,10 +78,17 @@ export default function ProfilePage() {
                  </div>
                  <div className="p-4 rounded-xl bg-white/2 border border-white/5">
                     <span className="text-[10px] uppercase font-black text-[#52525b] block mb-1">Blocked</span>
-                    <span className="text-xl font-black text-white font-mono text-center">{threatsBlocked}</span>
+                    <span className="text-xl font-black text-white font-mono">{threatsBlocked}</span>
                  </div>
               </div>
            </div>
+           
+           {isSignedIn && (
+             <div className="flex flex-col items-center gap-4">
+                <UserButton appearance={{ elements: { userButtonAvatarBox: "w-12 h-12" } }} />
+                <span className="text-[10px] font-black uppercase text-zinc-500">Account Managed</span>
+             </div>
+           )}
         </section>
 
         <div className="grid md:grid-cols-2 gap-8">
@@ -76,12 +107,16 @@ export default function ProfilePage() {
            <section className="glass-card p-6">
               <h2 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-tight">
                  <Settings className="w-5 h-5 text-zinc-500" />
-                 Guest Session Preferences
+                 {isSignedIn ? "Account Preferences" : "Guest Session Preferences"}
               </h2>
               <div className="space-y-3">
                  <div className="p-3 bg-white/2 rounded-xl flex items-center justify-between">
-                    <span className="text-sm font-medium text-zinc-400 italic">Clear Local History</span>
-                    <button className="text-[10px] font-black uppercase text-red-500 hover:text-red-400 transition-colors">WIPE DATA</button>
+                    <span className="text-sm font-medium text-zinc-400 italic">
+                      {isSignedIn ? "Synchronize Account" : "Clear Local History"}
+                    </span>
+                    <button className={`text-[10px] font-black uppercase transition-colors ${isSignedIn ? "text-[#00d2ff] hover:text-[#00d2ff]/80" : "text-red-500 hover:text-red-400"}`}>
+                      {isSignedIn ? "SYNC NOW" : "WIPE DATA"}
+                    </button>
                  </div>
               </div>
            </section>

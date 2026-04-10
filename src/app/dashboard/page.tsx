@@ -2,20 +2,31 @@
 
 import { 
   ShieldAlert, Activity, Globe, Monitor, 
-  BarChart2, Flame, Trophy, Zap, Clock, TrendingUp
+  BarChart2, Flame, Trophy, Zap, Clock, TrendingUp, Loader2
 } from "lucide-react";
-import { usePhishTank } from "../../hooks/usePhishTank";
 import { motion } from "framer-motion";
 import XPBar from "../../components/XPBar";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 
 export default function DashboardPage() {
-  const { 
-    totalScans,
-    threatsBlocked,
-    scanHistory,
-    userXP,
-    dailyScans
-  } = usePhishTank();
+  const { isLoaded, isSignedIn } = useUser();
+  const scans = useQuery(api.scans.getMyScans);
+  const stats = useQuery(api.scans.getMyStats);
+
+  if (!isLoaded || scans === undefined || stats === undefined) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00d2ff]" />
+      </div>
+    );
+  }
+
+  const totalScans = stats.totalScans || 0;
+  const threatsBlocked = stats.threatsBlocked || 0;
+  const scanHistory = scans || [];
+  const dailyScans = stats.dailyScans || 0;
 
   const maxVisibleScans = 30;
   const historyData = [...scanHistory].slice(0, maxVisibleScans).reverse(); 
@@ -119,9 +130,9 @@ export default function DashboardPage() {
 
            <div className="relative h-[200px] w-full mt-10">
               <svg 
-                 viewBox={`0 0 ${chartWidth} ${chartHeight}`} 
-                 className="w-full h-full overflow-visible preserve-3d"
-                 preserveAspectRatio="none"
+                viewBox={`0 0 ${chartWidth} ${chartHeight}`} 
+                className="w-full h-full overflow-visible preserve-3d"
+                preserveAspectRatio="none"
               >
                  <defs>
                     <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">

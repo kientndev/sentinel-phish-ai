@@ -1,51 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { User, Mail, Lock, Loader2, ShieldCheck, ArrowRight } from "lucide-react";
+import { SignUp } from "@clerk/nextjs";
+import { ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-import { useAppContext } from "../../context/AppContext";
-import Link from "next/link";
 
 export default function SignupPage() {
-  const router = useRouter();
-  const { login } = useAppContext();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        login(formData.username);
-        toast.success("Welcome, " + formData.username + "! Account created successfully.");
-        setFormData({ username: "", email: "", password: "" });
-        router.push("/scanning");
-      } else {
-        toast.error(data.error || "Something went wrong. Please try again.");
-      }
-    } catch (err) {
-      toast.error("Network error. Please check your connection.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <main className="flex flex-col flex-1 items-center justify-center px-6 relative overflow-hidden min-h-[90vh]">
       {/* Ambient Background Glows */}
@@ -67,75 +26,18 @@ export default function SignupPage() {
             <p className="text-zinc-400 text-sm">Secure your digital experience today.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 pl-1">Username</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                <input
-                  type="text"
-                  required
-                  placeholder="johndoe"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 transition-all text-sm font-medium text-white placeholder:text-zinc-600"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 pl-1">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                <input
-                  type="email"
-                  required
-                  placeholder="john@example.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 transition-all text-sm font-medium text-white placeholder:text-zinc-600"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 pl-1">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 transition-all text-sm font-medium text-white placeholder:text-zinc-600"
-                />
-              </div>
-              <p className="text-[10px] text-zinc-500 pl-1">Minimum 8 characters</p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-4 bg-[#00d2ff] hover:bg-[#00d2ff]/90 text-black font-black rounded-xl transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(0,210,255,0.3)]"
-            >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  Establish Identity
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <p className="text-center text-sm text-zinc-500">
-            Already a member?{" "}
-            <Link href="/login" className="text-[#00d2ff] hover:underline font-bold">
-              Sign In
-            </Link>
-          </p>
+          <SignUp appearance={{
+            elements: {
+              card: "bg-transparent shadow-none",
+              header: "hidden", // Hide clerk header since we have our own
+              formButtonPrimary: "bg-[#00d2ff] hover:bg-[#00d2ff]/90 text-black font-black w-full py-4 rounded-xl",
+              socialButtonsBlockButton: "bg-white/5 border-white/10 text-white hover:bg-white/10",
+              formFieldLabel: "text-zinc-500 font-black uppercase text-[10px] tracking-widest pl-1",
+              formFieldInput: "w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 transition-all text-sm font-medium text-white placeholder:text-zinc-600",
+              footerActionText: "text-zinc-500",
+              footerActionLink: "text-[#00d2ff] hover:underline font-bold",
+            }
+          }} />
         </div>
       </motion.div>
     </main>

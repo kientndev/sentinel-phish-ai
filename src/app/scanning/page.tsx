@@ -14,6 +14,9 @@ import { LangCode, translations } from "../translations";
 import { useAppContext } from "../../context/AppContext";
 import XPBar from "../../components/XPBar";
 import { TOP_DOMAINS } from "../api/scan/whitelist";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 
 const MOCK_SAFE_RESULT = {
   score: 0,
@@ -119,7 +122,9 @@ export default function ScanningPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const scannerRef = useRef<HTMLDivElement>(null);
 
-  const { burnCredits, creditBalance } = useAppContext();
+  const { burnCredits } = useAppContext();
+  const { isLoaded, isSignedIn } = useUser();
+  const storeScan = useMutation(api.scans.addScan);
 
   // Chat state
   const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
@@ -225,7 +230,7 @@ export default function ScanningPage() {
     const cleanDomain = urlToScan.replace(/^https?:\/\//i, "").split("/")[0].replace(/^www\./, "");
     const isWhitelisted = TOP_DOMAINS.includes(cleanDomain);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       let data = MOCK_DANGEROUS_RESULT;
       if (isWhitelisted) {
         data = MOCK_SAFE_RESULT;
@@ -239,6 +244,21 @@ export default function ScanningPage() {
 
       setResults(data);
       addScan(data.score, data.score >= 70, urlToScan);
+      
+      // PERSIST TO CONVEX IF SIGNED IN
+      if (isSignedIn) {
+        try {
+          await storeScan({
+            url: urlToScan,
+            score: data.score,
+            status: data.status,
+            isHighRisk: data.score >= 70,
+          });
+        } catch (error) {
+          console.error("Failed to persist scan to Convex:", error);
+        }
+      }
+      
       setIsScanning(false);
     }, isWhitelisted ? 800 : 2500); 
   };

@@ -1,54 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ShieldCheck, Calendar, Globe, AlertTriangle, ExternalLink, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 interface ReportedPhish {
-  id: string;
+  _id: string;
   url: string;
   score: number;
   status: string;
-  createdAt: string;
+  timestamp: string;
 }
 
 export default function ReportsPage() {
-  const [reports, setReports] = useState<ReportedPhish[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const reports = useQuery(api.scans.getReports);
   const [searchTerm, setSearchTerm] = useState("");
-  const [retryCount, setRetryCount] = useState(0);
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-
-    fetch("/api/report")
-      .then(async (res) => {
-        if (!res.ok) {
-           const errorData = await res.json().catch(() => ({}));
-           throw new Error(errorData.error || `HTTP ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (!Array.isArray(data)) {
-           console.error("Data type error: Expected array, got", typeof data);
-           throw new Error("Invalid data format received from vault.");
-        }
-        setReports(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        const isTimeout = err.message.includes("504") || err.message.includes("timeout");
-        console.error(isTimeout ? "Vault Timeout (504):" : "Vault Error:", err);
-        setError(isTimeout ? "The vault is taking too long to respond. Try refreshing in a moment." : err.message);
-        setLoading(false);
-      });
-  }, [retryCount]);
-
-  const filteredReports = reports.filter((r) => 
+  const filteredReports = (reports || []).filter((r: any) => 
     r.url.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -70,6 +41,8 @@ export default function ReportsPage() {
       return url.length > 30 ? url.substring(0, 30) + "..." : url;
     }
   };
+
+  const isLoading = reports === undefined;
 
   return (
     <main className="flex flex-col flex-1 items-center px-6 md:px-10 py-12 relative overflow-hidden text-[#fafafa]">
@@ -117,7 +90,7 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {loading ? (
+                {isLoading ? (
                   Array.from({ length: 12 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
                       <td className="px-6 py-5"><div className="h-4 bg-white/5 rounded w-32" /></td>
@@ -127,28 +100,10 @@ export default function ReportsPage() {
                       <td className="px-6 py-5 text-right"><div className="h-8 bg-white/5 rounded-lg w-20 ml-auto" /></td>
                     </tr>
                   ))
-                ) : error ? (
-                   <tr>
-                     <td colSpan={5} className="px-6 py-20 text-center">
-                        <div className="flex flex-col items-center gap-4">
-                           <AlertTriangle className="w-12 h-12 text-orange-500/50" />
-                           <div className="space-y-1">
-                              <p className="text-white font-bold">{error}</p>
-                              <p className="text-xs text-[#a1a1aa]">Check your connection or the database status.</p>
-                           </div>
-                           <button 
-                             onClick={() => setRetryCount(prev => prev + 1)}
-                             className="mt-2 px-4 py-2 bg-[#00d2ff]/10 hover:bg-[#00d2ff]/20 text-[#00d2ff] text-xs font-black uppercase tracking-widest rounded-lg transition-all"
-                           >
-                             Retry Connection
-                           </button>
-                        </div>
-                     </td>
-                   </tr>
                 ) : filteredReports.length > 0 ? (
-                  filteredReports.map((report, i) => (
+                  filteredReports.map((report: any, i: number) => (
                     <motion.tr 
-                      key={report.id}
+                      key={report._id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.05 }}
@@ -174,7 +129,7 @@ export default function ReportsPage() {
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="flex items-center gap-2 text-[#a1a1aa]">
                           <Calendar className="w-3.5 h-3.5" />
-                          <span className="text-xs font-medium">{new Date(report.createdAt).toLocaleDateString()}</span>
+                          <span className="text-xs font-medium">{new Date(report.timestamp).toLocaleDateString()}</span>
                         </div>
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap text-right">

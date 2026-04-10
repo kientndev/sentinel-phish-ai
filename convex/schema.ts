@@ -7,7 +7,14 @@ export default defineSchema({
     url: v.string(),
     score: v.number(),
     status: v.string(), // "SAFE" | "DANGEROUS"
-    timestamp: v.string(), // ISO string or number? Existing code used ISO string.
+    timestamp: v.string(), // ISO string
     isHighRisk: v.boolean(),
   }).index("by_user", ["userId"]),
+
+  reportedPhish: defineTable({
+    url: v.string(),
+    score: v.number(),
+    status: v.string(),
+    timestamp: v.string(),
+  }).index("by_timestamp", ["timestamp"]),
 });

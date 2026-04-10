@@ -185,7 +185,7 @@ export default function DashboardPage() {
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-white/5">
-                    {scanHistory.slice(0, 30).map((scan, i) => (
+                    {scanHistory.slice(0, 30).map((scan: any, i: number) => (
                        <tr key={i} className="group hover:bg-white/2 transition-colors">
                           <td className="px-4 py-4">
                              <div className={`p-2 w-fit rounded-lg ${scan.score >= 70 ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"}`}>

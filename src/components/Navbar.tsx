@@ -6,13 +6,13 @@ import { usePathname } from "next/navigation";
 import { Menu, X, ShieldAlert, Coins, UserCircle, LogOut } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserButton, useUser, SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { UserButton, useUser, SignInButton } from "@clerk/nextjs";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const { creditBalance } = useAppContext();
-  const { user, isSignedIn } = useUser();
+  const { user, isSignedIn, isLoaded } = useUser();
 
   const navLinks = [
     { name: "Scanning", href: "/scanning" },
@@ -63,13 +63,11 @@ export default function Navbar() {
                 </span>
               </div>
               
-              <SignedOut>
+              {!isSignedIn ? (
                 <Link href="/sign-up" className="hidden sm:flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-black rounded-lg text-[10px] uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(0,210,255,0.3)] hover:shadow-[0_0_20px_rgba(0,210,255,0.5)] transition-all">
                   Sign Up
                 </Link>
-              </SignedOut>
-
-              <SignedIn>
+              ) : (
                 <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-xl group transition-all">
                    <div className="flex flex-col items-end mr-2">
                       <span className="text-[10px] uppercase font-black tracking-widest text-[#a1a1aa]">Identity Verified</span>
@@ -84,7 +82,7 @@ export default function Navbar() {
                      }
                    }} />
                 </div>
-              </SignedIn>
+              )}
               
               <Link href="/profile" className="flex items-center gap-2 group border border-white/5 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
                 <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#00d2ff] to-[#a855f7] flex items-center justify-center p-[2px]">
@@ -130,7 +128,7 @@ export default function Navbar() {
                   {link.name}
                 </Link>
               ))}
-              <SignedOut>
+              {!isSignedIn ? (
                 <Link
                   href="/sign-up"
                   onClick={() => setIsOpen(false)}
@@ -138,9 +136,9 @@ export default function Navbar() {
                 >
                   Sign Up
                 </Link>
-              </SignedOut>
+              ) : null}
               <div className="h-px bg-white/10" />
-              <SignedIn>
+              {isSignedIn ? (
                  <div className="px-4 py-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
                     <div className="flex flex-col">
                        <span className="text-[10px] uppercase font-black text-zinc-500">Identity Verified</span>
@@ -148,7 +146,7 @@ export default function Navbar() {
                     </div>
                     <UserButton />
                  </div>
-              </SignedIn>
+              ) : null}
               <Link
                   href="/profile"
                   onClick={() => setIsOpen(false)}

@@ -123,8 +123,9 @@ export default function ScanningPage() {
   const scannerRef = useRef<HTMLDivElement>(null);
 
   const { burnCredits } = useAppContext();
-  const { isLoaded, isSignedIn } = useUser();
+  const { isLoaded, isSignedIn, user } = useUser();
   const storeScan = useMutation(api.scans.addScan);
+  const reportPhish = useMutation(api.scans.reportPhish);
 
   // Chat state
   const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
@@ -295,18 +296,12 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
     if (!results || reported) return;
     setIsReporting(true);
     try {
-      const res = await fetch("/api/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: url.startsWith("http") ? url : `https://${url}`,
-          score: results.score,
-          status: results.status
-        }),
+      await reportPhish({
+        url: url.startsWith("http") ? url : `https://${url}`,
+        score: results.score,
+        status: results.status
       });
-      if (res.ok) {
-        setReported(true);
-      }
+      setReported(true);
     } catch (err) {
       console.error("Reporting failed:", err);
     } finally {

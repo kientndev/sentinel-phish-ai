@@ -6,14 +6,14 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import XPBar from "../../components/XPBar";
-import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { useSafeQuery } from "../../hooks/useSafeQuery";
 import { useUser } from "@clerk/nextjs";
 
 export default function DashboardPage() {
   const { isLoaded, isSignedIn } = useUser();
-  const scans = useQuery(api.scans.getMyScans);
-  const stats = useQuery(api.scans.getMyStats);
+  const scans = useSafeQuery(isSignedIn ? api.scans.getMyScans : null);
+  const stats = useSafeQuery(isSignedIn ? api.scans.getMyStats : null);
 
   if (!isLoaded || scans === undefined || stats === undefined) {
     return (

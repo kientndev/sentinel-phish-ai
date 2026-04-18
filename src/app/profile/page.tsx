@@ -6,13 +6,13 @@ import { useAppContext } from "../../context/AppContext";
 import { motion } from "framer-motion";
 import XPBar from "../../components/XPBar";
 import { useUser, UserButton } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { useSafeQuery } from "../../hooks/useSafeQuery";
 
 export default function ProfilePage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const guestStats = usePhishTank();
-  const memberStats = useQuery(api.scans.getMyStats);
+  const memberStats = useSafeQuery(isSignedIn ? api.scans.getMyStats : null);
   const { creditBalance } = useAppContext();
 
   if (!isLoaded) {

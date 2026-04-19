@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering to avoid static generation issues with auth
+export const dynamic = "force-dynamic";
+
 import { 
   ShieldAlert, Activity, Globe, Monitor, 
   BarChart2, Flame, Trophy, Zap, Clock, TrendingUp, Loader2
@@ -12,8 +15,8 @@ import { useUser } from "@clerk/nextjs";
 
 export default function DashboardPage() {
   const { isLoaded, isSignedIn } = useUser();
-  const scans = useSafeQuery(isSignedIn ? api.scans.getMyScans : null);
-  const stats = useSafeQuery(isSignedIn ? api.scans.getMyStats : null);
+  const scans = useSafeQuery(isSignedIn ? api.scans.getMyScans : null) as { url: string; score: number; timestamp: number }[] | undefined;
+  const stats = useSafeQuery(isSignedIn ? api.scans.getMyStats : null) as { totalScans: number; threatsBlocked: number; dailyScans: number } | undefined;
 
   if (!isLoaded || scans === undefined || stats === undefined) {
     return (

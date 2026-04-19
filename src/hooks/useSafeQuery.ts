@@ -1,24 +1,24 @@
 "use client";
 
 import { useQuery as useConvexQuery } from "convex/react";
-import { FunctionReference, FunctionArgs, FunctionReturnType } from "convex/server";
+import { FunctionReference } from "convex/server";
 import { useConvexAvailable } from "../components/ConvexClientProvider";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyQuery = FunctionReference<"query", any>;
+
 /**
- * Safe wrapper around useQuery that returns undefined when Convex is not available
- * This prevents build-time errors when NEXT_PUBLIC_CONVEX_URL is not set
+ * Safe wrapper around useQuery that returns undefined when Convex is not available.
+ * This prevents build-time errors when NEXT_PUBLIC_CONVEX_URL is not set.
+ * Returns the query result or undefined if Convex is unavailable or query is null.
  */
-export function useSafeQuery<Query extends FunctionReference<"query">>(
-  query: Query | null,
-  ...args: FunctionArgs<Query> extends null | undefined ? [FunctionArgs<Query>?] : [FunctionArgs<Query>]
-): FunctionReturnType<Query> | undefined {
+export function useSafeQuery(query: AnyQuery | null | undefined): unknown {
   const convexAvailable = useConvexAvailable();
   
-  // Return undefined if Convex is not available or query is null
-  if (!convexAvailable || !query) {
-    return undefined;
-  }
-  
-  // Use the actual Convex hook when available
-  return useConvexQuery(query, ...args);
+  // Call useConvexQuery unconditionally (React hook rules)
+  // Pass null to skip when Convex is unavailable
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return useConvexQuery(
+    (convexAvailable ? query : null) as any
+  );
 }

@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering to avoid static generation issues with auth
+export const dynamic = "force-dynamic";
+
 import { UserCircle, Shield, Zap, History, Settings, LogOut, Loader2 } from "lucide-react";
 import { usePhishTank, getRankFromXP } from "../../hooks/usePhishTank";
 import { useAppContext } from "../../context/AppContext";
@@ -12,7 +15,7 @@ import { useSafeQuery } from "../../hooks/useSafeQuery";
 export default function ProfilePage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const guestStats = usePhishTank();
-  const memberStats = useSafeQuery(isSignedIn ? api.scans.getMyStats : null);
+  const memberStats = useSafeQuery(isSignedIn ? api.scans.getMyStats : null) as { totalScans: number; threatsBlocked: number } | undefined;
   const { creditBalance } = useAppContext();
 
   if (!isLoaded) {

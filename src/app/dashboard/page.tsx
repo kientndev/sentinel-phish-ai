@@ -10,13 +10,14 @@ import {
 import { motion } from "framer-motion";
 import XPBar from "../../components/XPBar";
 import { api } from "../../../convex/_generated/api";
-import { useSafeQuery } from "../../hooks/useSafeQuery";
+import { useQuery } from "convex/react";
+import { ClientOnly } from "../../components/ClientOnly";
 import { useUser } from "@clerk/nextjs";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { isLoaded, isSignedIn } = useUser();
-  const scans = useSafeQuery(isSignedIn ? api.scans.getMyScans : null) as { url: string; score: number; timestamp: number }[] | undefined;
-  const stats = useSafeQuery(isSignedIn ? api.scans.getMyStats : null) as { totalScans: number; threatsBlocked: number; dailyScans: number } | undefined;
+  const scans = useQuery(api.scans.getMyScans) as { url: string; score: number; timestamp: number }[] | undefined;
+  const stats = useQuery(api.scans.getMyStats) as { totalScans: number; threatsBlocked: number; dailyScans: number } | undefined;
 
   if (!isLoaded || scans === undefined || stats === undefined) {
     return (
@@ -212,5 +213,17 @@ export default function DashboardPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <ClientOnly fallback={
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00d2ff]" />
+      </div>
+    }>
+      <DashboardContent />
+    </ClientOnly>
   );
 }

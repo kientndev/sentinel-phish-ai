@@ -1,24 +1,46 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useQuery as useConvexQuery } from "convex/react";
-import { FunctionReference } from "convex/server";
-import { useConvexAvailable } from "../components/ConvexClientProvider";
+import { FunctionReference, FunctionReturnType } from "convex/server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyQuery = FunctionReference<"query", any>;
 
 /**
- * Safe wrapper around useQuery that returns undefined when Convex is not available.
+ * Safe wrapper around useQuery that:
+ * 1. Returns undefined during SSR
+ * 2. Returns undefined when Convex is unavailable or query is null
+ * 3. Otherwise returns the Convex query result
+ * 
  * This prevents build-time errors when NEXT_PUBLIC_CONVEX_URL is not set.
- * Returns the query result or undefined if Convex is unavailable or query is null.
  */
-export function useSafeQuery(query: AnyQuery | null | undefined): unknown {
-  const convexAvailable = useConvexAvailable();
+export function useSafeQuery<Query extends AnyQuery>(
+  query: Query | null | undefined
+): FunctionReturnType<Query> | undefined {
+  const [mounted, setMounted] = useState(false);
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
   
-  // Call useConvexQuery unconditionally (React hook rules)
-  // Pass null to skip when Convex is unavailable
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return useConvexQuery(
-    (convexAvailable ? query : null) as any
-  );
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const shouldSkip = !mounted || !convexUrl || query === null || query === undefined;
+  
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = useConvexQuery(
+      shouldSkip ? (null as any) : query
+    );
+    
+    if (shouldSkip) {
+      return undefined;
+    }
+    
+    return result as FunctionReturnType<Query> | undefined;
+  } catch (error) {
+    // If Convex errors (e.g., during SSR), return undefined
+    console.warn("Convex query error (likely SSR):", error);
+    return undefined;
+  }
 }

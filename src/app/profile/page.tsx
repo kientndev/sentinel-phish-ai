@@ -10,12 +10,13 @@ import { motion } from "framer-motion";
 import XPBar from "../../components/XPBar";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
-import { useSafeQuery } from "../../hooks/useSafeQuery";
+import { useQuery } from "convex/react";
+import { ClientOnly } from "../../components/ClientOnly";
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { isLoaded, isSignedIn, user } = useUser();
   const guestStats = usePhishTank();
-  const memberStats = useSafeQuery(isSignedIn ? api.scans.getMyStats : null) as { totalScans: number; threatsBlocked: number } | undefined;
+  const memberStats = useQuery(api.scans.getMyStats) as { totalScans: number; threatsBlocked: number } | undefined;
   const { creditBalance } = useAppContext();
 
   if (!isLoaded) {
@@ -126,5 +127,17 @@ export default function ProfilePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ClientOnly fallback={
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00d2ff]" />
+      </div>
+    }>
+      <ProfileContent />
+    </ClientOnly>
   );
 }

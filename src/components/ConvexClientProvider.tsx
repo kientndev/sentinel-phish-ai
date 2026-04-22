@@ -14,7 +14,6 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
   const convexConfig = useMemo(() => {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
     if (!convexUrl) {
-      console.warn("NEXT_PUBLIC_CONVEX_URL is not set. Convex features will be disabled.");
       return null;
     }
     return { convex: new ConvexReactClient(convexUrl), available: true };

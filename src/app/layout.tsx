@@ -6,6 +6,7 @@ import { AppProvider } from "../context/AppContext";
 import Navbar from "../components/Navbar";
 import { Toaster } from "sonner";
 import { ConvexClientProvider } from "../components/ConvexClientProvider";
+import { ClientOnly } from "../components/ClientOnly";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -38,12 +39,16 @@ export default function RootLayout({
           <ConvexClientProvider>
             <AppProvider>
               <Toaster position="bottom-right" richColors theme="dark" />
-              <Navbar />
+              <ClientOnly fallback={null}>
+                <Navbar />
+              </ClientOnly>
               {children}
             </AppProvider>
           </ConvexClientProvider>
         </ClerkProvider>
-        <GoogleAnalytics gaId="G-WR6V55XDBM" />
+        <ClientOnly fallback={null}>
+          <GoogleAnalytics gaId="G-WR6V55XDBM" />
+        </ClientOnly>
       </body>
     </html>
   );

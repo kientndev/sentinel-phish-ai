@@ -75,7 +75,7 @@ export function usePhishTank() {
       if (storedDailyScans) setDailyScans(parseInt(storedDailyScans, 10));
       if (storedLastDate) setLastScanDate(storedLastDate);
     } catch (e) {
-      console.warn("Failed to retrieve PhishTank data from localStorage", e);
+      // Failed to retrieve PhishTank data from localStorage
     }
   }, []);
 

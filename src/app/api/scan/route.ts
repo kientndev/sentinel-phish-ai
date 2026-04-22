@@ -216,7 +216,7 @@ URL: ${url} | Domain Age: ${whois.ageText} | Has Password Field: ${domAnalysis.h
         const jsonMatch = responseText.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) || responseText.match(/(\{[\s\S]*?\})/);
         if (jsonMatch && jsonMatch[1]) geminiVerdict = JSON.parse(jsonMatch[1]);
       } catch (err) {
-        console.error("Gemini AI Error:", err);
+        // Gemini AI Error
       }
     }
 
@@ -232,7 +232,6 @@ URL: ${url} | Domain Age: ${whois.ageText} | Has Password Field: ${domAnalysis.h
       screenshotUrl: screenshotDataUri, geminiVerdict
     });
   } catch (error: any) {
-    console.error("SentinelPhish API Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -40,7 +40,6 @@ export function useSafeQuery<Query extends AnyQuery>(
     return result as FunctionReturnType<Query> | undefined;
   } catch (error) {
     // If Convex errors (e.g., during SSR), return undefined
-    console.warn("Convex query error (likely SSR):", error);
     return undefined;
   }
 }

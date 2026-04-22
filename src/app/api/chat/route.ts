@@ -62,7 +62,6 @@ Heuristic Flags: ${(context.redFlags ?? []).join(', ')}`;
     return NextResponse.json({ reply: responseText });
 
   } catch (error: any) {
-    console.error("Chat API Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

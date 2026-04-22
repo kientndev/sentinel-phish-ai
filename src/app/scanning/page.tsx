@@ -184,7 +184,8 @@ export default function ScanningPage() {
     setChatInput("");
     setIsChatting(true);
     try {
-      const res = await fetch("/api/chat", {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+      const res = await fetch(`${baseUrl}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages, context: results, lang, aiMode }),
@@ -256,7 +257,7 @@ export default function ScanningPage() {
             isHighRisk: data.score >= 70,
           });
         } catch (error) {
-          console.error("Failed to persist scan to Convex:", error);
+          // Failed to persist scan to Convex
         }
       }
       
@@ -303,7 +304,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
       });
       setReported(true);
     } catch (err) {
-      console.error("Reporting failed:", err);
+      // Reporting failed
     } finally {
       setIsReporting(false);
     }

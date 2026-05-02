@@ -1,8 +1,5 @@
 "use client";
 
-// Force dynamic rendering to avoid static generation issues with auth
-export const dynamic = "force-dynamic";
-
 import { 
   ShieldAlert, Activity, Globe, Monitor, 
   BarChart2, Flame, Trophy, Zap, Clock, TrendingUp, Loader2
@@ -12,14 +9,12 @@ import XPBar from "../../components/XPBar";
 import { api } from "../../../convex/_generated/api";
 import { useQuery } from "convex/react";
 import { ClientOnly } from "../../components/ClientOnly";
-import { useUser } from "@clerk/nextjs";
 
 function DashboardContent() {
-  const { isLoaded, isSignedIn } = useUser();
   const scans = useQuery(api.scans.getMyScans) as { url: string; score: number; timestamp: number }[] | undefined;
   const stats = useQuery(api.scans.getMyStats) as { totalScans: number; threatsBlocked: number; dailyScans: number } | undefined;
 
-  if (!isLoaded || scans === undefined || stats === undefined) {
+  if (scans === undefined || stats === undefined) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-[#00d2ff]" />

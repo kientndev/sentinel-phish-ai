@@ -16,7 +16,6 @@ import XPBar from "../../components/XPBar";
 import { TOP_DOMAINS } from "../api/scan/whitelist";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { useUser } from "@clerk/nextjs";
 
 const MOCK_SAFE_RESULT = {
   score: 0,
@@ -123,7 +122,7 @@ export default function ScanningPage() {
   const scannerRef = useRef<HTMLDivElement>(null);
 
   const { burnCredits } = useAppContext();
-  const { isLoaded, isSignedIn, user } = useUser();
+  // Removed Clerk auth - skipping Convex persistence
   const storeScan = useMutation(api.scans.addScan);
   const reportPhish = useMutation(api.scans.reportPhish);
 
@@ -247,19 +246,8 @@ export default function ScanningPage() {
       setResults(data);
       addScan(data.score, data.score >= 70, urlToScan);
       
-      // PERSIST TO CONVEX IF SIGNED IN
-      if (isSignedIn) {
-        try {
-          await storeScan({
-            url: urlToScan,
-            score: data.score,
-            status: data.status,
-            isHighRisk: data.score >= 70,
-          });
-        } catch (error) {
-          // Failed to persist scan to Convex
-        }
-      }
+      // PERSIST TO CONVEX - skipped without auth
+      // Convex storage disabled when Clerk auth is removed
       
       setIsScanning(false);
     }, isWhitelisted ? 800 : 2500); 

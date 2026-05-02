@@ -1,6 +1,6 @@
 "use client";
 
-import { SignUp } from "@clerk/nextjs";
+import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -26,18 +26,12 @@ export default function SignupPage() {
             <p className="text-zinc-400 text-sm">Secure your digital experience today.</p>
           </div>
 
-          <SignUp appearance={{
-            elements: {
-              card: "bg-transparent shadow-none",
-              header: "hidden", // Hide clerk header since we have our own
-              formButtonPrimary: "bg-[#00d2ff] hover:bg-[#00d2ff]/90 text-black font-black w-full py-4 rounded-xl",
-              socialButtonsBlockButton: "bg-white/5 border-white/10 text-white hover:bg-white/10",
-              formFieldLabel: "text-zinc-500 font-black uppercase text-[10px] tracking-widest pl-1",
-              formFieldInput: "w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 transition-all text-sm font-medium text-white placeholder:text-zinc-600",
-              footerActionText: "text-zinc-500",
-              footerActionLink: "text-[#00d2ff] hover:underline font-bold",
-            }
-          }} />
+          <div className="text-center py-8">
+            <p className="text-zinc-400 mb-6">Registration is currently disabled. Please continue as a guest.</p>
+            <Link href="/" className="inline-block px-8 py-4 bg-[#00d2ff] hover:bg-[#00d2ff]/90 text-black font-black rounded-xl transition-colors">
+              Go Home
+            </Link>
+          </div>
         </div>
       </motion.div>
     </main>

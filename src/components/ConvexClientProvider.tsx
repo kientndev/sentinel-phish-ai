@@ -1,8 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
 import { ConvexReactClient, ConvexProvider } from "convex/react";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ReactNode, useMemo, createContext, useContext } from "react";
 
 // Create a context to track if Convex is available
@@ -10,6 +8,7 @@ const ConvexAvailabilityContext = createContext<boolean>(false);
 
 export const useConvexAvailable = () => useContext(ConvexAvailabilityContext);
 
+// Basic Convex provider without Clerk auth
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   const convexConfig = useMemo(() => {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -29,9 +28,9 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
 
   return (
     <ConvexAvailabilityContext.Provider value={true}>
-      <ConvexProviderWithClerk client={convexConfig.convex} useAuth={useAuth}>
+      <ConvexProvider client={convexConfig.convex}>
         {children}
-      </ConvexProviderWithClerk>
+      </ConvexProvider>
     </ConvexAvailabilityContext.Provider>
   );
 }

@@ -14,8 +14,7 @@ import { LangCode, translations } from "../translations";
 import { useAppContext } from "../../context/AppContext";
 import XPBar from "../../components/XPBar";
 import { TOP_DOMAINS } from "../api/scan/whitelist";
-import { useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+// Convex removed - using local storage only
 
 const MOCK_SAFE_RESULT = {
   score: 0,
@@ -122,9 +121,7 @@ export default function ScanningPage() {
   const scannerRef = useRef<HTMLDivElement>(null);
 
   const { burnCredits } = useAppContext();
-  // Removed Clerk auth - skipping Convex persistence
-  const storeScan = useMutation(api.scans.addScan);
-  const reportPhish = useMutation(api.scans.reportPhish);
+  // Convex mutations removed - using local storage only
 
   // Chat state
   const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
@@ -282,20 +279,14 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
   };
 
   const handleReportPhish = async () => {
+    // Convex removed - reporting disabled
     if (!results || reported) return;
     setIsReporting(true);
-    try {
-      await reportPhish({
-        url: url.startsWith("http") ? url : `https://${url}`,
-        score: results.score,
-        status: results.status
-      });
+    // Simulate success without Convex
+    setTimeout(() => {
       setReported(true);
-    } catch (err) {
-      // Reporting failed
-    } finally {
       setIsReporting(false);
-    }
+    }, 500);
   };
 
   const getRiskColor = (score: number) => {

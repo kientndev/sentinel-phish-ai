@@ -4,8 +4,13 @@ import { useState } from "react";
 import { ShieldCheck, Calendar, Globe, AlertTriangle, ExternalLink, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+
+// Dummy reported data since Convex is disabled
+const DUMMY_REPORTS = [
+  { _id: "1", url: "https://suspicious-bank.example.com/login", score: 92, status: "PHISHING", timestamp: "2024-01-15T10:30:00Z" },
+  { _id: "2", url: "https://fake-shop.example.com/checkout", score: 78, status: "SUSPICIOUS", timestamp: "2024-01-14T15:45:00Z" },
+  { _id: "3", url: "https://phishing-mail.example.com/verify", score: 88, status: "PHISHING", timestamp: "2024-01-13T09:20:00Z" },
+];
 
 interface ReportedPhish {
   _id: string;
@@ -16,8 +21,9 @@ interface ReportedPhish {
 }
 
 export default function ReportsPage() {
-  const reports = useQuery(api.scans.getReports);
   const [searchTerm, setSearchTerm] = useState("");
+  // Using dummy data instead of Convex
+  const reports = DUMMY_REPORTS;
 
   const filteredReports = (reports || []).filter((r: any) => 
     r.url.toLowerCase().includes(searchTerm.toLowerCase())
@@ -42,7 +48,7 @@ export default function ReportsPage() {
     }
   };
 
-  const isLoading = reports === undefined;
+  const isLoading = false;
 
   return (
     <main className="flex flex-col flex-1 items-center px-6 md:px-10 py-12 relative overflow-hidden text-[#fafafa]">

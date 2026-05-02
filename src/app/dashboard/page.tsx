@@ -6,26 +6,17 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import XPBar from "../../components/XPBar";
-import { api } from "../../../convex/_generated/api";
-import { useQuery } from "convex/react";
 import { ClientOnly } from "../../components/ClientOnly";
+import { usePhishTank } from "../../hooks/usePhishTank";
 
 function DashboardContent() {
-  const scans = useQuery(api.scans.getMyScans) as { url: string; score: number; timestamp: number }[] | undefined;
-  const stats = useQuery(api.scans.getMyStats) as { totalScans: number; threatsBlocked: number; dailyScans: number } | undefined;
-
-  if (scans === undefined || stats === undefined) {
-    return (
-      <div className="flex flex-1 items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#00d2ff]" />
-      </div>
-    );
-  }
-
-  const totalScans = stats.totalScans || 0;
-  const threatsBlocked = stats.threatsBlocked || 0;
-  const scanHistory = scans || [];
-  const dailyScans = stats.dailyScans || 0;
+  // Using local stats instead of Convex
+  const { totalScans, threatsBlocked, scanHistory } = usePhishTank();
+  const dailyScans = scanHistory.filter(s => {
+    const scanDate = new Date(s.timestamp);
+    const today = new Date();
+    return scanDate.toDateString() === today.toDateString();
+  }).length;
 
   const maxVisibleScans = 30;
   const historyData = [...scanHistory].slice(0, maxVisibleScans).reverse(); 

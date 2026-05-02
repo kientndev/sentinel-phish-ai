@@ -4,28 +4,22 @@ import { useState } from "react";
 import { ShieldCheck, Calendar, Globe, AlertTriangle, ExternalLink, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-
-// Dummy reported data since Convex is disabled
-const DUMMY_REPORTS = [
-  { _id: "1", url: "https://suspicious-bank.example.com/login", score: 92, status: "PHISHING", timestamp: "2024-01-15T10:30:00Z" },
-  { _id: "2", url: "https://fake-shop.example.com/checkout", score: 78, status: "SUSPICIOUS", timestamp: "2024-01-14T15:45:00Z" },
-  { _id: "3", url: "https://phishing-mail.example.com/verify", score: 88, status: "PHISHING", timestamp: "2024-01-13T09:20:00Z" },
-];
-
-interface ReportedPhish {
-  _id: string;
-  url: string;
-  score: number;
-  status: string;
-  timestamp: string;
-}
+import { usePhishTank } from "../../hooks/usePhishTank";
 
 export default function ReportsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  // Using dummy data instead of Convex
-  const reports = DUMMY_REPORTS;
+  const { scanHistory } = usePhishTank();
 
-  const filteredReports = (reports || []).filter((r: any) => 
+  // Convert scan history to reports format and get 10 latest
+  const reports = scanHistory.slice(0, 10).map((scan, index) => ({
+    _id: index.toString(),
+    url: scan.url,
+    score: scan.score,
+    status: scan.score >= 70 ? "PHISHING" : scan.score >= 30 ? "SUSPICIOUS" : "SAFE",
+    timestamp: scan.timestamp
+  }));
+
+  const filteredReports = reports.filter(r =>
     r.url.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -107,7 +101,7 @@ export default function ReportsPage() {
                     </tr>
                   ))
                 ) : filteredReports.length > 0 ? (
-                  filteredReports.map((report: any, i: number) => (
+                  filteredReports.map((report, i: number) => (
                     <motion.tr 
                       key={report._id}
                       initial={{ opacity: 0, x: -10 }}

@@ -74,7 +74,7 @@ export function usePhishTank() {
       if (storedStreak) setDailyStreak(parseInt(storedStreak, 10));
       if (storedDailyScans) setDailyScans(parseInt(storedDailyScans, 10));
       if (storedLastDate) setLastScanDate(storedLastDate);
-    } catch (e) {
+    } catch {
       // Failed to retrieve PhishTank data from localStorage
     }
   }, []);
@@ -85,13 +85,13 @@ export function usePhishTank() {
     
     setTotalScans((prev) => {
       const newVal = prev + 1;
-      try { localStorage.setItem("phishTank_totalScans", newVal.toString()); } catch(e){}
+      try { localStorage.setItem("phishTank_totalScans", newVal.toString()); } catch{}
       return newVal;
     });
 
     setThreatsBlocked((prev) => {
       const newVal = prev + (isHighRisk ? 1 : 0);
-      try { localStorage.setItem("phishTank_threatsBlocked", newVal.toString()); } catch(e){}
+      try { localStorage.setItem("phishTank_threatsBlocked", newVal.toString()); } catch{}
       return newVal;
     });
 
@@ -99,7 +99,7 @@ export function usePhishTank() {
       const newRecord: ScanHistoryRecord = { timestamp: now.toISOString(), score, url };
       // Keep last 5 scans as primary history for the guest UI, but store up to 50
       const newHistory = [newRecord, ...prev].slice(0, 50); 
-      try { localStorage.setItem("phishTank_history", JSON.stringify(newHistory)); } catch(e){}
+      try { localStorage.setItem("phishTank_history", JSON.stringify(newHistory)); } catch{}
       return newHistory;
     });
 
@@ -107,7 +107,7 @@ export function usePhishTank() {
     const xpEarned = 10 + (isHighRisk ? 50 : 0);
     setUserXP((prevXP) => {
       const newXP = prevXP + xpEarned;
-      try { localStorage.setItem("phishTank_userXP", newXP.toString()); } catch(e){}
+      try { localStorage.setItem("phishTank_userXP", newXP.toString()); } catch{}
       
       const oldRank = getRankFromXP(prevXP);
       const newRank = getRankFromXP(newXP);
@@ -122,7 +122,7 @@ export function usePhishTank() {
       if (prevDate !== today) {
         // First scan of a new day
         setDailyScans(1);
-        try { localStorage.setItem("phishTank_dailyScans", "1"); } catch(e){}
+        try { localStorage.setItem("phishTank_dailyScans", "1"); } catch{}
 
         const yesterday = new Date(now);
         yesterday.setDate(yesterday.getDate() - 1);
@@ -130,23 +130,23 @@ export function usePhishTank() {
           // Continued streak
           setDailyStreak((ps) => {
              const ns = ps + 1;
-             try { localStorage.setItem("phishTank_dailyStreak", ns.toString()); } catch(e){}
+             try { localStorage.setItem("phishTank_dailyStreak", ns.toString()); } catch{}
              return ns;
           });
         } else {
           // Broken streak
           setDailyStreak(1);
-          try { localStorage.setItem("phishTank_dailyStreak", "1"); } catch(e){}
+          try { localStorage.setItem("phishTank_dailyStreak", "1"); } catch{}
         }
       } else {
         // Re-scanning same day
         setDailyScans((ps) => {
           const ns = ps + 1;
-          try { localStorage.setItem("phishTank_dailyScans", ns.toString()); } catch(e){}
+          try { localStorage.setItem("phishTank_dailyScans", ns.toString()); } catch{}
           return ns;
         });
       }
-      try { localStorage.setItem("phishTank_lastScanDate", today); } catch(e){}
+      try { localStorage.setItem("phishTank_lastScanDate", today); } catch{}
       return today;
     });
   };

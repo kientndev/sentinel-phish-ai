@@ -12,8 +12,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const { creditBalance } = useAppContext();
   // Removed Clerk auth - using static guest mode
-  const isSignedIn = false;
-  const user = null;
 
   const navLinks = [
     { name: "Scanning", href: "/scanning" },

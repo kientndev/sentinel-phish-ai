@@ -15,7 +15,7 @@ export default function ContactPage() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) setFiles(prev => [...prev, ...Array.from(e.target.files)]);
+    if (e.target.files) setFiles(prev => [...prev, ...Array.from(e.target.files || [])]);
   };
 
   const removeFile = (index: number) => setFiles(prev => prev.filter((_, i) => i !== index));

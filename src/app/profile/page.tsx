@@ -1,9 +1,8 @@
 "use client";
 
-import { UserCircle, Shield, Zap, History, Settings, LogOut, Loader2 } from "lucide-react";
+import { Shield, Zap, Settings, Loader2 } from "lucide-react";
 import { usePhishTank, getRankFromXP } from "../../hooks/usePhishTank";
 import { useAppContext } from "../../context/AppContext";
-import { motion } from "framer-motion";
 import XPBar from "../../components/XPBar";
 import { ClientOnly } from "../../components/ClientOnly";
 

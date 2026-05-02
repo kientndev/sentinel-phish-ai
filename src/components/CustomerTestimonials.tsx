@@ -100,7 +100,7 @@ export default function CustomerTestimonials() {
               </div>
               
               <p className="text-gray-300 text-sm leading-relaxed mb-4">
-                "{testimonial.feedback}"
+                &ldquo;{testimonial.feedback}&rdquo;
               </p>
               
               <div className="border-t border-slate-800 pt-4">

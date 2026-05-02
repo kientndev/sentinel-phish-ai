@@ -2,7 +2,6 @@
 
 import { Check, Zap, Shield, Crown, Lock } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 
 export default function PricingPage() {
   return (

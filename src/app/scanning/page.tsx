@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-   Search, ShieldAlert, Activity, Globe, Monitor, Code,
-  Brain, Bot, CheckCircle2, MessageSquare, Send, Settings, Download, Zap, Lock,
+   Search, ShieldAlert, Activity, Globe,
+  Brain, Bot, CheckCircle2, MessageSquare, Send, Settings, Download, Zap,
   Eye, Bug, ShieldCheck, RefreshCw
 } from "lucide-react";
 import { sendGAEvent } from "@next/third-parties/google";
@@ -14,7 +14,30 @@ import { LangCode, translations } from "../translations";
 import { useAppContext } from "../../context/AppContext";
 import XPBar from "../../components/XPBar";
 import { TOP_DOMAINS } from "../api/scan/whitelist";
-// Convex removed - using local storage only
+
+interface ScanResult {
+  score: number;
+  status: string;
+  domainAge: string;
+  expiryDate: string;
+  registrar: string;
+  redFlags: string[];
+  screenshotUrl: string;
+  geminiVerdict: {
+    score: number;
+    level: string;
+    analysis_factors: {
+      visual: string;
+      technical: string;
+      behavior: string;
+    };
+    advisor: {
+      summary: string;
+      actionable_advice: string[];
+    };
+    verdict: string;
+  };
+}
 
 const MOCK_SAFE_RESULT = {
   score: 0,
@@ -116,8 +139,7 @@ const MOCK_NEUTRAL_RESULT = {
 export default function ScanningPage() {
   const [url, setUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
-  const [results, setResults] = useState<any>(null);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [results, setResults] = useState<ScanResult | null>(null);
   const scannerRef = useRef<HTMLDivElement>(null);
 
   const { burnCredits } = useAppContext();
@@ -217,7 +239,6 @@ export default function ScanningPage() {
 
     setIsScanning(true);
     setResults(null);
-    setErrorMsg("");
     setChatMessages([]);
     setChatInput("");
     setIsChatting(false);
@@ -423,7 +444,8 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                      Visual Preview
                    </h3>
                    <div className="relative aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group">
-                      <img 
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={`https://api.microlink.io/?url=${encodeURIComponent(url.startsWith("http") ? url : `https://${url}`)}&screenshot=true&embed=screenshot.url`}
                         alt="Site Preview"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -616,7 +638,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
   );
 }
 
-function UserCircle(props: any) {
+function UserCircle(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
   );

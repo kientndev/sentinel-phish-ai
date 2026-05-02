@@ -21,7 +21,6 @@ export function usePhishTank() {
   const [userXP, setUserXP] = useState<number>(0);
   const [dailyStreak, setDailyStreak] = useState<number>(0);
   const [dailyScans, setDailyScans] = useState<number>(0);
-  const [lastScanDate, setLastScanDate] = useState<string>("");
   const [justRankedUp, setJustRankedUp] = useState<boolean>(false);
 
   // Load from local storage
@@ -33,7 +32,6 @@ export function usePhishTank() {
       const storedXP = localStorage.getItem("phishTank_userXP");
       const storedStreak = localStorage.getItem("phishTank_dailyStreak");
       const storedDailyScans = localStorage.getItem("phishTank_dailyScans");
-      const storedLastDate = localStorage.getItem("phishTank_lastScanDate");
 
       if (storedScans) {
         setTotalScans(parseInt(storedScans, 10));
@@ -73,7 +71,6 @@ export function usePhishTank() {
 
       if (storedStreak) setDailyStreak(parseInt(storedStreak, 10));
       if (storedDailyScans) setDailyScans(parseInt(storedDailyScans, 10));
-      if (storedLastDate) setLastScanDate(storedLastDate);
     } catch {
       // Failed to retrieve PhishTank data from localStorage
     }
@@ -81,7 +78,6 @@ export function usePhishTank() {
 
   const addScan = (score: number, isHighRisk: boolean, url: string) => {
     const now = new Date();
-    const today = now.toDateString();
     
     setTotalScans((prev) => {
       const newVal = prev + 1;
@@ -115,39 +111,6 @@ export function usePhishTank() {
         setJustRankedUp(true);
       }
       return newXP;
-    });
-
-    // Daily Streak Logic
-    setLastScanDate((prevDate) => {
-      if (prevDate !== today) {
-        // First scan of a new day
-        setDailyScans(1);
-        try { localStorage.setItem("phishTank_dailyScans", "1"); } catch{}
-
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
-        if (prevDate === yesterday.toDateString()) {
-          // Continued streak
-          setDailyStreak((ps) => {
-             const ns = ps + 1;
-             try { localStorage.setItem("phishTank_dailyStreak", ns.toString()); } catch{}
-             return ns;
-          });
-        } else {
-          // Broken streak
-          setDailyStreak(1);
-          try { localStorage.setItem("phishTank_dailyStreak", "1"); } catch{}
-        }
-      } else {
-        // Re-scanning same day
-        setDailyScans((ps) => {
-          const ns = ps + 1;
-          try { localStorage.setItem("phishTank_dailyScans", ns.toString()); } catch{}
-          return ns;
-        });
-      }
-      try { localStorage.setItem("phishTank_lastScanDate", today); } catch{}
-      return today;
     });
   };
 

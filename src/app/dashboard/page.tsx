@@ -1,8 +1,8 @@
 "use client";
 
 import { 
-  ShieldAlert, Activity, Globe, Monitor, 
-  BarChart2, Flame, Trophy, Zap, Clock, TrendingUp, Loader2
+  ShieldAlert, Activity, 
+  BarChart2, Flame, Clock, TrendingUp, Loader2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import XPBar from "../../components/XPBar";
@@ -175,7 +175,7 @@ function DashboardContent() {
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-white/5">
-                    {scanHistory.slice(0, 30).map((scan: any, i: number) => (
+                    {scanHistory.slice(0, 30).map((scan, i: number) => (
                        <tr key={i} className="group hover:bg-white/2 transition-colors">
                           <td className="px-4 py-4">
                              <div className={`p-2 w-fit rounded-lg ${scan.score >= 70 ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"}`}>

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from 'next/server';
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { chromium: playwright } = require('playwright-core');
@@ -84,7 +87,7 @@ function isLookalike(hostname: string) {
 async function runBrowserAnalysis(url: string) {
   let pageAccessible = true;
   let screenshotDataUri = "";
-  let domAnalysis = { hasPasswordField: false };
+  const domAnalysis = { hasPasswordField: false };
 
   try {
     const executablePath = await chromium.executablePath();

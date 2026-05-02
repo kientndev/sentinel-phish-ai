@@ -34,20 +34,58 @@ export default function LandingPage() {
       <div className="pointer-events-none absolute top-40 right-1/4 w-[500px] h-[500px] bg-indigo-500/8 rounded-full blur-[120px]" />
 
       {/* ── Hero Section ─────────────────────────────────────── */}
-      <motion.section
-        initial={{ y: 24, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="max-w-6xl mt-16 mb-20 px-4"
-      >
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm">
-          <Lock className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-xs font-bold tracking-widest text-gray-300 uppercase">Sentinel-SaaS Platform · Live</span>
+      <section className="relative w-full max-w-7xl mx-auto mt-16 mb-20 px-4">
+        {/* 3D Recessed Video Container */}
+        <div 
+          className="relative w-full h-[600px] md:h-[700px] overflow-hidden rounded-3xl"
+          style={{
+            boxShadow: 'inset 0 0 60px rgba(0,0,0,1)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            perspective: '1000px',
+          }}
+        >
+          {/* Video with 3D Transform */}
+          <div 
+            className="relative w-full h-full"
+            style={{
+              transform: 'rotateX(2deg)',
+              transformOrigin: 'center center',
+            }}
+          >
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+            >
+              <source src="/marketing_video_horizontal.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            
+            {/* Gradient Mask at Top */}
+            <div 
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: 'linear-gradient(to bottom, rgba(11,14,20,0.8) 0%, rgba(11,14,20,0.4) 30%, transparent 100%)',
+              }}
+            />
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Left Column - Text Content */}
-          <div className="text-center md:text-left">
+        {/* Content Overlay - Above Video */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-4" style={{ zIndex: 10 }}>
+          <motion.div
+            initial={{ y: 24, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-center max-w-4xl"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm">
+              <Lock className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-xs font-bold tracking-widest text-gray-300 uppercase">Sentinel-SaaS Platform · Live</span>
+            </div>
+
             <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] mb-6">
               <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-white/90 to-gray-500">
                 The World&apos;s First{" "}
@@ -61,17 +99,17 @@ export default function LandingPage() {
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-[#a1a1aa] mb-10 max-w-xl leading-relaxed">
+            <p className="text-lg md:text-xl text-[#a1a1aa] mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-lg">
               High-fidelity AI phishing detection for the modern web. 
               No account required. Scan instantly.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/scanning"
                 className="group px-8 py-4 w-full sm:w-auto rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all
                   bg-[#00d2ff]/15 hover:bg-[#00d2ff]/25 text-[#00d2ff] border border-[#00d2ff]/30
-                  hover:shadow-[0_0_32px_rgba(0,210,255,0.35)]"
+                  hover:shadow-[0_0_32px_rgba(0,210,255,0.35)] backdrop-blur-sm"
               >
                 Start Scanning
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -79,50 +117,14 @@ export default function LandingPage() {
               <Link
                 href="/dashboard"
                 className="px-8 py-4 w-full sm:w-auto rounded-xl font-bold text-lg flex items-center justify-center
-                  bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all"
+                  bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all backdrop-blur-sm"
               >
                 View Dashboard
               </Link>
             </div>
-          </div>
-
-          {/* Right Column - Video Player */}
-          <div className="flex justify-center md:justify-end">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-              className="relative"
-            >
-              <div className="relative rounded-2xl overflow-hidden border-2 border-[#00d2ff]/30 
-                shadow-[0_0_40px_rgba(0,210,255,0.2)] hover:shadow-[0_0_60px_rgba(0,210,255,0.4)] 
-                transition-shadow duration-300"
-                style={{ 
-                  width: '280px',
-                  aspectRatio: '9/16',
-                  background: 'linear-gradient(135deg, rgba(0,210,255,0.1), rgba(168,85,247,0.1))'
-                }}
-              >
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                >
-                  <source src="/marketing_video_remastered.mp4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                {/* Gradient overlay for visual effect */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-              </div>
-              
-              {/* Decorative glow elements */}
-              <div className="absolute -inset-2 bg-gradient-to-r from-[#00d2ff]/20 to-[#a855f7]/20 blur-xl -z-10 rounded-2xl" />
-            </motion.div>
-          </div>
+          </motion.div>
         </div>
-      </motion.section>
+      </section>
 
       {/* ── Customer Testimonials ─────────────────────────────── */}
       <CustomerTestimonials />

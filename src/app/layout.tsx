@@ -19,8 +19,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   title: "SentinelPhish - Real-time AI Phishing Detector",
   description: "Advanced URL Scrutiny and Phishing Detection.",

@@ -19,6 +19,7 @@ export default function Navbar() {
     { name: "Scanning", href: "/scanning" },
     { name: "Dashboard", href: "/dashboard" },
     { name: "Community Vault", href: "/reports" },
+    { name: "Contact", href: "/contact" },
     { name: "Pricing", href: "/pricing" },
   ];
 

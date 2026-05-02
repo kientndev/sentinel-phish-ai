@@ -38,48 +38,89 @@ export default function LandingPage() {
         initial={{ y: 24, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="text-center max-w-4xl mt-16 mb-20 px-4"
+        className="max-w-6xl mt-16 mb-20 px-4"
       >
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm">
           <Lock className="w-3.5 h-3.5 text-emerald-400" />
           <span className="text-xs font-bold tracking-widest text-gray-300 uppercase">Sentinel-SaaS Platform · Live</span>
         </div>
 
-        <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-[1.1] mb-6">
-          <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-white/90 to-gray-500">
-            The World&apos;s First{" "}
-          </span>
-          <br className="hidden md:block" />
-          <span
-            className="bg-clip-text text-transparent"
-            style={{ backgroundImage: "linear-gradient(90deg, #00d2ff, #a855f7)" }}
-          >
-            AI-Driven Phishing Shield
-          </span>
-        </h1>
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          {/* Left Column - Text Content */}
+          <div className="text-center md:text-left">
+            <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] mb-6">
+              <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-white/90 to-gray-500">
+                The World&apos;s First{" "}
+              </span>
+              <br className="hidden md:block" />
+              <span
+                className="bg-clip-text text-transparent"
+                style={{ backgroundImage: "linear-gradient(90deg, #00d2ff, #a855f7)" }}
+              >
+                AI-Driven Phishing Shield
+              </span>
+            </h1>
 
-        <p className="text-lg md:text-xl text-[#a1a1aa] mb-10 max-w-2xl mx-auto leading-relaxed">
-          High-fidelity AI phishing detection for the modern web. 
-          No account required. Scan instantly.
-        </p>
+            <p className="text-lg md:text-xl text-[#a1a1aa] mb-10 max-w-xl leading-relaxed">
+              High-fidelity AI phishing detection for the modern web. 
+              No account required. Scan instantly.
+            </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/scanning"
-            className="group px-8 py-4 w-full sm:w-auto rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all
-              bg-[#00d2ff]/15 hover:bg-[#00d2ff]/25 text-[#00d2ff] border border-[#00d2ff]/30
-              hover:shadow-[0_0_32px_rgba(0,210,255,0.35)]"
-          >
-            Start Scanning
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
-          <Link
-            href="/dashboard"
-            className="px-8 py-4 w-full sm:w-auto rounded-xl font-bold text-lg flex items-center justify-center
-              bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all"
-          >
-            View Dashboard
-          </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
+              <Link
+                href="/scanning"
+                className="group px-8 py-4 w-full sm:w-auto rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all
+                  bg-[#00d2ff]/15 hover:bg-[#00d2ff]/25 text-[#00d2ff] border border-[#00d2ff]/30
+                  hover:shadow-[0_0_32px_rgba(0,210,255,0.35)]"
+              >
+                Start Scanning
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link
+                href="/dashboard"
+                className="px-8 py-4 w-full sm:w-auto rounded-xl font-bold text-lg flex items-center justify-center
+                  bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all"
+              >
+                View Dashboard
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Column - Video Player */}
+          <div className="flex justify-center md:justify-end">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+              className="relative"
+            >
+              <div className="relative rounded-2xl overflow-hidden border-2 border-[#00d2ff]/30 
+                shadow-[0_0_40px_rgba(0,210,255,0.2)] hover:shadow-[0_0_60px_rgba(0,210,255,0.4)] 
+                transition-shadow duration-300"
+                style={{ 
+                  width: '280px',
+                  aspectRatio: '9/16',
+                  background: 'linear-gradient(135deg, rgba(0,210,255,0.1), rgba(168,85,247,0.1))'
+                }}
+              >
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                >
+                  <source src="/marketing_video_remastered.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+                {/* Gradient overlay for visual effect */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+              </div>
+              
+              {/* Decorative glow elements */}
+              <div className="absolute -inset-2 bg-gradient-to-r from-[#00d2ff]/20 to-[#a855f7]/20 blur-xl -z-10 rounded-2xl" />
+            </motion.div>
+          </div>
         </div>
       </motion.section>
 

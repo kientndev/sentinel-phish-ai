@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ShieldAlert, Zap, Globe2, Activity, ArrowRight, Lock } from "lucide-react";
 import { motion } from "framer-motion";
+import CustomerTestimonials from "@/components/CustomerTestimonials";
 
 const features = [
   {
@@ -81,6 +82,9 @@ export default function LandingPage() {
           </Link>
         </div>
       </motion.section>
+
+      {/* ── Customer Testimonials ─────────────────────────────── */}
+      <CustomerTestimonials />
 
       {/* ── Social Proof ──────────────────────────────────────── */}
       <motion.div

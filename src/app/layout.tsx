@@ -30,12 +30,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
   
   try {
-    console.log("Environment check:", {
-      clerkKey: clerkKey ? "present" : "missing",
-      convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL ? "present" : "missing",
-    });
+    console.log("=== ENVIRONMENT CHECK ===");
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:", clerkKey ? `${clerkKey.substring(0, 10)}...` : "MISSING");
+    console.log("NEXT_PUBLIC_CONVEX_URL:", convexUrl || "MISSING");
+    console.log("NEXT_PUBLIC_CONVEX_URL type:", typeof convexUrl);
+    console.log("========================");
   } catch (e) {
     console.error("Environment check failed:", e);
   }
@@ -61,7 +64,14 @@ export default function RootLayout({
   }
 
   return (
-    <ClerkProvider publishableKey={clerkKey}>
+    <ClerkProvider 
+      publishableKey={clerkKey}
+      appearance={{
+        elements: {
+          rootBox: "display: contents",
+        },
+      }}
+    >
       <ConvexClientProvider>
         <html
           lang="en"

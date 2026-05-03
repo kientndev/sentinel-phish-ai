@@ -1,18 +1,50 @@
 "use client";
 
 import { ConvexProvider, ConvexReactClient } from "convex/react";
-import { ReactNode, useMemo } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
-  const convex = useMemo(() => {
+  const [mounted, setMounted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    
     const url = process.env.NEXT_PUBLIC_CONVEX_URL;
-    if (!url) return null;
-    return new ConvexReactClient(url);
+    if (!url) {
+      console.error("NEXT_PUBLIC_CONVEX_URL is not defined");
+      setError("Convex URL is missing");
+      return;
+    }
+
+    // Validate URL format
+    try {
+      new URL(url);
+    } catch (e) {
+      console.error("Invalid NEXT_PUBLIC_CONVEX_URL:", url, e);
+      setError("Invalid Convex URL format");
+    }
   }, []);
 
-  if (!convex) {
+  if (error) {
     return <>{children}</>;
   }
 
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) {
+    console.error("NEXT_PUBLIC_CONVEX_URL is not defined");
+    return <>{children}</>;
+  }
+
+  try {
+    const convex = new ConvexReactClient(url);
+    return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+  } catch (e) {
+    console.error("Failed to initialize Convex client:", e);
+    return <>{children}</>;
+  }
 }

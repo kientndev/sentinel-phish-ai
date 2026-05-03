@@ -15,6 +15,12 @@ export default function Navbar() {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
 
+  // Check environment variables
+  const hasClerkKey = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  if (!hasClerkKey) {
+    console.warn("Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY");
+  }
+
   const navLinks = [
     { name: "Scanning", href: "/scanning" },
     { name: "Dashboard", href: "/dashboard" },

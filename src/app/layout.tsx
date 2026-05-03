@@ -29,8 +29,39 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  
+  try {
+    console.log("Environment check:", {
+      clerkKey: clerkKey ? "present" : "missing",
+      convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL ? "present" : "missing",
+    });
+  } catch (e) {
+    console.error("Environment check failed:", e);
+  }
+
+  // Auth guard - only initialize Clerk if key is present
+  if (!clerkKey) {
+    console.error("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is missing");
+    return (
+      <ConvexClientProvider>
+        <html
+          lang="en"
+          className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+        >
+          <body className="min-h-full flex flex-col bg-[#0b0e14] text-[#fafafa]">
+            <AppProvider>
+              <Toaster position="bottom-right" richColors theme="dark" />
+              {children}
+            </AppProvider>
+          </body>
+        </html>
+      </ConvexClientProvider>
+    );
+  }
+
   return (
-    <ClerkProvider>
+    <ClerkProvider publishableKey={clerkKey}>
       <ConvexClientProvider>
         <html
           lang="en"

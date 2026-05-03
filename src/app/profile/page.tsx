@@ -13,24 +13,46 @@ function ProfileContent() {
   const { user, isLoaded: userLoaded } = useUser();
   const { creditBalance } = useAppContext();
   const getOrCreateUser = useMutation(api.users.getOrCreateUser);
-  
-  // Fetch user data from Convex
+
+  // Check if environment variables are present
+  const hasClerkKey = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const hasConvexUrl = !!process.env.NEXT_PUBLIC_CONVEX_URL;
+
+  // Show loading state if user is not loaded yet
+  if (!userLoaded) {
+    return (
+      <main className="flex flex-1 items-center justify-center px-6">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00d2ff]" />
+      </main>
+    );
+  }
+
+  // Fetch user data from Convex only if env vars are present
   const convexUser = useQuery(
     api.users.getUser,
-    user?.id ? { clerkId: user.id } : "skip"
+    (hasConvexUrl && user?.id) ? { clerkId: user.id } : "skip"
   );
 
-  // Sync user to Convex on login
+  // Sync user to Convex on login only if env vars are present
   useEffect(() => {
-    if (user?.id && userLoaded) {
-      getOrCreateUser({
-        clerkId: user.id,
-        email: user.emailAddresses[0]?.emailAddress,
-        name: user.fullName || user.firstName || undefined,
-        imageUrl: user.imageUrl || undefined,
-      });
+    if (!hasClerkKey || !hasConvexUrl) {
+      console.warn("Missing environment variables:", { hasClerkKey, hasConvexUrl });
+      return;
     }
-  }, [user?.id, userLoaded, getOrCreateUser]);
+
+    if (user?.id && userLoaded) {
+      try {
+        getOrCreateUser({
+          clerkId: user.id,
+          email: user.emailAddresses[0]?.emailAddress,
+          name: user.fullName || user.firstName || undefined,
+          imageUrl: user.imageUrl || undefined,
+        });
+      } catch (e) {
+        console.error("Failed to sync user to Convex:", e);
+      }
+    }
+  }, [user?.id, userLoaded, getOrCreateUser, hasClerkKey, hasConvexUrl]);
 
   // Use Convex data or fall back to defaults
   const totalScans = convexUser?.totalScans ?? 0;

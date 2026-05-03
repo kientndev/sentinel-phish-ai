@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { LoginGuard } from "../../components/LoginGuard";
 import {
    Search, ShieldAlert, Activity, Globe,
   Brain, Bot, CheckCircle2, MessageSquare, Send, Settings, Download, Zap,
@@ -137,6 +138,14 @@ const MOCK_NEUTRAL_RESULT = {
 };
 
 export default function ScanningPage() {
+  return (
+    <LoginGuard>
+      <ScanningContent />
+    </LoginGuard>
+  );
+}
+
+function ScanningContent() {
   const [url, setUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [results, setResults] = useState<ScanResult | null>(null);

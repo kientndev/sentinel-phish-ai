@@ -1,20 +1,52 @@
 "use client";
 
-import { Shield, Zap, Settings, Loader2 } from "lucide-react";
-import { usePhishTank, getRankFromXP } from "../../hooks/usePhishTank";
+import { Shield, Zap, Settings, Loader2, Lock } from "lucide-react";
+import { useUser, UserButton } from "@clerk/nextjs";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { useAppContext } from "../../context/AppContext";
 import XPBar from "../../components/XPBar";
 import { ClientOnly } from "../../components/ClientOnly";
+import { useEffect } from "react";
 
 function ProfileContent() {
-  // Removed Clerk auth - using guest mode only
-  const guestStats = usePhishTank();
+  const { user, isLoaded: userLoaded } = useUser();
   const { creditBalance } = useAppContext();
+  const getOrCreateUser = useMutation(api.users.getOrCreateUser);
+  
+  // Fetch user data from Convex
+  const convexUser = useQuery(
+    api.users.getUser,
+    user?.id ? { clerkId: user.id } : "skip"
+  );
 
-  // Guest stats only (no auth required)
-  const totalScans = guestStats.totalScans;
-  const threatsBlocked = guestStats.threatsBlocked;
-  const userXP = guestStats.userXP;
+  // Sync user to Convex on login
+  useEffect(() => {
+    if (user?.id && userLoaded) {
+      getOrCreateUser({
+        clerkId: user.id,
+        email: user.emailAddresses[0]?.emailAddress,
+        name: user.fullName || user.firstName || undefined,
+        imageUrl: user.imageUrl || undefined,
+      });
+    }
+  }, [user?.id, userLoaded, getOrCreateUser]);
+
+  // Use Convex data or fall back to defaults
+  const totalScans = convexUser?.totalScans ?? 0;
+  const threatsBlocked = convexUser?.threatsBlocked ?? 0;
+  const userXP = convexUser?.xp ?? 0;
+  const level = convexUser?.level ?? 1;
+  
+  // Calculate rank based on XP
+  const getRankFromXP = (xp: number) => {
+    if (xp < 100) return { level: 1, title: "Novice Scanner" };
+    if (xp < 300) return { level: 2, title: "Cyber Guardian" };
+    if (xp < 600) return { level: 3, title: "Threat Hunter" };
+    if (xp < 1000) return { level: 4, title: "Security Sentinel" };
+    return { level: 5, title: "Elite Defender" };
+  };
+  
   const rank = getRankFromXP(userXP);
 
   return (
@@ -26,7 +58,13 @@ function ProfileContent() {
            <div className="relative">
               <div className="w-32 h-32 rounded-3xl bg-gradient-to-tr from-[#00d2ff] to-[#a855f7] p-1 shadow-[0_0_40px_rgba(0,210,255,0.2)]">
                  <div className="w-full h-full bg-[#0b0e14] rounded-[calc(1.5rem-2px)] flex items-center justify-center overflow-hidden">
-                    <span className="text-5xl font-black text-white italic">G</span>
+                    {user?.imageUrl ? (
+                      <img src={user.imageUrl} alt={user.fullName || "User"} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-5xl font-black text-white italic">
+                        {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress.charAt(0) || "U"}
+                      </span>
+                    )}
                  </div>
               </div>
               <div className="absolute -bottom-2 -right-2 p-2 rounded-xl border-4 border-[#0b0e14] bg-emerald-500">
@@ -37,10 +75,10 @@ function ProfileContent() {
            <div className="flex-1 text-center md:text-left">
               <div className="flex flex-col md:flex-row items-center gap-3 mb-2">
                  <h1 className="text-3xl font-black text-white tracking-tight italic">
-                   Guest Agent
+                   {user?.fullName || user?.firstName || user?.emailAddresses[0]?.emailAddress.split("@")[0] || "Agent"}
                  </h1>
                  <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-[#a1a1aa]">
-                   Level {rank.level}
+                   Level {level}
                  </span>
               </div>
               <p className="text-[#00d2ff] font-bold text-sm mb-6 px-3 py-1 bg-[#00d2ff]/10 w-fit rounded-lg border border-[#00d2ff]/20">
@@ -67,7 +105,9 @@ function ProfileContent() {
               </div>
            </div>
            
-           {/* UserButton removed - auth disabled */}
+           <div className="absolute top-4 right-4">
+              <UserButton />
+           </div>
         </section>
 
         <div className="grid md:grid-cols-2 gap-8">
@@ -85,17 +125,15 @@ function ProfileContent() {
 
            <section className="glass-card p-6">
               <h2 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-tight">
-                 <Settings className="w-5 h-5 text-zinc-500" />
-                 Guest Session Preferences
+                 <Lock className="w-5 h-5 text-zinc-500" />
+                 Account Security
               </h2>
               <div className="space-y-3">
                  <div className="p-3 bg-white/2 rounded-xl flex items-center justify-between">
-                    <span className="text-sm font-medium text-zinc-400 italic">
-                      Clear Local History
+                    <span className="text-sm font-medium text-zinc-400">
+                      Manage Account
                     </span>
-                    <button className="text-[10px] font-black uppercase transition-colors text-red-500 hover:text-red-400">
-                      WIPE DATA
-                    </button>
+                    <UserButton appearance={{ elements: { userButtonBox: "w-8 h-8" } }} />
                  </div>
               </div>
            </section>

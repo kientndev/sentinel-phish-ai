@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import XPBar from "../../components/XPBar";
 import { ClientOnly } from "../../components/ClientOnly";
 import { usePhishTank } from "../../hooks/usePhishTank";
+import { LoginGuard } from "../../components/LoginGuard";
 
 function DashboardContent() {
   // Using local stats instead of Convex
@@ -204,12 +205,14 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <ClientOnly fallback={
-      <div className="flex flex-1 items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#00d2ff]" />
-      </div>
-    }>
-      <DashboardContent />
-    </ClientOnly>
+    <LoginGuard>
+      <ClientOnly fallback={
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#00d2ff]" />
+        </div>
+      }>
+        <DashboardContent />
+      </ClientOnly>
+    </LoginGuard>
   );
 }

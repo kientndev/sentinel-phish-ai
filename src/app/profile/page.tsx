@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, Zap, Settings, Loader2, Lock } from "lucide-react";
+import { Shield, Zap, Loader2, Lock } from "lucide-react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -8,6 +8,7 @@ import { useAppContext } from "../../context/AppContext";
 import XPBar from "../../components/XPBar";
 import { ClientOnly } from "../../components/ClientOnly";
 import { useEffect } from "react";
+import Image from "next/image";
 
 function ProfileContent() {
   const { user, isLoaded: userLoaded } = useUser();
@@ -17,15 +18,6 @@ function ProfileContent() {
   // Check if environment variables are present
   const hasClerkKey = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const hasConvexUrl = !!process.env.NEXT_PUBLIC_CONVEX_URL;
-
-  // Show loading state if user is not loaded yet
-  if (!userLoaded) {
-    return (
-      <main className="flex flex-1 items-center justify-center px-6">
-        <Loader2 className="w-8 h-8 animate-spin text-[#00d2ff]" />
-      </main>
-    );
-  }
 
   // Fetch user data from Convex only if env vars are present
   const convexUser = useQuery(
@@ -52,7 +44,7 @@ function ProfileContent() {
         console.error("Failed to sync user to Convex:", e);
       }
     }
-  }, [user?.id, userLoaded, getOrCreateUser, hasClerkKey, hasConvexUrl]);
+  }, [user?.id, userLoaded, getOrCreateUser, hasClerkKey, hasConvexUrl, user?.emailAddresses, user?.firstName, user?.fullName, user?.imageUrl]);
 
   // Use Convex data or fall back to defaults
   const totalScans = convexUser?.totalScans ?? 0;
@@ -71,6 +63,18 @@ function ProfileContent() {
   
   const rank = getRankFromXP(userXP);
 
+  // Show loading state if user is not loaded yet
+  if (!userLoaded) {
+    return (
+      <main className="flex flex-col flex-1 items-center px-6 md:px-10 py-10 relative">
+        <XPBar />
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#00d2ff]" />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="flex flex-col flex-1 items-center px-6 md:px-10 py-10 relative">
       <XPBar />
@@ -81,7 +85,7 @@ function ProfileContent() {
               <div className="w-32 h-32 rounded-3xl bg-gradient-to-tr from-[#00d2ff] to-[#a855f7] p-1 shadow-[0_0_40px_rgba(0,210,255,0.2)]">
                  <div className="w-full h-full bg-[#0b0e14] rounded-[calc(1.5rem-2px)] flex items-center justify-center overflow-hidden">
                     {user?.imageUrl ? (
-                      <img src={user.imageUrl} alt={user.fullName || "User"} className="w-full h-full object-cover" />
+                      <Image src={user.imageUrl} alt={user.fullName || "User"} width={128} height={128} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-5xl font-black text-white italic">
                         {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress.charAt(0) || "U"}

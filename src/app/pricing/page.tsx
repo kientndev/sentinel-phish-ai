@@ -1,104 +1,198 @@
 "use client";
 
-import { Check, Zap, Shield, Crown, Lock } from "lucide-react";
+import { Check, Zap, Shield, Crown, X, XCircle } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function PricingPage() {
+  const [isYearly, setIsYearly] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  const tiers = [
+    {
+      name: "Basic",
+      icon: Zap,
+      iconColor: "text-[#00d2ff]",
+      borderColor: "border-[#00d2ff]/20",
+      bgColor: "bg-[#00d2ff]/5",
+      monthlyPrice: 0,
+      yearlyPrice: 0,
+      scansPerDay: 15,
+      features: ["Basic Heuristics", "15 Scans/Day", "Community Support"],
+      isBestValue: false,
+    },
+    {
+      name: "Mid",
+      icon: Shield,
+      iconColor: "text-[#a855f7]",
+      borderColor: "border-[#a855f7]/20",
+      bgColor: "bg-[#a855f7]/5",
+      monthlyPrice: 2.59,
+      yearlyPrice: 15,
+      scansPerDay: 35,
+      features: ["Advanced Heuristics", "35 Scans/Day", "Priority Support", "Basic Reports"],
+      isBestValue: false,
+    },
+    {
+      name: "Pro",
+      icon: Shield,
+      iconColor: "text-[#a855f7]",
+      borderColor: "border-[#a855f7]/40",
+      bgColor: "bg-[#a855f7]/10",
+      monthlyPrice: 4.59,
+      yearlyPrice: 20,
+      scansPerDay: 55,
+      features: ["AI Security Advisor", "55 Scans/Day", "Priority Support", "Advanced Reports", "Team Features"],
+      isBestValue: true,
+    },
+    {
+      name: "VIP",
+      icon: Crown,
+      iconColor: "text-yellow-500",
+      borderColor: "border-yellow-500/40",
+      bgColor: "bg-yellow-500/10",
+      monthlyPrice: 9.59,
+      yearlyPrice: 45,
+      scansPerDay: "Unlimited",
+      features: ["All Pro Features", "Unlimited Scans", "24/7 Support", "API Access", "White-label Reports"],
+      isBestValue: false,
+    },
+  ];
+
   return (
     <main className="flex flex-col flex-1 items-center px-6 md:px-10 py-16 relative">
-      <div className="max-w-4xl w-full text-center mb-16">
+      <div className="max-w-4xl w-full text-center mb-8">
         <h1 className="text-4xl md:text-6xl font-black text-white mb-4 italic tracking-tight">Access Plans</h1>
         <p className="text-[#a1a1aa] font-medium text-lg italic">Choose your level of scrutiny</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full px-4">
-        {/* Guest Plan */}
-        <div className="glass-card p-8 border-[#00d2ff]/20 bg-[#00d2ff]/5 flex flex-col">
-          <div className="flex items-center gap-3 mb-6">
-            <Zap className="w-6 h-6 text-[#00d2ff]" />
-            <h3 className="text-xl font-bold text-white tracking-widest">GUEST</h3>
-          </div>
-          <div className="mb-8">
-            <span className="text-4xl font-black text-white">$0</span>
-            <span className="text-[#a1a1aa] ml-2 font-bold">/lifetime</span>
-          </div>
-          <ul className="space-y-4 mb-10 flex-1">
-             <li className="flex items-center gap-3 text-sm text-[#a1a1aa] font-medium">
-               <Check className="w-4 h-4 text-[#00d2ff]" /> Basic Heuristics
-             </li>
-             <li className="flex items-center gap-3 text-sm text-[#a1a1aa] font-medium">
-               <Check className="w-4 h-4 text-[#00d2ff]" /> 800 Daily Credits
-             </li>
-             <li className="flex items-center gap-3 text-sm text-[#a1a1aa] font-medium text-white/40">
-               <Lock className="w-4 h-4" /> AI Security Advisor
-             </li>
-          </ul>
-          <Link href="/scanning" className="w-full py-4 text-center rounded-xl bg-[#00d2ff]/20 text-[#00d2ff] font-bold border border-[#00d2ff]/30 hover:bg-[#00d2ff]/30 transition-all uppercase tracking-widest text-xs">
-            Start Scanning
-          </Link>
-        </div>
-
-        {/* Pro Plan - Locked */}
-        <div className="glass-card p-8 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-10 flex items-center justify-center">
-             <div className="bg-[#0b0e14]/80 border border-white/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#a1a1aa]">
-                Feature in Development
-             </div>
-          </div>
-          <div className="flex items-center gap-3 mb-6">
-            <Shield className="w-6 h-6 text-[#a855f7]" />
-            <h3 className="text-xl font-bold text-white tracking-widest">PRO</h3>
-          </div>
-          <div className="mb-8">
-            <span className="text-4xl font-black text-white">$24</span>
-            <span className="text-[#a1a1aa] ml-2 font-bold">/m</span>
-          </div>
-          <ul className="space-y-4 mb-10 flex-1">
-             <li className="flex items-center gap-3 text-sm text-[#a1a1aa] font-medium">
-               <Check className="w-4 h-4 text-[#a855f7]" /> Advanced Gemini Vision
-             </li>
-             <li className="flex items-center gap-3 text-sm text-[#a1a1aa] font-medium">
-               <Check className="w-4 h-4 text-[#a855f7]" /> Infinite Playwright 
-             </li>
-             <li className="flex items-center gap-3 text-sm text-[#a1a1aa] font-medium">
-               <Check className="w-4 h-4 text-[#a855f7]" /> Team Collaboration
-             </li>
-          </ul>
-          <button disabled className="w-full py-4 text-center rounded-xl bg-white/5 text-zinc-500 font-bold border border-white/5 uppercase tracking-widest text-xs">
-            Locked
-          </button>
-        </div>
-        
-        {/* Enterprise - Locked */}
-        <div className="glass-card p-8 border-yellow-500/10 relative overflow-hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-10 flex items-center justify-center">
-             <div className="bg-[#0b0e14]/80 border border-white/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#a1a1aa]">
-                Feature in Development
-             </div>
-          </div>
-          <div className="flex items-center gap-3 mb-6">
-            <Crown className="w-6 h-6 text-yellow-500" />
-            <h3 className="text-xl font-bold text-white tracking-widest text-yellow-500">SENTINEL+</h3>
-          </div>
-          <div className="mb-8">
-            <span className="text-4xl font-black text-white">Custom</span>
-          </div>
-          <ul className="space-y-4 mb-10 flex-1">
-             <li className="flex items-center gap-3 text-sm text-[#a1a1aa] font-medium">
-               <Check className="w-4 h-4 text-yellow-500" /> API Access
-             </li>
-             <li className="flex items-center gap-3 text-sm text-[#a1a1aa] font-medium">
-               <Check className="w-4 h-4 text-yellow-500" /> White-label Reports
-             </li>
-             <li className="flex items-center gap-3 text-sm text-[#a1a1aa] font-medium">
-               <Check className="w-4 h-4 text-yellow-500" /> 24/7 Priority Support
-             </li>
-          </ul>
-          <button disabled className="w-full py-4 text-center rounded-xl bg-white/5 text-zinc-500 font-bold border border-white/5 uppercase tracking-widest text-xs">
-            Locked
-          </button>
-        </div>
+      {/* Toggle Switch */}
+      <div className="flex items-center gap-4 mb-12">
+        <span className={`font-bold ${!isYearly ? "text-white" : "text-[#a1a1aa]"}`}>Monthly</span>
+        <button
+          onClick={() => setIsYearly(!isYearly)}
+          className={`relative w-16 h-8 rounded-full transition-colors ${isYearly ? "bg-[#a855f7]" : "bg-[#00d2ff]"}`}
+        >
+          <div
+            className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform ${isYearly ? "left-9" : "left-1"}`}
+          />
+        </button>
+        <span className={`font-bold ${isYearly ? "text-white" : "text-[#a1a1aa]"}`}>Yearly</span>
+        {isYearly && (
+          <span className="ml-2 px-3 py-1 bg-emerald-500/20 text-emerald-500 text-xs font-bold rounded-full uppercase tracking-wider">
+            Save ~60%
+          </span>
+        )}
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl w-full px-4">
+        {tiers.map((tier) => {
+          const Icon = tier.icon;
+          const price = isYearly ? tier.yearlyPrice : tier.monthlyPrice;
+          const period = isYearly ? "/year" : "/month";
+          const showSaveBadge = isYearly && (tier.name === "Pro" || tier.name === "VIP");
+
+          return (
+            <div
+              key={tier.name}
+              className={`glass-card p-6 ${tier.borderColor} ${tier.bgColor} flex flex-col relative ${tier.isBestValue ? "ring-2 ring-[#a855f7]" : ""}`}
+            >
+              {tier.isBestValue && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#a855f7] px-4 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white">
+                  Best Value
+                </div>
+              )}
+              {showSaveBadge && (
+                <div className="absolute top-4 right-4 bg-emerald-500 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-white">
+                  Save ~60%
+                </div>
+              )}
+              
+              <div className="flex items-center gap-3 mb-4">
+                <Icon className={`w-6 h-6 ${tier.iconColor}`} />
+                <h3 className="text-xl font-bold text-white tracking-widest">{tier.name.toUpperCase()}</h3>
+              </div>
+              
+              <div className="mb-6">
+                <span className="text-4xl font-black text-white">${price}</span>
+                <span className="text-[#a1a1aa] ml-2 font-bold">{period}</span>
+              </div>
+              
+              <div className="mb-6 p-3 bg-white/5 rounded-xl">
+                <div className="text-[10px] uppercase font-black text-[#a1a1aa] block mb-1">
+                  Daily Scans
+                </div>
+                <div className="text-2xl font-black text-white">{tier.scansPerDay}</div>
+              </div>
+              
+              <ul className="space-y-3 mb-8 flex-1">
+                {tier.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-3 text-sm text-[#a1a1aa] font-medium">
+                    <Check className={`w-4 h-4 ${tier.iconColor}`} />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              
+              {tier.name === "Basic" ? (
+                <Link
+                  href="/scanning"
+                  className="w-full py-3 text-center rounded-xl bg-[#00d2ff]/20 text-[#00d2ff] font-bold border border-[#00d2ff]/30 hover:bg-[#00d2ff]/30 transition-all uppercase tracking-widest text-xs"
+                >
+                  Start Scanning
+                </Link>
+              ) : (
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="w-full py-3 text-center rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all uppercase tracking-widest text-xs"
+                >
+                  Upgrade
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Coming Soon Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card p-8 max-w-md w-full relative">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 text-[#a1a1aa] hover:text-white transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#a855f7]/20 p-4 flex items-center justify-center">
+                <Crown className="w-8 h-8 text-[#a855f7]" />
+              </div>
+              <h2 className="text-2xl font-black text-white mb-2">Coming Soon</h2>
+              <p className="text-[#a1a1aa]">Secure Payment Gateway</p>
+            </div>
+            
+            <p className="text-center text-white/80 mb-6">
+              We are currently finalizing our secure payment gateway. Join the early-access list to get an extra 10% off when we go live!
+            </p>
+            
+            <div className="space-y-3">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-[#a1a1aa] focus:outline-none focus:border-[#a855f7] transition-colors"
+              />
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all uppercase tracking-widest text-xs"
+              >
+                Join Waitlist
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

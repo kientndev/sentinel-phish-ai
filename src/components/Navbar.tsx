@@ -14,8 +14,7 @@ export default function Navbar() {
   const { user } = useUser();
 
   // Mock user subscription tier - in production, this would come from Clerk/Convex
-  const userTier: "free" | "mid" | "pro" | "vip" = "free";
-  const isSubscribed = userTier === "pro" || userTier === "vip";
+  const isSubscribed = false; // Set to true for pro/vip users
 
   const navLinks = [
     { name: "Dashboard", href: "/dashboard" },

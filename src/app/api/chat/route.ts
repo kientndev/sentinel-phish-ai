@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const maxDuration = 60;
 
@@ -22,10 +22,11 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: 'GOOGLE_API_KEY or GEMINI_API_KEY is not configured.' }, { status: 500 });
+      console.error('GOOGLE_API_KEY or GEMINI_API_KEY is not configured');
+      return NextResponse.json({ error: 'API key is not configured.' }, { status: 500 });
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    const genAI = new GoogleGenerativeAI(apiKey);
 
     const languageName = LANG_NAMES[lang] ?? 'English';
 
@@ -45,24 +46,24 @@ Status: ${context.status}
 Domain Intel: Age: ${context.domainAge}, Registrar: ${context.registrar}
 Heuristic Flags: ${(context.redFlags ?? []).join(', ')}`;
 
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      systemInstruction
+    });
+
     // Format messages for Gemini Chat
     const chatSequence = messages.map((m: any) => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.content }]
     }));
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: chatSequence,
-      config: {
-        systemInstruction
-      }
-    });
+    const result = await model.generateContent(chatSequence);
+    const responseText = result.response.text() || "";
 
-    const responseText = response.text || "";
     return NextResponse.json({ reply: responseText });
 
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Chat API Error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to generate response' }, { status: 500 });
   }
 }

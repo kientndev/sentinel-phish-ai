@@ -16,7 +16,7 @@ export default function SignupPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md relative z-10"
       >
-        <div className="glass-card p-10 space-y-8 border-white/5 shadow-2xl">
+        <div className="glass-card p-10 space-y-8 border-white/5 glow-sm">
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00d2ff]/10 border border-[#00d2ff]/20 mb-4">
               <ShieldCheck className="w-3.5 h-3.5 text-[#00d2ff]" />

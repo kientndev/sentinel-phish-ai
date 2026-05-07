@@ -344,10 +344,10 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
             initial={{ opacity: 0, y: -40, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-20 left-1/2 -translate-x-1/2 z-[99999] bg-[#0b0e14] border border-[#a855f7] rounded-2xl px-6 py-4 shadow-[0_0_30px_rgba(168,85,247,0.4)] flex items-center gap-4"
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-[99999] bg-[#0b0e14] border border-[#a855f7] rounded-2xl px-6 py-4 glow-purple flex items-center gap-4"
           >
             <div className="bg-[#a855f7]/20 p-2 rounded-full">
-              <Zap className="w-5 h-5 text-[#a855f7]" />
+              <Zap size={18} className="text-[#a855f7]" />
             </div>
             <div>
               <h3 className="text-white font-bold text-sm">RANK UP!</h3>
@@ -378,9 +378,9 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
         onClick={() => setSettingsOpen(true)}
         className="group fixed top-20 right-6 z-40 w-11 h-11 flex items-center justify-center
           bg-white/5 border border-white/10 rounded-xl hover:bg-[#00d2ff]/15 hover:border-[#00d2ff]/30
-          transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,210,255,0.2)] backdrop-blur-md"
+          transition-all duration-300 glow-md backdrop-blur-md"
       >
-        <Settings className="w-5 h-5 text-[#a1a1aa] group-hover:text-[#00d2ff] transition-colors" />
+        <Settings size={18} className="text-[#a1a1aa] group-hover:text-[#00d2ff] transition-colors" />
       </button>
 
       <div className="max-w-6xl w-full space-y-10">
@@ -393,11 +393,11 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
         </section>
 
         {/* Input Bar */}
-        <section ref={scannerRef} className="glass-card p-6 shadow-2xl relative overflow-hidden transition-all border-[#00d2ff]/20">
+        <section ref={scannerRef} className="glass-card p-6 glow-sm relative overflow-hidden transition-all border-[#00d2ff]/20">
           <form onSubmit={handleScan} className="flex flex-col md:flex-row gap-4 relative z-10">
             <div className="relative flex-1 flex items-stretch">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
-                <Globe className="h-4 w-4 text-zinc-500" />
+                 <Globe size={18} className="text-zinc-500" />
               </div>
               <span className="flex items-center bg-zinc-800 text-zinc-400 px-3 pl-9 border border-white/10 border-r-zinc-700 rounded-l-xl text-sm font-mono whitespace-nowrap select-none">
                 https://
@@ -414,16 +414,16 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
             <button
               type="submit"
               disabled={isScanning}
-              className="px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-[0_0_20px_rgba(239,68,68,0.3)] tracking-wide"
+              className="px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed glow-md hover:glow-lg tracking-wide"
             >
-              <Search className="h-5 w-5" />
+              <Search size={18} />
               {t.scanBtn}
             </button>
           </form>
 
           {isScanning && (
             <div className="mt-8 flex flex-col items-center justify-center space-y-4 py-8 text-[#a1a1aa]">
-              <Activity className={`h-12 w-12 animate-spin ${spinnerColor}`} />
+                      <Activity size={18} className={`animate-spin ${spinnerColor}`} />
               <p className="font-bold text-xl text-[#fafafa] tracking-tight">{t.scanningMsg}</p>
               <p className="text-sm font-medium opacity-60 px-6 text-center">{t.scanningSubMsg}</p>
             </div>
@@ -458,7 +458,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                 {/* VISUAL PREVIEW: Feature 1 */}
                 <div className="glass-card p-4 space-y-3">
                    <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
-                     <Eye className="w-3.5 h-3.5 text-[#00d2ff]" />
+                     <Eye size={18} className="text-[#00d2ff]" />
                      Visual Logo-Analysis
                    </h3>
                    <div className="relative aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group">
@@ -480,7 +480,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                    }`}>
                      {results.score >= 70 && (
                        <div className="flex items-center gap-2">
-                         <AlertTriangle className="w-4 h-4 text-red-500" />
+                      <AlertTriangle size={18} className="text-red-500" />
                          <span className="text-xs font-bold text-red-400">Visual Impersonation Detected</span>
                        </div>
                      )}
@@ -498,7 +498,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                 {/* INTENT SCRAPER: Feature 2 */}
                 <div className="glass-card p-4 space-y-3">
                    <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
-                     <ZapIcon className="w-3.5 h-3.5 text-[#a855f7]" />
+                     <ZapIcon size={18} className="text-[#a855f7]" />
                      Intent Scraper
                    </h3>
                    <div className={`p-3 rounded-lg border ${
@@ -522,7 +522,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                 {/* SHADOW REDIRECT BYPASS: Feature 3 */}
                 <div className="glass-card p-4 space-y-3">
                    <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
-                     <RefreshCw className="w-3.5 h-3.5 text-yellow-500" />
+                     <RefreshCw size={18} className="text-yellow-500" />
                      Shadow Redirect Bypass
                    </h3>
                    <div className={`p-3 rounded-lg border ${
@@ -530,7 +530,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                    }`}>
                      {isScanning ? (
                        <div className="flex items-center gap-2">
-                         <RefreshCw className="w-4 h-4 text-yellow-500 animate-spin" />
+                         <RefreshCw size={18} className="text-yellow-500 animate-spin" />
                          <span className="text-[10px] text-yellow-400">Deep crawling in progress...</span>
                        </div>
                      ) : (
@@ -575,7 +575,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                   onClick={handleDownloadReport}
                   className="w-full py-4 rounded-xl font-bold bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-2 group"
                 >
-                  <Download className="w-5 h-5 text-gray-400 group-hover:text-white" />
+                <Download size={18} className="text-gray-400 group-hover:text-white" />
                   {t.downloadReport}
                 </button>
 
@@ -587,16 +587,16 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                     ${reported 
                       ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500 cursor-default" 
                       : results.score >= 30
-                        ? "bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 shadow-lg hover:shadow-red-500/10"
+                        ? "bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 glow-md hover:glow-lg"
                         : "bg-white/5 border-white/10 text-gray-500 cursor-not-allowed"
                     }`}
                 >
                   {isReporting ? (
-                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <RefreshCw size={18} className="animate-spin" />
                   ) : reported ? (
-                    <ShieldCheck className="w-5 h-5" />
+                    <ShieldCheck size={18} />
                   ) : (
-                    <Bug className="w-5 h-5" />
+                    <Bug size={18} />
                   )}
                   {reported ? "Threat Reported" : "Report as Phish"}
                 </button>
@@ -606,14 +606,14 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
               <div className="lg:col-span-8 space-y-6">
                 <div className="glass-card p-6">
                   <h3 className="font-bold text-white mb-6 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-[#00d2ff]" />
+                      <CheckCircle2 size={18} className="text-[#00d2ff]" />
                     {t.redFlags}
                   </h3>
                   <div className="grid gap-3">
                     {results.redFlags.map((flag: string, i: number) => (
                       <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-white/2 border border-white/5 hover:border-white/10 transition-colors">
                         <div className={`p-2 rounded-lg mt-0.5 ${results.score >= 70 ? "bg-red-500/10" : "bg-emerald-500/10"}`}>
-                          <ShieldAlert className={`w-4 h-4 ${results.score >= 70 ? "text-red-500" : "text-emerald-500"}`} />
+                    <ShieldAlert size={18} className={`text-[#a1a1aa] ${results.score >= 70 ? "text-red-500" : "text-emerald-500"}`} />
                         </div>
                         <p className="text-sm font-medium text-zinc-300 leading-relaxed">{flag}</p>
                       </div>
@@ -626,20 +626,20 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                    {isFreeUser && (
                      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-10 rounded-2xl flex flex-col items-center justify-center p-6">
                        <div className="w-16 h-16 rounded-full bg-[#a855f7]/20 p-4 flex items-center justify-center mb-4">
-                         <Lock className="w-8 h-8 text-[#a855f7]" />
+                            <Lock size={18} className="text-[#a855f7]" />
                        </div>
                        <h3 className="text-xl font-black text-white mb-2">AI Analysis Locked</h3>
                        <p className="text-[#a1a1aa] text-sm text-center mb-4">
                          AI Analysis available for Pro &amp; VIP subscribers.
                        </p>
-                       <Link href="/pricing" className="px-6 py-2 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold rounded-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all uppercase tracking-widest text-xs">
+                       <Link href="/pricing" className="px-6 py-2 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold rounded-lg glow-md hover:glow-lg transition-all uppercase tracking-widest text-xs">
                          Upgrade to Pro
                        </Link>
                      </div>
                    )}
                    <div className={`flex items-center gap-3 mb-6 ${isFreeUser ? "opacity-50" : ""}`}>
                       <div className="p-2.5 rounded-xl bg-[#00d2ff]/10 border border-[#00d2ff]/20">
-                         <Brain className="w-6 h-6 text-[#00d2ff]" />
+                         <Brain size={18} className="text-[#00d2ff]" />
                       </div>
                       <div>
                         <h3 className="font-black text-white">{t.aiAnalysis}</h3>
@@ -671,7 +671,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                             <div className="space-y-2">
                                {results.geminiVerdict?.advisor?.actionable_advice?.map((a: string, i: number) => (
                                  <div key={i} className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
-                                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                                    <CheckCircle2 size={18} className="shrink-0" />
                                     {a}
                                  </div>
                                ))}
@@ -698,14 +698,14 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                      </div>
                    )}
                    <div className="flex items-center gap-2 mb-6">
-                      <MessageSquare className="w-5 h-5 text-[#a855f7]" />
+                      <MessageSquare size={18} className="text-[#a855f7]" />
                       <h3 className="font-bold text-white">{t.askAiTitle}</h3>
                    </div>
                    
                    <div className="h-[300px] overflow-y-auto mb-6 space-y-4 pr-2 scrollbar-thin">
                       <div className="flex gap-3">
                         <div className="w-8 h-8 rounded-lg bg-[#a855f7]/20 flex items-center justify-center shrink-0 border border-[#a855f7]/30">
-                           <Bot className="w-4 h-4 text-[#a855f7]" />
+                           <Bot size={18} className="text-[#a855f7]" />
                         </div>
                         <div className="bg-white/5 p-4 rounded-2xl rounded-tl-none border border-white/10 max-w-[85%]">
                           <p className="text-sm text-zinc-300 font-medium">{t.chatEmptyMsg}</p>
@@ -717,7 +717,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                             msg.role === "user" ? "bg-white/10 border-white/20" : "bg-[#a855f7]/20 border-[#a855f7]/30"
                           }`}>
-                            {msg.role === "user" ? <UserCircle className="w-4 h-4" /> : <Bot className="w-4 h-4 text-[#a855f7]" />}
+                            {msg.role === "user" ? <UserCircle size={18} /> : <Bot size={18} className="text-[#a855f7]" />}
                           </div>
                           <div className={`p-4 rounded-2xl border ${
                             msg.role === "user" ? "bg-[#00d2ff]/10 border-[#00d2ff]/20 rounded-tr-none" : "bg-white/5 border-white/10 rounded-tl-none"
@@ -738,7 +738,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                      <div className="relative">
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-xl flex items-center justify-center p-4 z-10">
                           <div className="text-center">
-                            <Lock className="w-8 h-8 text-[#a855f7] mx-auto mb-2" />
+                            <Lock size={18} className="text-[#a855f7] mx-auto mb-2" />
                             <p className="text-sm font-bold text-white">Chat Limit Reached</p>
                             <p className="text-xs text-[#a1a1aa] mt-1">Upgrade to Pro for unlimited AI chat</p>
                           </div>
@@ -769,7 +769,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                             isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES ? "opacity-50 cursor-not-allowed" : ""
                           }`}
                         >
-                          <Send className="w-5 h-5" />
+                          <Send size={18} />
                         </button>
                      </form>
                    )}

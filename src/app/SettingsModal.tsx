@@ -50,7 +50,7 @@ export default function SettingsModal({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="relative w-[90%] max-w-sm p-5 flex flex-col gap-5 bg-white/10 border border-white/20 shadow-[0_0_40px_rgba(0,0,0,0.5)] rounded-2xl backdrop-blur-lg h-auto max-h-[90vh] overflow-y-auto"
+            className="relative w-[90%] max-w-sm p-5 flex flex-col gap-5 bg-white/10 border border-white/20 glow-sm rounded-2xl backdrop-blur-lg h-auto max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -84,14 +84,14 @@ export default function SettingsModal({
                 onClick={() => setLang(lng.code)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
                   lang === lng.code
-                    ? "bg-[#00d2ff]/10 border-[#00d2ff]/40 text-white shadow-[0_0_12px_rgba(0,210,255,0.15)]"
+                    ? "bg-[#00d2ff]/10 border-[#00d2ff]/40 text-white glow-md"
                     : "border-white/10 text-[#a1a1aa] hover:border-white/20 hover:text-white hover:bg-white/5"
                 }`}
               >
                 <span className="text-xl">{lng.flag}</span>
                 <span>{lng.name}</span>
                 {lang === lng.code && (
-                  <span className="ml-auto w-2 h-2 rounded-full bg-[#00d2ff] shadow-[0_0_6px_#00d2ff]" />
+                  <span className="ml-auto w-2 h-2 rounded-full bg-[#00d2ff] glow-sm" />
                 )}
               </button>
             ))}
@@ -115,7 +115,7 @@ export default function SettingsModal({
                   onClick={() => setAiMode(mode)}
                   className={`flex flex-col items-center gap-2 py-4 rounded-xl border text-sm font-medium transition-all ${
                     isActive
-                      ? "bg-[#00d2ff]/10 border-[#00d2ff]/40 text-white shadow-[0_0_12px_rgba(0,210,255,0.15)]"
+                      ? "bg-[#00d2ff]/10 border-[#00d2ff]/40 text-white glow-md"
                       : "border-white/10 text-[#a1a1aa] hover:border-white/20 hover:text-white hover:bg-white/5"
                   }`}
                 >

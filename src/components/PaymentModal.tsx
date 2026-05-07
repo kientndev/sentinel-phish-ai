@@ -14,7 +14,7 @@ interface Props {
 const accent = {
   Pro: {
     border:   "border-[#00d2ff]/40",
-    glow:     "shadow-[0_0_50px_rgba(0,210,255,0.2)]",
+    glow:     "glow-lg",
     text:     "text-[#00d2ff]",
     badge:    "bg-[#00d2ff]/15 border-[#00d2ff]/30 text-[#00d2ff]",
     icon:     <Zap className="w-4 h-4" />,
@@ -22,7 +22,7 @@ const accent = {
   },
   Premium: {
     border:   "border-[#a855f7]/40",
-    glow:     "shadow-[0_0_50px_rgba(168,85,247,0.2)]",
+    glow:     "glow-purple",
     text:     "text-[#a855f7]",
     badge:    "bg-[#a855f7]/15 border-[#a855f7]/30 text-[#a855f7]",
     icon:     <Flame className="w-4 h-4" />,

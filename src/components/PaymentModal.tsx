@@ -19,7 +19,6 @@ const accent = {
     badge:    "bg-[#00d2ff]/15 border-[#00d2ff]/30 text-[#00d2ff]",
     icon:     <Zap className="w-4 h-4" />,
     price:    "$4",
-    credits:  "5,000+",
   },
   Premium: {
     border:   "border-[#a855f7]/40",
@@ -28,7 +27,6 @@ const accent = {
     badge:    "bg-[#a855f7]/15 border-[#a855f7]/30 text-[#a855f7]",
     icon:     <Flame className="w-4 h-4" />,
     price:    "$6.85",
-    credits:  "Unlimited",
   },
 } as const;
 
@@ -100,8 +98,8 @@ export default function PaymentModal({ plan, onClose }: Props) {
             <p className="text-[#a1a1aa] text-sm leading-relaxed">
               We are currently in{" "}
               <span className="text-white font-semibold">Early Access</span> for the Vietnam region.
-              To upgrade and claim your{" "}
-              <span className={`font-bold ${a.text}`}>{a.credits}</span> credits, please scan the
+              To upgrade to the{" "}
+              <span className={`font-bold ${a.text}`}>{plan}</span> plan, please scan the
               MoMo / ZaloPay QR code below and include your{" "}
               <span className="text-white font-semibold">Sentinel ID</span> in the transaction note.
             </p>

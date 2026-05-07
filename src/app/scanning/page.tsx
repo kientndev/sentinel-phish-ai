@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { LoginGuard } from "../../components/LoginGuard";
+import Link from "next/link";
 import {
    Search, ShieldAlert, Activity, Globe,
   Brain, Bot, CheckCircle2, MessageSquare, Send, Settings, Download, Zap,
-  Eye, Bug, ShieldCheck, RefreshCw
+  Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon
 } from "lucide-react";
 import { sendGAEvent } from "@next/third-parties/google";
 import { usePhishTank } from "../../hooks/usePhishTank";
@@ -150,14 +151,17 @@ function ScanningContent() {
   const [isScanning, setIsScanning] = useState(false);
   const [results, setResults] = useState<ScanResult | null>(null);
   const scannerRef = useRef<HTMLDivElement>(null);
-
-  const { burnCredits } = useAppContext();
-  // Convex mutations removed - using local storage only
+  
+  // Mock user tier - in production, this would come from Clerk/Convex
+  const userTier = "free"; // Options: "free", "mid", "pro", "vip"
+  const isFreeUser = userTier === "free";
 
   // Chat state
   const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatting, setIsChatting] = useState(false);
+  const [chatCount, setChatCount] = useState(0);
+  const MAX_FREE_CHAT_MESSAGES = 5;
 
   // Settings
   const [lang, setLang] = useState<LangCode>("en");
@@ -206,9 +210,16 @@ function ScanningContent() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim() || !results) return;
+    
+    // Check chat limit for free users
+    if (isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES) {
+      return;
+    }
+    
     const newMessages = [...chatMessages, { role: "user", content: chatInput }];
     setChatMessages(newMessages);
     setChatInput("");
+    setChatCount(prev => prev + 1);
     setIsChatting(true);
     try {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
@@ -235,8 +246,6 @@ function ScanningContent() {
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url) return;
-
-    await burnCredits(50); // Auto-refill handled in AppContext
 
     sendGAEvent({ event: "security_scan_start", value: url });
 
@@ -450,7 +459,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                 <div className="glass-card p-4 space-y-3">
                    <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
                      <Eye className="w-3.5 h-3.5 text-[#00d2ff]" />
-                     Visual Preview
+                     Visual Logo-Analysis
                    </h3>
                    <div className="relative aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -466,9 +475,81 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                          <span className="text-[10px] font-medium text-white/80 line-clamp-1">{url}</span>
                       </div>
                    </div>
-                   <p className="text-[10px] text-[#a1a1aa] text-center italic">
-                     Analyzing visual structure for login form patterns...
-                   </p>
+                   <div className={`p-3 rounded-lg border ${
+                     results.score >= 70 ? "bg-red-500/10 border-red-500/30" : "bg-emerald-500/10 border-emerald-500/30"
+                   }`}>
+                     {results.score >= 70 && (
+                       <div className="flex items-center gap-2">
+                         <AlertTriangle className="w-4 h-4 text-red-500" />
+                         <span className="text-xs font-bold text-red-400">Visual Impersonation Detected</span>
+                       </div>
+                     )}
+                     <p className={`text-[10px] mt-2 ${
+                       results.score >= 70 ? "text-red-300" : "text-emerald-300"
+                     }`}>
+                       {results.score >= 70 
+                         ? "High-profile brand logo detected but domain not verified/official."
+                         : "No suspicious brand impersonation detected."
+                       }
+                     </p>
+                   </div>
+                </div>
+
+                {/* INTENT SCRAPER: Feature 2 */}
+                <div className="glass-card p-4 space-y-3">
+                   <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
+                     <ZapIcon className="w-3.5 h-3.5 text-[#a855f7]" />
+                     Intent Scraper
+                   </h3>
+                   <div className={`p-3 rounded-lg border ${
+                     results.score >= 50 ? "bg-orange-500/10 border-orange-500/30" : "bg-emerald-500/10 border-emerald-500/30"
+                   }`}>
+                     <div className="flex items-center justify-between mb-2">
+                       <span className="text-[10px] font-bold text-[#a1a1aa] uppercase">Social Engineering Risk</span>
+                       <span className={`text-xs font-bold ${
+                       results.score >= 50 ? "text-orange-400" : "text-emerald-400"
+                     }`}>{results.score >= 50 ? "High" : "Low"}</span>
+                     </div>
+                     <p className="text-[10px] text-zinc-400">
+                       {results.score >= 50 
+                         ? "Detected high-urgency social engineering markers (e.g., 'Immediate action required')"
+                         : "No urgent social engineering patterns detected."
+                       }
+                     </p>
+                   </div>
+                </div>
+
+                {/* SHADOW REDIRECT BYPASS: Feature 3 */}
+                <div className="glass-card p-4 space-y-3">
+                   <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
+                     <RefreshCw className="w-3.5 h-3.5 text-yellow-500" />
+                     Shadow Redirect Bypass
+                   </h3>
+                   <div className={`p-3 rounded-lg border ${
+                     results.score >= 60 ? "bg-yellow-500/10 border-yellow-500/30" : "bg-emerald-500/10 border-emerald-500/30"
+                   }`}>
+                     {isScanning ? (
+                       <div className="flex items-center gap-2">
+                         <RefreshCw className="w-4 h-4 text-yellow-500 animate-spin" />
+                         <span className="text-[10px] text-yellow-400">Deep crawling in progress...</span>
+                       </div>
+                     ) : (
+                       <>
+                         <div className="flex items-center justify-between mb-2">
+                           <span className="text-[10px] font-bold text-[#a1a1aa] uppercase">Redirect Analysis</span>
+                           <span className={`text-xs font-bold ${
+                           results.score >= 60 ? "text-yellow-400" : "text-emerald-400"
+                         }`}>{results.score >= 60 ? "Suspicious" : "Clean"}</span>
+                         </div>
+                         <p className="text-[10px] text-zinc-400">
+                           {results.score >= 60 
+                             ? "Detected potential hidden redirects behind CAPTCHAs or credential harvesters."
+                             : "No suspicious redirect chains or hidden patterns detected."
+                           }
+                         </p>
+                       </>
+                     )}
+                   </div>
                 </div>
 
                 <div className="glass-card p-6 space-y-5">
@@ -540,9 +621,23 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                   </div>
                 </div>
 
-                {/* Gemini AI Result Part */}
-                <div className="glass-card p-6 relative group border-[#00d2ff]/10">
-                   <div className="flex items-center gap-3 mb-6">
+                {/* Gemini AI Result Part - PAYWALLED FOR FREE USERS */}
+                <div className={`glass-card p-6 relative group ${isFreeUser ? "" : "border-[#00d2ff]/10"}`}>
+                   {isFreeUser && (
+                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-10 rounded-2xl flex flex-col items-center justify-center p-6">
+                       <div className="w-16 h-16 rounded-full bg-[#a855f7]/20 p-4 flex items-center justify-center mb-4">
+                         <Lock className="w-8 h-8 text-[#a855f7]" />
+                       </div>
+                       <h3 className="text-xl font-black text-white mb-2">AI Analysis Locked</h3>
+                       <p className="text-[#a1a1aa] text-sm text-center mb-4">
+                         AI Analysis available for Pro &amp; VIP subscribers.
+                       </p>
+                       <Link href="/pricing" className="px-6 py-2 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold rounded-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all uppercase tracking-widest text-xs">
+                         Upgrade to Pro
+                       </Link>
+                     </div>
+                   )}
+                   <div className={`flex items-center gap-3 mb-6 ${isFreeUser ? "opacity-50" : ""}`}>
                       <div className="p-2.5 rounded-xl bg-[#00d2ff]/10 border border-[#00d2ff]/20">
                          <Brain className="w-6 h-6 text-[#00d2ff]" />
                       </div>
@@ -586,8 +681,22 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                    </div>
                 </div>
 
-                {/* Unified AI Chat */}
+                {/* Unified AI Chat - LOCKED FOR FREE USERS */}
                 <div className="glass-card p-6 border-white/10">
+                   {isFreeUser && (
+                     <div className="mb-4 p-4 bg-[#a855f7]/10 border border-[#a855f7]/20 rounded-xl">
+                       <div className="flex items-center gap-2 mb-2">
+                         <Lock className="w-4 h-4 text-[#a855f7]" />
+                         <span className="text-xs font-bold text-[#a855f7] uppercase tracking-wider">Free Tier Limit</span>
+                       </div>
+                       <p className="text-[10px] text-[#a1a1aa]">
+                         {chatCount >= MAX_FREE_CHAT_MESSAGES 
+                           ? `You've reached your ${MAX_FREE_CHAT_MESSAGES} message limit. Upgrade to Pro for unlimited AI chat.`
+                           : `${MAX_FREE_CHAT_MESSAGES - chatCount} messages remaining for this scan.`
+                         }
+                       </p>
+                     </div>
+                   )}
                    <div className="flex items-center gap-2 mb-6">
                       <MessageSquare className="w-5 h-5 text-[#a855f7]" />
                       <h3 className="font-bold text-white">{t.askAiTitle}</h3>
@@ -625,18 +734,45 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                       )}
                    </div>
 
-                   <form onSubmit={handleSendMessage} className="relative">
-                      <input
-                        type="text"
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        placeholder={t.chatPlaceholder || "Ask a question..."}
-                        className="w-full pl-4 pr-12 py-4 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#a855f7]/40 transition-all text-sm font-medium"
-                      />
-                      <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#a855f7] hover:bg-[#a855f7]/10 rounded-lg transition-all">
-                        <Send className="w-5 h-5" />
-                      </button>
-                   </form>
+                   {isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES ? (
+                     <div className="relative">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-xl flex items-center justify-center p-4 z-10">
+                          <div className="text-center">
+                            <Lock className="w-8 h-8 text-[#a855f7] mx-auto mb-2" />
+                            <p className="text-sm font-bold text-white">Chat Limit Reached</p>
+                            <p className="text-xs text-[#a1a1aa] mt-1">Upgrade to Pro for unlimited AI chat</p>
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          disabled
+                          placeholder="Chat limit reached - Upgrade to Pro"
+                          className="w-full pl-4 pr-12 py-4 bg-white/5 border border-white/10 rounded-xl text-sm font-medium opacity-50 cursor-not-allowed"
+                        />
+                     </div>
+                   ) : (
+                     <form onSubmit={handleSendMessage} className="relative">
+                        <input
+                          type="text"
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          placeholder={t.chatPlaceholder || "Ask a question..."}
+                          disabled={isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES}
+                          className={`w-full pl-4 pr-12 py-4 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#a855f7]/40 transition-all text-sm font-medium ${
+                            isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
+                        />
+                        <button 
+                          type="submit" 
+                          disabled={isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES}
+                          className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#a855f7] hover:bg-[#a855f7]/10 rounded-lg transition-all ${
+                            isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
+                        >
+                          <Send className="w-5 h-5" />
+                        </button>
+                     </form>
+                   )}
                 </div>
               </div>
             </motion.div>

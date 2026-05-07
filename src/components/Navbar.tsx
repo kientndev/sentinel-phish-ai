@@ -3,15 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ShieldAlert, Coins, UserCircle } from "lucide-react";
-import { useAppContext } from "../context/AppContext";
+import { Menu, X, ShieldAlert, UserCircle, QrCode } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth, useUser, SignOutButton } from "@clerk/nextjs";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const { creditBalance } = useAppContext();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
 
@@ -23,6 +21,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Scanning", href: "/scanning" },
+    { name: "QR Scanner", href: "/scan/qr", isNew: true },
     { name: "Dashboard", href: "/dashboard" },
     { name: "Community Vault", href: "/reports" },
     { name: "Contact", href: "/contact" },
@@ -45,65 +44,61 @@ export default function Navbar() {
         </div>
 
         {/* Center: Desktop Nav */}
-        <div className="hidden md:flex flex-1 justify-center items-center gap-8">
+        <div className="hidden md:flex flex-1 justify-center items-center gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               href={link.href}
-              className={`text-xs font-black uppercase tracking-widest transition-all ${
+              className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all ${
                 pathname === link.href
                   ? "text-[#00d2ff]"
                   : "text-[#a1a1aa] hover:text-white"
               }`}
             >
               {link.name}
+              {link.isNew && (
+                <span className="px-1.5 py-0.5 bg-emerald-500 text-[8px] font-black rounded text-white uppercase tracking-wider">
+                  NEW
+                </span>
+              )}
             </Link>
           ))}
         </div>
 
         {/* Right: Actions */}
         <div className="hidden md:flex flex-1 justify-end items-center gap-4">
-          <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 px-3 py-1.5 rounded-lg transition-all group">
-                <Coins className="w-4 h-4 text-yellow-500" />
-                <span className="text-yellow-400 font-bold text-sm">
-                  {creditBalance.toLocaleString()}
-                </span>
-              </div>
+          {isSignedIn ? (
+            <>
+              <SignOutButton>
+                <button className="hidden sm:flex items-center gap-2 px-5 py-2 bg-red-500/10 border border-red-500/20 text-red-400 font-black rounded-lg text-[10px] uppercase tracking-[0.2em] hover:bg-red-500/20 transition-all">
+                  Sign Out
+                </button>
+              </SignOutButton>
               
-              {isSignedIn ? (
-                <>
-                  <SignOutButton>
-                    <button className="hidden sm:flex items-center gap-2 px-5 py-2 bg-red-500/10 border border-red-500/20 text-red-400 font-black rounded-lg text-[10px] uppercase tracking-[0.2em] hover:bg-red-500/20 transition-all">
-                      Sign Out
-                    </button>
-                  </SignOutButton>
-                  
-                  <Link href="/profile" className="flex items-center gap-2 group border border-white/5 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#00d2ff] to-[#a855f7] flex items-center justify-center p-[2px]">
-                      <div className="w-full h-full bg-[#0b0e14] rounded-full flex items-center justify-center">
-                        <span className="text-[10px] font-bold text-white uppercase italic">
-                          {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress.charAt(0) || 'U'}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="hidden sm:inline text-xs font-black uppercase tracking-widest text-[#fafafa]">
-                      {user?.firstName || user?.emailAddresses[0]?.emailAddress.split('@')[0] || 'User'}
+              <Link href="/profile" className="flex items-center gap-2 group border border-white/5 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#00d2ff] to-[#a855f7] flex items-center justify-center p-[2px]">
+                  <div className="w-full h-full bg-[#0b0e14] rounded-full flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-white uppercase italic">
+                      {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress.charAt(0) || 'U'}
                     </span>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link href="/sign-in" className="hidden sm:flex items-center gap-2 px-5 py-2 bg-white/5 border border-white/10 text-white font-black rounded-lg text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all">
-                    Sign In
-                  </Link>
-                  
-                  <Link href="/sign-up" className="hidden sm:flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-black rounded-lg text-[10px] uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(0,210,255,0.3)] hover:shadow-[0_0_20px_rgba(0,210,255,0.5)] transition-all">
-                    Sign Up
-                  </Link>
-                </>
-              )}
-          </div>
+                  </div>
+                </div>
+                <span className="hidden sm:inline text-xs font-black uppercase tracking-widest text-[#fafafa]">
+                  {user?.firstName || user?.emailAddresses[0]?.emailAddress.split('@')[0] || 'User'}
+                </span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/sign-in" className="hidden sm:flex items-center gap-2 px-5 py-2 bg-white/5 border border-white/10 text-white font-black rounded-lg text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all">
+                Sign In
+              </Link>
+              
+              <Link href="/sign-up" className="hidden sm:flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-black rounded-lg text-[10px] uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(0,210,255,0.3)] hover:shadow-[0_0_20px_rgba(0,210,255,0.5)] transition-all">
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -130,11 +125,16 @@ export default function Navbar() {
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className={`px-4 py-3 rounded-xl font-bold bg-white/5 ${
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-bold bg-white/5 ${
                     pathname === link.href ? "text-[#00d2ff] border border-[#00d2ff]/30" : "text-[#a1a1aa]"
                   }`}
                 >
                   {link.name}
+                  {link.isNew && (
+                    <span className="px-1.5 py-0.5 bg-emerald-500 text-[8px] font-black rounded text-white uppercase tracking-wider">
+                      NEW
+                    </span>
+                  )}
                 </Link>
               ))}
               {isSignedIn ? (
@@ -151,13 +151,11 @@ export default function Navbar() {
                   <Link
                       href="/profile"
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center justify-between px-4 py-4 bg-white/5 rounded-xl border border-white/10"
+                      className="flex items-center gap-2 px-4 py-4 bg-white/5 rounded-xl border border-white/10"
                     >
-                      <span className="text-[#a1a1aa] font-medium flex items-center gap-2">
-                        <UserCircle className="w-5 h-5" /> {user?.firstName || user?.emailAddresses[0]?.emailAddress.split('@')[0] || 'User'}
-                      </span>
-                      <span className="text-yellow-400 font-bold flex items-center gap-1">
-                        {creditBalance} <Coins className="w-4 h-4" />
+                      <UserCircle className="w-5 h-5 text-[#a1a1aa]" />
+                      <span className="text-[#a1a1aa] font-medium">
+                        {user?.firstName || user?.emailAddresses[0]?.emailAddress.split('@')[0] || 'User'}
                       </span>
                     </Link>
                 </>

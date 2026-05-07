@@ -12,7 +12,6 @@ import Image from "next/image";
 
 function ProfileContent() {
   const { user, isLoaded: userLoaded } = useUser();
-  const { creditBalance } = useAppContext();
   const getOrCreateUser = useMutation(api.users.getOrCreateUser);
 
   // Check if environment variables are present
@@ -111,11 +110,7 @@ function ProfileContent() {
                 {rank.title}
               </p>
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                 <div className="p-4 rounded-xl bg-white/2 border border-white/5">
-                    <span className="text-[10px] uppercase font-black text-[#52525b] block mb-1">Credits</span>
-                    <span className="text-xl font-black text-white">{creditBalance}</span>
-                 </div>
+              <div className="grid grid-cols-3 gap-4">
                  <div className="p-4 rounded-xl bg-white/2 border border-white/5">
                     <span className="text-[10px] uppercase font-black text-[#52525b] block mb-1">XP</span>
                     <span className="text-xl font-black text-white">{userXP}</span>

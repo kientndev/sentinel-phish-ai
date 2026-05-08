@@ -345,7 +345,8 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
       setHasAutoScanned(true);
       // Trigger scan after a short delay to allow UI to render
       setTimeout(() => {
-        handleScan(new Event("submit") as any);
+        const event = { preventDefault: () => {} } as React.FormEvent;
+        handleScan(event);
       }, 500);
     }
   }, [searchParams, hasAutoScanned, isScanning]);

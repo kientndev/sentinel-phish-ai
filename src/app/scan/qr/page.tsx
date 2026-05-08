@@ -1,16 +1,63 @@
 "use client";
 
-import { QrCode, Upload, X, AlertTriangle } from "lucide-react";
+import { QrCode, Upload, X, AlertTriangle, Shield, ArrowRight, AlertCircle } from "lucide-react";
 import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import jsQR from "jsqr";
 
+interface ScanResult {
+  url: string;
+  redFlags: string[];
+  riskLevel: "Low" | "Medium" | "High";
+}
+
 export default function QRScannerPage() {
   const router = useRouter();
   const [dragActive, setDragActive] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Heuristic evaluation function
+  const evaluateUrl = (url: string): ScanResult => {
+    const redFlags: string[] = [];
+    const lowerUrl = url.toLowerCase();
+
+    // Check for suspicious TLDs
+    const suspiciousTLDs = [".top", ".xyz", ".link", ".info", ".biz"];
+    if (suspiciousTLDs.some(tld => lowerUrl.includes(tld))) {
+      redFlags.push("Suspicious TLD detected");
+    }
+
+    // Check for IP Address URLs
+    const ipPattern = /https?:\/\/(\d{1,3}\.){3}\d{1,3}/;
+    if (ipPattern.test(url)) {
+      redFlags.push("Direct IP address URL");
+    }
+
+    // Check for URL shorteners
+    const shorteners = ["bit.ly", "t.co", "tinyurl", "goo.gl", "ow.ly", "is.gd"];
+    if (shorteners.some(shortener => lowerUrl.includes(shortener))) {
+      redFlags.push("URL shortener detected");
+    }
+
+    // Check for sensitive keywords
+    const sensitiveKeywords = ["login", "verify", "secure", "banking", "update", "account", "password", "signin"];
+    if (sensitiveKeywords.some(keyword => lowerUrl.includes(keyword))) {
+      redFlags.push("Contains sensitive keywords");
+    }
+
+    // Determine risk level
+    let riskLevel: "Low" | "Medium" | "High" = "Low";
+    if (redFlags.length >= 3) {
+      riskLevel = "High";
+    } else if (redFlags.length >= 1) {
+      riskLevel = "Medium";
+    }
+
+    return { url, redFlags, riskLevel };
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -41,6 +88,7 @@ export default function QRScannerPage() {
 
   const handleFile = async (file: File) => {
     setError(null);
+    setScanResult(null);
     
     // Validate file type
     if (!file.type.match(/image\/(jpeg|png)/)) {
@@ -48,7 +96,7 @@ export default function QRScannerPage() {
       return;
     }
 
-    setIsScanning(true);
+    setIsAnalyzing(true);
 
     try {
       // Read file
@@ -82,8 +130,9 @@ export default function QRScannerPage() {
         // Extract URL from QR code
         const url = code.data;
         if (isValidUrl(url)) {
-          // Redirect to scan page with the extracted URL
-          router.push(`/scanning?url=${encodeURIComponent(url)}`);
+          // Perform heuristic evaluation instead of redirecting
+          const result = evaluateUrl(url);
+          setScanResult(result);
         } else {
           setError("QR code does not contain a valid URL");
         }
@@ -93,7 +142,7 @@ export default function QRScannerPage() {
     } catch (err) {
       setError("Failed to process image. Please try again.");
     } finally {
-      setIsScanning(false);
+      setIsAnalyzing(false);
     }
   };
 
@@ -117,6 +166,25 @@ export default function QRScannerPage() {
 
   const onButtonClick = () => {
     inputRef.current?.click();
+  };
+
+  const handleDeepScan = () => {
+    if (scanResult) {
+      router.push(`/scanning?url=${encodeURIComponent(scanResult.url)}`);
+    }
+  };
+
+  const getRiskColor = (level: string) => {
+    switch (level) {
+      case "High":
+        return "text-red-500 bg-red-500/10 border-red-500/20";
+      case "Medium":
+        return "text-orange-400 bg-orange-400/10 border-orange-400/20";
+      case "Low":
+        return "text-emerald-400 bg-emerald-400/10 border-emerald-400/20";
+      default:
+        return "text-[#a1a1aa] bg-white/5 border-white/10";
+    }
   };
 
   return (
@@ -153,10 +221,10 @@ export default function QRScannerPage() {
             className="hidden"
           />
 
-          {isScanning ? (
+          {isAnalyzing ? (
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 border-4 border-[#00d2ff] border-t-transparent rounded-full animate-spin" />
-              <p className="text-[#a1a1aa] font-medium">Scanning QR code...</p>
+              <p className="text-[#a1a1aa] font-medium">Analyzing QR code...</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-6">
@@ -190,6 +258,58 @@ export default function QRScannerPage() {
               className="ml-auto text-red-400 hover:text-red-300 transition-colors"
             >
               <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
+        {scanResult && (
+          <div className="mt-6 glass-card p-6 border-white/10 bg-white/5">
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="w-5 h-5 text-[#00d2ff]" />
+              <h3 className="text-white font-bold">Detection Result</h3>
+            </div>
+
+            {/* Risk Level Indicator */}
+            <div className={`mb-4 px-3 py-2 rounded-lg border flex items-center justify-center gap-2 ${getRiskColor(scanResult.riskLevel)}`}>
+              <AlertCircle className="w-4 h-4" />
+              <span className="font-bold">Risk Level: {scanResult.riskLevel}</span>
+            </div>
+
+            {/* Decoded URL */}
+            <div className="mb-4">
+              <p className="text-[#a1a1aa] text-sm mb-2 font-medium">Decoded URL:</p>
+              <div className="bg-[#0b0e14] border border-white/10 rounded-lg px-4 py-3 break-all">
+                <p className="text-white text-sm font-mono">{scanResult.url}</p>
+              </div>
+            </div>
+
+            {/* Red Flags */}
+            <div className="mb-6">
+              <p className="text-[#a1a1aa] text-sm mb-2 font-medium">Heuristic Red Flags:</p>
+              {scanResult.redFlags.length > 0 ? (
+                <ul className="space-y-2">
+                  {scanResult.redFlags.map((flag, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                      <span className="text-[#a1a1aa]">{flag}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-emerald-400 text-sm flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  No immediate red flags detected
+                </p>
+              )}
+            </div>
+
+            {/* Deep Scan Button */}
+            <button
+              onClick={handleDeepScan}
+              className="w-full px-6 py-3 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold rounded-xl hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+            >
+              <span>Perform Deep AI Scan with Gemini 3 Flash</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         )}

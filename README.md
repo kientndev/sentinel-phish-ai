@@ -288,14 +288,14 @@ Modify Gemini prompts in `src/app/api/scan/route.ts`
 
 ## 📝 License
 
-This software is proprietary. Contact [your-email@example.com] for licensing information.
+This software is proprietary. Contact kien.eat.pizza@gmail.com or trikientrannam@gmail.com for licensing information.
 
 ---
 
 ## 🤝 Support
 
 For technical support or licensing inquiries, contact:
-- Email: support@example.com
+- Email: trikientrannam@gmail.com
 - Documentation: https://docs.example.com
 - Issues: https://github.com/your-org/sentinel-phish/issues
 

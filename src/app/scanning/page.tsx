@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { LoginGuard } from "../../components/LoginGuard";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
    Search, ShieldAlert, Activity, Globe,
   Brain, Bot, CheckCircle2, MessageSquare, Send, Settings, Download, Zap,
@@ -151,6 +152,8 @@ function ScanningContent() {
   const [isScanning, setIsScanning] = useState(false);
   const [results, setResults] = useState<ScanResult | null>(null);
   const scannerRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const [hasAutoScanned, setHasAutoScanned] = useState(false);
   
   // Mock user tier - in production, this would come from Clerk/Convex
   const userTier = "free"; // Options: "free", "mid", "pro", "vip"
@@ -333,6 +336,19 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
     if (score >= 30) return "text-orange-400";
     return "text-emerald-400";
   };
+
+  // Auto-scan if URL is passed from QR scanner
+  useEffect(() => {
+    const urlFromParams = searchParams.get("url");
+    if (urlFromParams && !hasAutoScanned && !isScanning) {
+      setUrl(urlFromParams);
+      setHasAutoScanned(true);
+      // Trigger scan after a short delay to allow UI to render
+      setTimeout(() => {
+        handleScan(new Event("submit") as any);
+      }, 500);
+    }
+  }, [searchParams, hasAutoScanned, isScanning]);
 
   return (
     <main className="flex flex-col flex-1 items-center px-6 md:px-10 py-10 relative overflow-hidden">

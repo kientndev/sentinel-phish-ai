@@ -2,20 +2,52 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, ShieldAlert, Search, UserCircle, Activity, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth, useUser, SignOutButton } from "@clerk/nextjs";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
 
   // Mock user subscription tier - in production, this would come from Clerk/Convex
   const userTier = "free" as "free" | "mid" | "pro" | "vip";
   const isSubscribed = userTier === "pro" || userTier === "vip";
+
+  // Page navigation data
+  const pages = [
+    { name: "Dashboard", path: "/dashboard", keywords: ["dashboard", "home", "overview"] },
+    { name: "Scan History", path: "/dashboard#history", keywords: ["history", "scans", "past"] },
+    { name: "QR Shield", path: "/scan/qr", keywords: ["qr", "scanner", "quishing"] },
+    { name: "Community Reports", path: "/reports", keywords: ["report", "community", "vault"] },
+    { name: "User Settings", path: "/profile", keywords: ["profile", "settings", "account"] },
+  ];
+
+  const filteredPages = pages.filter(
+    (page) =>
+      page.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      page.keywords.some((keyword) => keyword.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && filteredPages.length > 0) {
+      router.push(filteredPages[0].path);
+      setSearchQuery("");
+      setShowSearchResults(false);
+    }
+  };
+
+  const handlePageClick = (path: string) => {
+    router.push(path);
+    setSearchQuery("");
+    setShowSearchResults(false);
+  };
 
   const navLinks = [
     { name: "Dashboard", href: "/dashboard" },
@@ -41,17 +73,47 @@ export default function Navbar() {
             </Link>
             
             {/* Search/Command Bar - Desktop */}
-            <div className="hidden lg:flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 w-64">
+            <div className="hidden lg:flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 w-64 relative">
               <Search size={16} className="text-[#52525b]" />
               <input
                 type="text"
                 placeholder="Search... (⌘K)"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchResults(e.target.value.length > 0);
+                }}
+                onFocus={() => setShowSearchResults(searchQuery.length > 0)}
+                onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
+                onKeyDown={handleSearch}
                 className="bg-transparent text-white text-sm placeholder:text-[#52525b] focus:outline-none flex-1"
-                readOnly
               />
               <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium text-[#52525b] bg-white/5 rounded border border-white/10">
                 ⌘K
               </kbd>
+
+              {/* Search Results Dropdown */}
+              <AnimatePresence>
+                {showSearchResults && filteredPages.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-[#0b0e14]/95 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden glow-sm z-50"
+                  >
+                    {filteredPages.map((page) => (
+                      <button
+                        key={page.path}
+                        onClick={() => handlePageClick(page.path)}
+                        className="w-full px-3 py-2 text-left text-sm text-[#a1a1aa] hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
+                      >
+                        <span className="flex-1">{page.name}</span>
+                        <span className="text-[10px] text-[#52525b]">{page.path}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -141,14 +203,49 @@ export default function Navbar() {
           >
             <div className="bg-[#0b0e14]/95 backdrop-blur-md border border-white/10 rounded-2xl p-4 glow-sm flex flex-col gap-2">
               {/* Mobile Search */}
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 mb-2">
-                <Search size={16} className="text-[#52525b]" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="bg-transparent text-white text-sm placeholder:text-[#52525b] focus:outline-none flex-1"
-                  readOnly
-                />
+              <div className="flex flex-col gap-2 relative">
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                  <Search size={16} className="text-[#52525b]" />
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowSearchResults(e.target.value.length > 0);
+                    }}
+                    onFocus={() => setShowSearchResults(searchQuery.length > 0)}
+                    onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
+                    onKeyDown={handleSearch}
+                    className="bg-transparent text-white text-sm placeholder:text-[#52525b] focus:outline-none flex-1"
+                  />
+                </div>
+
+                {/* Mobile Search Results Dropdown */}
+                <AnimatePresence>
+                  {showSearchResults && filteredPages.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="bg-[#0b0e14]/95 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden glow-sm z-50"
+                    >
+                      {filteredPages.map((page) => (
+                        <button
+                          key={page.path}
+                          onClick={() => {
+                            handlePageClick(page.path);
+                            setIsOpen(false);
+                          }}
+                          className="w-full px-3 py-2 text-left text-sm text-[#a1a1aa] hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
+                        >
+                          <span className="flex-1">{page.name}</span>
+                          <span className="text-[10px] text-[#52525b]">{page.path}</span>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {navLinks.map((link) => (

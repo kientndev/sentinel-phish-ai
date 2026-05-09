@@ -1,7 +1,7 @@
 "use client";
 
-import { QrCode, Upload, X, AlertTriangle, Shield, ArrowRight, AlertCircle } from "lucide-react";
-import { useState, useCallback, useRef } from "react";
+import { QrCode, Upload, X, AlertTriangle, Shield, ArrowRight, AlertCircle, Camera, CameraOff, RotateCw } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import jsQR from "jsqr";
 
@@ -17,7 +17,14 @@ export default function QRScannerPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const inputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   // Heuristic evaluation function
   const evaluateUrl = (url: string): ScanResult => {
@@ -187,6 +194,101 @@ export default function QRScannerPage() {
     }
   };
 
+  const startCamera = async () => {
+    setCameraError(null);
+    try {
+      const constraints = {
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+
+        // Start scanning loop
+        scanQRCode();
+      }
+
+      setIsCameraActive(true);
+    } catch (err) {
+      setCameraError("Unable to access camera. Please check permissions or try a different browser.");
+      console.error("Camera error:", err);
+    }
+  };
+
+  const stopCamera = async () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    setIsCameraActive(false);
+  };
+
+  const scanQRCode = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return;
+
+    const scan = () => {
+      if (!isCameraActive || !videoRef.current) return;
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert",
+      });
+
+      if (code && isValidUrl(code.data)) {
+        stopCamera();
+        const result = evaluateUrl(code.data);
+        setScanResult(result);
+        return;
+      }
+
+      animationFrameRef.current = requestAnimationFrame(scan);
+    };
+
+    scan();
+  };
+
+  const flipCamera = async () => {
+    await stopCamera();
+    setFacingMode(prev => prev === "environment" ? "user" : "environment");
+    setTimeout(() => {
+      startCamera();
+    }, 100);
+  };
+
+  const handleCameraScan = () => {
+    setScanResult(null);
+    setError(null);
+    startCamera();
+  };
+
   return (
     <main className="flex flex-col flex-1 items-center px-6 md:px-10 py-16 relative">
       <div className="max-w-2xl w-full text-center mb-12">
@@ -240,9 +342,16 @@ export default function QRScannerPage() {
                 </p>
                 <button
                   onClick={onButtonClick}
-                  className="px-6 py-3 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold rounded-xl hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all uppercase tracking-widest text-xs"
+                  className="px-6 py-3 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold rounded-xl hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all uppercase tracking-widest text-xs mb-3 w-full"
                 >
                   Browse Files
+                </button>
+                <button
+                  onClick={handleCameraScan}
+                  className="px-6 py-3 bg-white/5 border border-white/10 text-white font-bold rounded-xl hover:bg-white/10 transition-all uppercase tracking-widest text-xs w-full flex items-center justify-center gap-2"
+                >
+                  <Camera className="w-4 h-4" />
+                  Scan via Camera
                 </button>
               </div>
             </div>
@@ -258,6 +367,58 @@ export default function QRScannerPage() {
               className="ml-auto text-red-400 hover:text-red-300 transition-colors"
             >
               <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
+        {/* Camera Modal */}
+        {isCameraActive && (
+          <div className="mt-6 glass-card p-6 border-white/10 bg-white/5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-[#00d2ff]" />
+                <h3 className="text-white font-bold">Scanning via Camera</h3>
+              </div>
+              <button
+                onClick={stopCamera}
+                className="p-2 text-[#a1a1aa] hover:text-white hover:bg-white/5 rounded-lg transition-all"
+              >
+                <CameraOff className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Camera Error Message */}
+            {cameraError && (
+              <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <p className="text-red-400 text-sm">{cameraError}</p>
+              </div>
+            )}
+
+            {/* Video Container */}
+            <div className="relative w-full max-w-md mx-auto bg-[#0b0e14] rounded-xl overflow-hidden border border-white/10">
+              <video
+                ref={videoRef}
+                className="w-full h-auto"
+                playsInline
+                muted
+              />
+              <canvas ref={canvasRef} className="hidden" />
+              
+              {/* Scanning overlay */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 border-4 border-[#00d2ff]/30 rounded-xl" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-[#00d2ff] rounded-lg" />
+              </div>
+            </div>
+
+            {/* Flip Camera Button */}
+            <button
+              onClick={flipCamera}
+              className="mt-4 w-full px-6 py-4 bg-white/5 border border-white/10 text-white font-bold rounded-xl hover:bg-white/10 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+            >
+              <RotateCw className="w-5 h-5" />
+              Flip Camera
             </button>
           </div>
         )}

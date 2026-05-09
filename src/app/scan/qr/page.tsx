@@ -198,20 +198,30 @@ export default function QRScannerPage() {
   const startCamera = async () => {
     setCameraError(null);
     setIsStartingCamera(true);
+    
+    console.log("[Camera] Starting camera initialization...");
+    
+    // Stop any existing camera first to prevent race condition
+    await stopCamera();
+    
+    // Add delay to allow DOM and hardware to sync
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     try {
-      console.log("Starting camera with facingMode:", facingMode);
+      console.log("[Camera] Requesting camera with facingMode:", facingMode);
       
       const constraints = {
         video: {
           facingMode: facingMode,
           width: { ideal: 1280, max: 1920 },
           height: { ideal: 720, max: 1080 },
+          aspectRatio: 1.0,
         },
       };
 
-      console.log("Requesting camera with constraints:", constraints);
+      console.log("[Camera] Constraints:", constraints);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log("Camera stream obtained:", stream);
+      console.log("[Camera] Stream obtained successfully");
       streamRef.current = stream;
 
       if (videoRef.current) {
@@ -220,16 +230,22 @@ export default function QRScannerPage() {
         videoRef.current.setAttribute('playsinline', '');
         videoRef.current.setAttribute('muted', '');
         
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          console.log("[Camera] Video metadata loaded, dimensions:", videoRef.current?.videoWidth, "x", videoRef.current?.videoHeight);
+        };
+        
         await videoRef.current.play();
-        console.log("Video playing");
+        console.log("[Camera] Video playing successfully");
         
         // Start scanning loop
         scanQRCode();
       }
 
       setIsCameraActive(true);
+      console.log("[Camera] Camera active and ready");
     } catch (err) {
-      console.error("Camera error:", err);
+      console.error("[Camera] Error caught:", err);
       setCameraError(`Unable to access camera: ${err instanceof Error ? err.message : 'Unknown error'}. Please check permissions or try a different browser.`);
     } finally {
       setIsStartingCamera(false);
@@ -237,49 +253,80 @@ export default function QRScannerPage() {
   };
 
   const stopCamera = async () => {
+    console.log("[Camera] Stopping camera...");
+    
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
+      console.log("[Camera] Animation frame cancelled");
     }
 
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+        console.log("[Camera] Track stopped:", track.kind);
+      });
       streamRef.current = null;
+      console.log("[Camera] Stream stopped");
     }
 
     if (videoRef.current) {
       videoRef.current.srcObject = null;
+      console.log("[Camera] Video source cleared");
     }
 
     setIsCameraActive(false);
+    console.log("[Camera] Camera stopped");
   };
 
   const scanQRCode = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    console.log("[Camera] Starting QR code scanning loop...");
+    
+    if (!videoRef.current || !canvasRef.current) {
+      console.error("[Camera] Video or canvas ref not available");
+      return;
+    }
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
-    if (!ctx) return;
+    if (!ctx) {
+      console.error("[Camera] Canvas context not available");
+      return;
+    }
+
+    console.log("[Camera] Video ready state:", video.readyState);
+    console.log("[Camera] Video dimensions:", video.videoWidth, "x", video.videoHeight);
 
     const scan = () => {
-      if (!isCameraActive || !videoRef.current) return;
+      if (!isCameraActive || !videoRef.current) {
+        console.log("[Camera] Scanning loop stopped (camera inactive)");
+        return;
+      }
 
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
 
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      console.log("[Camera] Image data captured:", imageData.width, "x", imageData.height);
+      
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: "dontInvert",
       });
 
-      if (code && isValidUrl(code.data)) {
-        stopCamera();
-        const result = evaluateUrl(code.data);
-        setScanResult(result);
-        return;
+      if (code) {
+        console.log("[Camera] QR code detected:", code.data);
+        if (isValidUrl(code.data)) {
+          console.log("[Camera] Valid URL detected, stopping camera and evaluating...");
+          stopCamera();
+          const result = evaluateUrl(code.data);
+          setScanResult(result);
+          return;
+        } else {
+          console.log("[Camera] QR detected but not a valid URL, continuing scan...");
+        }
       }
 
       animationFrameRef.current = requestAnimationFrame(scan);

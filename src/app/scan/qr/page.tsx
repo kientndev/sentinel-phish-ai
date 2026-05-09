@@ -201,25 +201,48 @@ export default function QRScannerPage() {
     
     console.log("[Camera] Starting camera initialization...");
     
-    // Stop any existing camera first to prevent race condition
+    // Clean slate: stop any existing camera first
     await stopCamera();
     
     // Add delay to allow DOM and hardware to sync
     await new Promise(resolve => setTimeout(resolve, 500));
     
     try {
-      console.log("[Camera] Requesting camera with facingMode:", facingMode);
+      console.log("[Camera] Enumerating available cameras...");
       
-      const constraints = {
-        video: {
-          facingMode: facingMode,
-          width: { ideal: 1280, max: 1920 },
-          height: { ideal: 720, max: 1080 },
-          aspectRatio: 1.0,
-        },
+      // Enumerate devices to find cameras
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      console.log("[Camera] Found video devices:", videoDevices.length);
+      
+      let deviceId: string | undefined;
+      
+      if (videoDevices.length > 0) {
+        // Try to find back camera first
+        const backCamera = videoDevices.find(device => 
+          device.label.toLowerCase().includes('back') || 
+          device.label.toLowerCase().includes('rear') ||
+          device.label.toLowerCase().includes('environment')
+        );
+        
+        if (backCamera) {
+          deviceId = backCamera.deviceId;
+          console.log("[Camera] Using back camera:", backCamera.label);
+        } else {
+          // Use first available camera
+          deviceId = videoDevices[0].deviceId;
+          console.log("[Camera] Using first available camera:", videoDevices[0].label);
+        }
+      }
+      
+      // Relaxed constraints - no strict width/height, just basic video
+      const constraints: MediaStreamConstraints = {
+        video: deviceId 
+          ? { deviceId: { exact: deviceId }, aspectRatio: 1.0 }
+          : { facingMode: facingMode, aspectRatio: 1.0 },
       };
 
-      console.log("[Camera] Constraints:", constraints);
+      console.log("[Camera] Requesting camera with constraints:", constraints);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       console.log("[Camera] Stream obtained successfully");
       streamRef.current = stream;

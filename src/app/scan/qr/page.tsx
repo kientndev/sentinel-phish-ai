@@ -19,6 +19,7 @@ export default function QRScannerPage() {
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -196,6 +197,7 @@ export default function QRScannerPage() {
 
   const startCamera = async () => {
     setCameraError(null);
+    setIsStartingCamera(true);
     try {
       console.log("Starting camera with facingMode:", facingMode);
       
@@ -229,6 +231,8 @@ export default function QRScannerPage() {
     } catch (err) {
       console.error("Camera error:", err);
       setCameraError(`Unable to access camera: ${err instanceof Error ? err.message : 'Unknown error'}. Please check permissions or try a different browser.`);
+    } finally {
+      setIsStartingCamera(false);
     }
   };
 
@@ -295,6 +299,8 @@ export default function QRScannerPage() {
   const handleCameraScan = () => {
     setScanResult(null);
     setError(null);
+    setCameraError(null);
+    console.log("Camera button clicked, starting...");
     startCamera();
   };
 
@@ -380,6 +386,14 @@ export default function QRScannerPage() {
           </div>
         )}
 
+        {/* Camera Loading Indicator */}
+        {isStartingCamera && (
+          <div className="mt-6 glass-card p-6 border-white/10 bg-white/5 flex flex-col items-center gap-4">
+            <div className="w-16 h-16 border-4 border-[#00d2ff] border-t-transparent rounded-full animate-spin" />
+            <p className="text-[#a1a1aa] font-medium">Starting camera...</p>
+          </div>
+        )}
+
         {/* Camera Modal */}
         {isCameraActive && (
           <div className="mt-6 glass-card p-6 border-white/10 bg-white/5">
@@ -405,15 +419,20 @@ export default function QRScannerPage() {
             )}
 
             {/* Video Container */}
-            <div className="relative w-full max-w-md mx-auto bg-[#0b0e14] rounded-xl overflow-hidden border border-white/10">
+            <div className="relative w-full max-w-md mx-auto bg-[#0b0e14] rounded-xl overflow-hidden border border-white/10" style={{ minHeight: '300px' }}>
               <video
                 ref={videoRef}
                 className="w-full h-auto object-cover"
                 autoPlay
                 playsInline
                 muted
-                style={{ minHeight: '300px' }}
+                style={{ minHeight: '300px', backgroundColor: '#1a1d24' }}
               />
+              {!videoRef.current?.srcObject && (
+                <div className="absolute inset-0 flex items-center justify-center text-[#52525b]">
+                  <p>Camera loading...</p>
+                </div>
+              )}
               <canvas ref={canvasRef} className="hidden" />
               
               {/* Scanning overlay */}

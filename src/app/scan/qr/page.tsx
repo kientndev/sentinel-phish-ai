@@ -197,29 +197,38 @@ export default function QRScannerPage() {
   const startCamera = async () => {
     setCameraError(null);
     try {
+      console.log("Starting camera with facingMode:", facingMode);
+      
       const constraints = {
         video: {
           facingMode: facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
         },
       };
 
+      console.log("Requesting camera with constraints:", constraints);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log("Camera stream obtained:", stream);
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute('autoplay', '');
+        videoRef.current.setAttribute('playsinline', '');
+        videoRef.current.setAttribute('muted', '');
+        
         await videoRef.current.play();
-
+        console.log("Video playing");
+        
         // Start scanning loop
         scanQRCode();
       }
 
       setIsCameraActive(true);
     } catch (err) {
-      setCameraError("Unable to access camera. Please check permissions or try a different browser.");
       console.error("Camera error:", err);
+      setCameraError(`Unable to access camera: ${err instanceof Error ? err.message : 'Unknown error'}. Please check permissions or try a different browser.`);
     }
   };
 
@@ -399,9 +408,11 @@ export default function QRScannerPage() {
             <div className="relative w-full max-w-md mx-auto bg-[#0b0e14] rounded-xl overflow-hidden border border-white/10">
               <video
                 ref={videoRef}
-                className="w-full h-auto"
+                className="w-full h-auto object-cover"
+                autoPlay
                 playsInline
                 muted
+                style={{ minHeight: '300px' }}
               />
               <canvas ref={canvasRef} className="hidden" />
               

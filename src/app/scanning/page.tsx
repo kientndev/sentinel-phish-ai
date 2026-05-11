@@ -17,6 +17,7 @@ import { LangCode, translations } from "../translations";
 import { useAppContext } from "../../context/AppContext";
 import XPBar from "../../components/XPBar";
 import { TOP_DOMAINS } from "../api/scan/whitelist";
+import { checkLicenseBeforeScan, getLicenseErrorMessage } from "../../lib/licenseGatekeeper";
 
 interface ScanResult {
   score: number;
@@ -249,6 +250,13 @@ function ScanningContent() {
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url) return;
+
+    // Check license before allowing scan
+    const licenseCheck = await checkLicenseBeforeScan();
+    if (!licenseCheck.valid) {
+      setError(getLicenseErrorMessage(licenseCheck.reason));
+      return;
+    }
 
     sendGAEvent({ event: "security_scan_start", value: url });
 

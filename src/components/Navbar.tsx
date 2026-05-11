@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, ShieldAlert, Search, UserCircle, Activity, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth, useUser, SignOutButton } from "@clerk/nextjs";
+import { usePartner } from "../../contexts/PartnerContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +16,7 @@ export default function Navbar() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
+  const { primaryColor, logoUrl } = usePartner();
 
   // Mock user subscription tier - in production, this would come from Clerk/Convex
   const userTier = "free" as "free" | "mid" | "pro" | "vip";
@@ -64,10 +66,14 @@ export default function Navbar() {
           {/* Left: Logo + Search Bar */}
           <div className="flex items-center gap-4 flex-1">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="bg-[#00d2ff]/10 p-1.5 rounded-lg group-hover:bg-[#00d2ff]/20 transition-colors border border-[#00d2ff]/20">
-                <ShieldAlert size={18} className="text-[#00d2ff]" />
-              </div>
-              <span className="font-black text-lg tracking-tight text-white group-hover:text-[#00d2ff] transition-colors">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Partner Logo" className="h-6 w-auto" />
+              ) : (
+                <div className="bg-[#00d2ff]/10 p-1.5 rounded-lg group-hover:bg-[#00d2ff]/20 transition-colors border border-[#00d2ff]/20" style={{ backgroundColor: `${primaryColor}10`, borderColor: `${primaryColor}33` }}>
+                  <ShieldAlert size={18} style={{ color: primaryColor }} />
+                </div>
+              )}
+              <span className="font-black text-lg tracking-tight text-white group-hover:text-[#00d2ff] transition-colors" style={{ '--hover-color': primaryColor } as React.CSSProperties}>
                 Sentinel<span className="text-gray-500">Phish</span>
               </span>
             </Link>
@@ -128,6 +134,11 @@ export default function Navbar() {
                     ? "bg-[#00d2ff]/10 text-[#00d2ff]"
                     : "text-[#a1a1aa] hover:text-white hover:bg-white/5"
                 }`}
+                style={
+                  pathname === link.href
+                    ? { backgroundColor: `${primaryColor}1a`, color: primaryColor }
+                    : undefined
+                }
               >
                 {link.name}
                 {link.isNew && (

@@ -4,6 +4,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ConvexClientProvider } from "../components/ConvexClientProvider";
 import { AppProvider } from "../context/AppContext";
+import { PartnerProvider } from "../../contexts/PartnerContext";
 import Navbar from "../components/Navbar";
 import { Toaster } from "sonner";
 import { ClientOnly } from "../components/ClientOnly";
@@ -48,17 +49,19 @@ export default function RootLayout({
     console.error("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is missing");
     return (
       <ConvexClientProvider>
-        <html
-          lang="en"
-          className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
-        >
-          <body className="min-h-full flex flex-col bg-[#0b0e14] text-[#fafafa]">
-            <AppProvider>
-              <Toaster position="bottom-right" richColors theme="dark" />
-              {children}
-            </AppProvider>
-          </body>
-        </html>
+        <PartnerProvider>
+          <html
+            lang="en"
+            className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+          >
+            <body className="min-h-full flex flex-col bg-[#0b0e14] text-[#fafafa]">
+              <AppProvider>
+                <Toaster position="bottom-right" richColors theme="dark" />
+                {children}
+              </AppProvider>
+            </body>
+          </html>
+        </PartnerProvider>
       </ConvexClientProvider>
     );
   }
@@ -73,23 +76,25 @@ export default function RootLayout({
       }}
     >
       <ConvexClientProvider>
-        <html
-          lang="en"
-          className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
-        >
-          <body className="min-h-full flex flex-col bg-[#0b0e14] text-[#fafafa]">
-            <AppProvider>
-              <Toaster position="bottom-right" richColors theme="dark" />
+        <PartnerProvider>
+          <html
+            lang="en"
+            className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+          >
+            <body className="min-h-full flex flex-col bg-[#0b0e14] text-[#fafafa]">
+              <AppProvider>
+                <Toaster position="bottom-right" richColors theme="dark" />
+                <ClientOnly fallback={null}>
+                  <Navbar />
+                </ClientOnly>
+                {children}
+              </AppProvider>
               <ClientOnly fallback={null}>
-                <Navbar />
+                <GoogleAnalytics gaId="G-WR6V55XDBM" />
               </ClientOnly>
-              {children}
-            </AppProvider>
-            <ClientOnly fallback={null}>
-              <GoogleAnalytics gaId="G-WR6V55XDBM" />
-            </ClientOnly>
-          </body>
-        </html>
+            </body>
+          </html>
+        </PartnerProvider>
       </ConvexClientProvider>
     </ClerkProvider>
   );

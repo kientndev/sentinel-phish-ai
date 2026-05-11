@@ -14,4 +14,12 @@ export default defineSchema({
   })
     .index("by_clerk_id", ["clerkId"])
     .index("by_xp", ["xp"]),
+  partners: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    logoUrl: v.optional(v.string()),
+    primaryColor: v.string(),
+    licenseExpiry: v.number(), // Timestamp in milliseconds
+  })
+    .index("by_slug", ["slug"]),
 });

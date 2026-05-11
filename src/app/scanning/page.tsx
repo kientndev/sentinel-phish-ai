@@ -17,7 +17,7 @@ import { LangCode, translations } from "../translations";
 import { useAppContext } from "../../context/AppContext";
 import XPBar from "../../components/XPBar";
 import { TOP_DOMAINS } from "../api/scan/whitelist";
-import { checkLicenseBeforeScan, getLicenseErrorMessage } from "../../lib/licenseGatekeeper";
+import { checkLicenseBeforeScan, getLicenseErrorMessage } from "../../../lib/licenseGatekeeper";
 
 interface ScanResult {
   score: number;

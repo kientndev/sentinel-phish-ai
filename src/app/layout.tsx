@@ -6,6 +6,7 @@ import { ConvexClientProvider } from "../components/ConvexClientProvider";
 import { AppProvider } from "../context/AppContext";
 import { PartnerProvider } from "../../contexts/PartnerContext";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { Toaster } from "sonner";
 import { ClientOnly } from "../components/ClientOnly";
 import "./globals.css";
@@ -57,7 +58,10 @@ export default function RootLayout({
             <body className="min-h-full flex flex-col bg-[#0b0e14] text-[#fafafa]">
               <AppProvider>
                 <Toaster position="bottom-right" richColors theme="dark" />
-                {children}
+                <div className="flex-1 flex flex-col">
+                  {children}
+                </div>
+                <Footer />
               </AppProvider>
             </body>
           </html>
@@ -87,7 +91,10 @@ export default function RootLayout({
                 <ClientOnly fallback={null}>
                   <Navbar />
                 </ClientOnly>
-                {children}
+                <div className="flex-1 flex flex-col">
+                  {children}
+                </div>
+                <Footer />
               </AppProvider>
               <ClientOnly fallback={null}>
                 <GoogleAnalytics gaId="G-WR6V55XDBM" />

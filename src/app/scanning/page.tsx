@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import {
    Search, ShieldAlert, Activity, Globe,
   Brain, Bot, CheckCircle2, MessageSquare, Send, Settings, Download, Zap,
-  Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, UserCircle
+  Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, UserCircle, X
 } from "lucide-react";
 import { sendGAEvent } from "@next/third-parties/google";
 import { usePhishTank } from "../../hooks/usePhishTank";
@@ -152,6 +152,7 @@ function ScanningContent() {
   const [url, setUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [results, setResults] = useState<ScanResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const scannerRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
   const [hasAutoScanned, setHasAutoScanned] = useState(false);
@@ -419,6 +420,18 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
 
         {/* Input Bar */}
         <section ref={scannerRef} className="glass-card p-6 glow-sm relative overflow-hidden transition-all border-[#00d2ff]/20">
+          {error && (
+            <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <p className="text-red-400 text-sm">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto text-red-400 hover:text-red-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          )}
           <form onSubmit={handleScan} className="flex flex-col md:flex-row gap-4 relative z-10">
             <div className="relative flex-1 flex items-stretch">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">

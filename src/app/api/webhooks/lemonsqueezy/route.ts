@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { fetchMutation } from "convex/nextjs";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "../../../../../convex/_generated/api";
 
 // LemonSqueezy webhook secret
 const WEBHOOK_SECRET = "illke#this12(";

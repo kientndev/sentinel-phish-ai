@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Zap, Shield, Crown, X, XCircle } from "lucide-react";
+import { Check, Zap, Shield, Crown, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 

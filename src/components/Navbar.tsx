@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, ShieldAlert, Search, UserCircle, Activity, ChevronDown } from "lucide-react";
+import {
+  Search, ShieldAlert, Globe,
+  Brain, Bot, CheckCircle2, MessageSquare, Send, Settings, Download, Zap,
+  Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, UserCircle, X
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth, useUser, SignOutButton } from "@clerk/nextjs";
 import { usePartner } from "../../contexts/PartnerContext";

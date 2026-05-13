@@ -1,5 +1,8 @@
-import { fetchQuery } from "convex/nextjs";
+import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
+
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+const convex = convexUrl ? new ConvexHttpClient(convexUrl) : null;
 
 export interface Partner {
   _id: string;
@@ -40,10 +43,10 @@ export function getSlugFromHostname(hostname: string): string | null {
 
 // Get partner by slug
 export async function getPartnerBySlug(slug: string | null): Promise<Partner | null> {
-  if (!slug) return null;
+  if (!slug || !convex) return null;
   
   try {
-    const partner = await fetchQuery(api.partners.getPartnerBySlug, { slug });
+    const partner = await convex.query(api.partners.getPartnerBySlug, { slug });
     return partner as Partner | null;
   } catch (error) {
     console.error("Error fetching partner:", error);
@@ -54,9 +57,13 @@ export async function getPartnerBySlug(slug: string | null): Promise<Partner | n
 // Check if partner license is valid
 export async function checkPartnerLicense(slug: string | null): Promise<{ valid: boolean; reason?: string }> {
   if (!slug) return { valid: true }; // Default valid for no partner
+  if (!convex) {
+    console.warn("Convex client not initialized");
+    return { valid: true }; // Fallback to valid if client is missing
+  }
   
   try {
-    const result = await fetchQuery(api.partners.checkLicense, { slug });
+    const result = await convex.query(api.partners.checkLicense, { slug });
     return result;
   } catch (error) {
     console.error("Error checking license:", error);

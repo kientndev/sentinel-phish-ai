@@ -1,7 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { getSlugFromHostname, getPartnerBySlug, Partner } from "../lib/partner";
+import { createContext, useContext, ReactNode, useMemo } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../convex/_generated/api";
+import { getSlugFromHostname, Partner } from "../lib/partner";
 
 interface PartnerContextType {
   partner: Partner | null;
@@ -18,28 +20,17 @@ const PartnerContext = createContext<PartnerContextType>({
 });
 
 export function PartnerProvider({ children }: { children: ReactNode }) {
-  const [partner, setPartner] = useState<Partner | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const slug = getSlugFromHostname(hostname);
+  
+  // Use Convex useQuery hook for reactive data fetching
+  const partnerData = useQuery(
+    api.partners.getPartnerBySlug, 
+    slug ? { slug } : "skip"
+  );
 
-  useEffect(() => {
-    async function loadPartner() {
-      try {
-        const hostname = window.location.hostname;
-        const slug = getSlugFromHostname(hostname);
-        
-        if (slug) {
-          const partnerData = await getPartnerBySlug(slug);
-          setPartner(partnerData);
-        }
-      } catch (error) {
-        console.error("Error loading partner:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadPartner();
-  }, []);
+  const isLoading = partnerData === undefined;
+  const partner = partnerData || null;
 
   const primaryColor = partner?.primaryColor || "#00d2ff";
   const logoUrl = partner?.logoUrl || null;

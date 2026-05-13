@@ -42,10 +42,6 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
     return <>{children}</>;
   }
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   const url = process.env.NEXT_PUBLIC_CONVEX_URL;
   if (!url) {
     console.error("NEXT_PUBLIC_CONVEX_URL is not defined");
@@ -58,9 +54,9 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
   }
 
   try {
-    console.log("ConvexClientProvider - Initializing Convex client with URL:", url);
+    // We can initialize the client even during SSR
+    // This prevents "Could not find Convex client" errors during build
     const convex = new ConvexReactClient(url);
-    console.log("ConvexClientProvider - Convex client initialized successfully");
     return <ConvexProvider client={convex}>{children}</ConvexProvider>;
   } catch (e) {
     console.error("Failed to initialize Convex client:", e);

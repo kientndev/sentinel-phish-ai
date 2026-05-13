@@ -10,6 +10,7 @@ import { ClientOnly } from "../../components/ClientOnly";
 import { useEffect } from "react";
 import Image from "next/image";
 
+function ProfileContent() {
   const [mounted, setMounted] = useState(false);
   
   useEffect(() => {

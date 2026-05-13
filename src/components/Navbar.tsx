@@ -7,6 +7,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth, useUser, SignOutButton } from "@clerk/nextjs";
 import { usePartner } from "../../contexts/PartnerContext";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,8 +34,8 @@ export default function Navbar() {
       {/* Floating Glassmorphism Navbar */}
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-3">
         <div className="bg-[#0b0e14]/70 backdrop-blur-md border border-white/10 rounded-2xl glow-sm flex items-center justify-between px-4 md:px-6 py-3">
-          {/* Left: Logo + Search Bar */}
-          <div className="flex items-center gap-4 flex-1">
+          {/* Left: Logo */}
+          <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2 group">
               {logoUrl ? (
                 <img src={logoUrl} alt="Partner Logo" className="h-6 w-auto" />
@@ -46,66 +48,22 @@ export default function Navbar() {
                 Sentinel<span className="text-gray-500">Phish</span>
               </span>
             </Link>
-            
-            {/* Search/Command Bar - Desktop */}
-            <div className="hidden lg:flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 w-64 relative">
-              <Search size={16} className="text-[#52525b]" />
-              <input
-                type="text"
-                placeholder="Search... (⌘K)"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowSearchResults(e.target.value.length > 0);
-                }}
-                onFocus={() => setShowSearchResults(searchQuery.length > 0)}
-                onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
-                onKeyDown={handleSearch}
-                className="bg-transparent text-white text-sm placeholder:text-[#52525b] focus:outline-none flex-1"
-              />
-              <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium text-[#52525b] bg-white/5 rounded border border-white/10">
-                ⌘K
-              </kbd>
-
-              {/* Search Results Dropdown */}
-              <AnimatePresence>
-                {showSearchResults && filteredPages.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-[#0b0e14]/95 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden glow-sm z-50"
-                  >
-                    {filteredPages.map((page) => (
-                      <button
-                        key={page.path}
-                        onClick={() => handlePageClick(page.path)}
-                        className="w-full px-3 py-2 text-left text-sm text-[#a1a1aa] hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
-                      >
-                        <span className="flex-1">{page.name}</span>
-                        <span className="text-[10px] text-[#52525b]">{page.path}</span>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
           </div>
 
-          {/* Center: Navigation Links - Desktop */}
-          <div className="hidden md:flex items-center gap-1">
+          {/* Center: Navigation Links */}
+          <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`text-sm font-medium tracking-wide transition-all relative ${
                   pathname === link.href
-                    ? "bg-[#00d2ff]/10 text-[#00d2ff]"
-                    : "text-[#a1a1aa] hover:text-white hover:bg-white/5"
+                    ? "text-[#00d2ff]"
+                    : "text-[#a1a1aa] hover:text-blue-400"
                 }`}
                 style={
                   pathname === link.href
-                    ? { backgroundColor: `${primaryColor}1a`, color: primaryColor }
+                    ? { color: primaryColor }
                     : undefined
                 }
               >
@@ -114,6 +72,9 @@ export default function Navbar() {
                   <span className="ml-1.5 px-1 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-500/30">
                     NEW
                   </span>
+                )}
+                {pathname === link.href && (
+                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#00d2ff]" style={{ backgroundColor: primaryColor }} />
                 )}
               </Link>
             ))}

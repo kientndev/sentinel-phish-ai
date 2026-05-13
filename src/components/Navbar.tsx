@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import {
-  Search, ShieldAlert, Globe,
-  Brain, Bot, CheckCircle2, MessageSquare, Send, Settings, Download, Zap,
-  Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, UserCircle, X
+  ShieldAlert, Globe, X, Menu, UserCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth, useUser, SignOutButton } from "@clerk/nextjs";
@@ -12,10 +10,7 @@ import { usePartner } from "../../contexts/PartnerContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showSearchResults, setShowSearchResults] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const { primaryColor, logoUrl } = usePartner();
@@ -24,39 +19,11 @@ export default function Navbar() {
   const userTier = "free" as "free" | "mid" | "pro" | "vip";
   const isSubscribed = userTier === "pro" || userTier === "vip";
 
-  // Page navigation data
-  const pages = [
-    { name: "Dashboard", path: "/dashboard", keywords: ["dashboard", "home", "overview"] },
-    { name: "Scan History", path: "/dashboard#history", keywords: ["history", "scans", "past"] },
-    { name: "QR Shield", path: "/scan/qr", keywords: ["qr", "scanner", "quishing"] },
-    { name: "Community Reports", path: "/reports", keywords: ["report", "community", "vault"] },
-    { name: "User Settings", path: "/profile", keywords: ["profile", "settings", "account"] },
-  ];
-
-  const filteredPages = pages.filter(
-    (page) =>
-      page.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      page.keywords.some((keyword) => keyword.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && filteredPages.length > 0) {
-      router.push(filteredPages[0].path);
-      setSearchQuery("");
-      setShowSearchResults(false);
-    }
-  };
-
-  const handlePageClick = (path: string) => {
-    router.push(path);
-    setSearchQuery("");
-    setShowSearchResults(false);
-  };
-
   const navLinks = [
     { name: "Dashboard", href: "/dashboard" },
-    { name: "Scans", href: "/scanning" },
+    { name: "Scanning", href: "/scanning" },
     { name: "QR Shield", href: "/scan/qr", isNew: true },
+    { name: "Reports", href: "/reports" },
     { name: "Pricing", href: "/pricing" },
   ];
 

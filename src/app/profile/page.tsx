@@ -10,7 +10,12 @@ import { ClientOnly } from "../../components/ClientOnly";
 import { useEffect } from "react";
 import Image from "next/image";
 
-function ProfileContent() {
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const { user, isLoaded: userLoaded } = useUser();
   const getOrCreateUser = useMutation(api.users.getOrCreateUser);
 
@@ -18,10 +23,10 @@ function ProfileContent() {
   const hasClerkKey = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const hasConvexUrl = !!process.env.NEXT_PUBLIC_CONVEX_URL;
 
-  // Fetch user data from Convex only if env vars are present
+  // Fetch user data from Convex only if env vars are present and mounted
   const convexUser = useQuery(
     api.users.getUser,
-    (hasConvexUrl && user?.id) ? { clerkId: user.id } : "skip"
+    (mounted && hasConvexUrl && user?.id) ? { clerkId: user.id } : "skip"
   );
 
   // Sync user to Convex on login only if env vars are present

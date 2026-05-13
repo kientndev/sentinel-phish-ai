@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, ReactNode, useMemo } from "react";
+import { createContext, useContext, ReactNode, useMemo, useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { getSlugFromHostname, Partner } from "../lib/partner";
@@ -20,17 +20,24 @@ const PartnerContext = createContext<PartnerContextType>({
 });
 
 export function PartnerProvider({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const slug = getSlugFromHostname(hostname);
   
   // Use Convex useQuery hook for reactive data fetching
+  // Only call when mounted to avoid SSR errors with missing ConvexProvider
   const partnerData = useQuery(
     api.partners.getPartnerBySlug, 
-    slug ? { slug } : "skip"
+    (mounted && slug) ? { slug } : "skip"
   );
 
-  const isLoading = partnerData === undefined;
-  const partner = partnerData || null;
+  const isLoading = mounted ? (partnerData === undefined) : true;
+  const partner = mounted ? (partnerData || null) : null;
 
   const primaryColor = partner?.primaryColor || "#00d2ff";
   const logoUrl = partner?.logoUrl || null;

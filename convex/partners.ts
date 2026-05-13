@@ -7,7 +7,7 @@ export const getPartnerBySlug = query({
   handler: async (ctx, args) => {
     const partner = await ctx.db
       .query("partners")
-      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .filter((q) => q.eq(q.field("slug"), args.slug))
       .first();
     return partner;
   },
@@ -94,7 +94,7 @@ export const checkLicense = query({
   handler: async (ctx, args) => {
     const partner = await ctx.db
       .query("partners")
-      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .filter((q) => q.eq(q.field("slug"), args.slug))
       .first();
     
     if (!partner) {

@@ -1,6 +1,7 @@
 
 import { ConvexHttpClient } from "convex/browser";
-import { api } from "./convex/_generated/api.js";
+import pkg from "./convex/_generated/api.js";
+const { api } = pkg;
 
 const url = "https://exciting-octopus-660.convex.cloud";
 

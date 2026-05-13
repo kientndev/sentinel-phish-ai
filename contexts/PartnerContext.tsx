@@ -36,8 +36,11 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
     (mounted && slug) ? { slug } : "skip"
   );
 
+  // If query returns undefined (loading) or null (not found), or if it errors
+  // Error handling: Convex useQuery might throw if the query itself crashes
+  // We'll use a safe derived state
   const isLoading = mounted ? (partnerData === undefined) : true;
-  const partner = mounted ? (partnerData || null) : null;
+  const partner = (mounted && partnerData) ? partnerData : null;
 
   const primaryColor = partner?.primaryColor || "#00d2ff";
   const logoUrl = partner?.logoUrl || null;

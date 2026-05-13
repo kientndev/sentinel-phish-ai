@@ -143,52 +143,6 @@ export default function Navbar() {
             className="px-4 md:px-6 pb-4"
           >
             <div className="bg-[#0b0e14]/95 backdrop-blur-md border border-white/10 rounded-2xl p-4 glow-sm flex flex-col gap-2">
-              {/* Mobile Search */}
-              <div className="flex flex-col gap-2 relative">
-                <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-                  <Search size={16} className="text-[#52525b]" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setShowSearchResults(e.target.value.length > 0);
-                    }}
-                    onFocus={() => setShowSearchResults(searchQuery.length > 0)}
-                    onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
-                    onKeyDown={handleSearch}
-                    className="bg-transparent text-white text-sm placeholder:text-[#52525b] focus:outline-none flex-1"
-                  />
-                </div>
-
-                {/* Mobile Search Results Dropdown */}
-                <AnimatePresence>
-                  {showSearchResults && filteredPages.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="bg-[#0b0e14]/95 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden glow-sm z-50"
-                    >
-                      {filteredPages.map((page) => (
-                        <button
-                          key={page.path}
-                          onClick={() => {
-                            handlePageClick(page.path);
-                            setIsOpen(false);
-                          }}
-                          className="w-full px-3 py-2 text-left text-sm text-[#a1a1aa] hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
-                        >
-                          <span className="flex-1">{page.name}</span>
-                          <span className="text-[10px] text-[#52525b]">{page.path}</span>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
@@ -199,6 +153,11 @@ export default function Navbar() {
                       ? "bg-[#00d2ff]/10 text-[#00d2ff]"
                       : "text-[#a1a1aa] hover:text-white hover:bg-white/5"
                   }`}
+                  style={
+                    pathname === link.href
+                      ? { backgroundColor: `${primaryColor}1a`, color: primaryColor }
+                      : undefined
+                  }
                 >
                   <span>{link.name}</span>
                   {link.isNew && (

@@ -36,12 +36,12 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
   );
 
   // If query returns undefined (loading) or null (not found)
-  const isLoading = mounted ? (partnerData === undefined && slug && slug !== "sentinel-admin") : true;
+  const isLoading = mounted ? (partnerData === undefined && !!slug && slug !== "sentinel-admin") : true;
   
   const partner = useMemo(() => {
     if (!mounted) return null;
     if (slug === "sentinel-admin") return DEFAULT_PARTNER;
-    return partnerData || null;
+    return (partnerData as Partner | null) || null;
   }, [mounted, slug, partnerData]);
 
   const primaryColor = partner?.primaryColor || "#3b82f6";

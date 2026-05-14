@@ -22,4 +22,18 @@ export default defineSchema({
     licenseExpiry: v.number(), // Timestamp in milliseconds
   })
     .index("by_slug", ["slug"]),
+  
+  waitlist: defineTable({
+    email: v.string(),
+    plan: v.string(),
+    joinedAt: v.number(),
+  }).index("by_email", ["email"]),
+
+  contacts: defineTable({
+    name: v.string(),
+    email: v.string(),
+    message: v.string(),
+    attachmentId: v.optional(v.string()), // Storage ID
+    createdAt: v.number(),
+  }),
 });

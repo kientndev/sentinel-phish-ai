@@ -3,10 +3,17 @@
 import { Check, Zap, Shield, Crown, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import WaitlistModal from "../../components/WaitlistModal";
 
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<string | null>(null);
+
+  const handleUpgradeClick = (tierName: string) => {
+    setSelectedTier(tierName);
+    setShowModal(true);
+  };
 
   const tiers = [
     {
@@ -143,7 +150,7 @@ export default function PricingPage() {
                 </Link>
               ) : (
                 <button
-                  onClick={() => setShowModal(true)}
+                  onClick={() => handleUpgradeClick(tier.name)}
                   className="w-full py-3 text-center rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all uppercase tracking-widest text-xs"
                 >
                   Upgrade
@@ -154,45 +161,11 @@ export default function PricingPage() {
         })}
       </div>
 
-      {/* Coming Soon Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-card p-8 max-w-md w-full relative">
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 text-[#a1a1aa] hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#a855f7]/20 p-4 flex items-center justify-center">
-                <Crown className="w-8 h-8 text-[#a855f7]" />
-              </div>
-              <h2 className="text-2xl font-black text-white mb-2">Coming Soon</h2>
-              <p className="text-[#a1a1aa]">Secure Payment Gateway</p>
-            </div>
-            
-            <p className="text-center text-white/80 mb-6">
-              We are currently finalizing our secure payment gateway. Join the early-access list to get an extra 10% off when we go live!
-            </p>
-            
-            <div className="space-y-3">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-[#a1a1aa] focus:outline-none focus:border-[#a855f7] transition-colors"
-              />
-              <button
-                onClick={() => setShowModal(false)}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all uppercase tracking-widest text-xs"
-              >
-                Join Waitlist
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <WaitlistModal 
+        isOpen={showModal} 
+        onClose={() => setShowModal(false)} 
+        plan={selectedTier || "Pro"} 
+      />
     </main>
   );
 }

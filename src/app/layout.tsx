@@ -31,43 +31,17 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_placeholder";
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
   
   try {
     console.log("=== ENVIRONMENT CHECK ===");
     console.log("NODE_ENV:", process.env.NODE_ENV);
-    console.log("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:", clerkKey ? `${clerkKey.substring(0, 10)}...` : "MISSING");
+    console.log("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:", process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? `${process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.substring(0, 10)}...` : "MISSING (Using placeholder)");
     console.log("NEXT_PUBLIC_CONVEX_URL:", convexUrl || "MISSING");
-    console.log("NEXT_PUBLIC_CONVEX_URL type:", typeof convexUrl);
     console.log("========================");
   } catch (e) {
-    console.error("Environment check failed:", e);
-  }
-
-  // Auth guard - only initialize Clerk if key is present
-  if (!clerkKey) {
-    console.error("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is missing");
-    return (
-      <ConvexClientProvider>
-        <PartnerProvider>
-          <html
-            lang="en"
-            className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
-          >
-            <body className="min-h-full flex flex-col bg-[#0b0e14] text-[#fafafa]">
-              <AppProvider>
-                <Toaster position="bottom-right" richColors theme="dark" />
-                <div className="flex-1 flex flex-col">
-                  {children}
-                </div>
-                <Footer />
-              </AppProvider>
-            </body>
-          </html>
-        </PartnerProvider>
-      </ConvexClientProvider>
-    );
+    // Fail silently in environment check
   }
 
   return (

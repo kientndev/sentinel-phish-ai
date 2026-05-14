@@ -4,7 +4,6 @@ import { Shield, Zap, Loader2, Lock } from "lucide-react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { useAppContext } from "../../context/AppContext";
 import XPBar from "../../components/XPBar";
 import { ClientOnly } from "../../components/ClientOnly";
 import { useEffect, useState } from "react";

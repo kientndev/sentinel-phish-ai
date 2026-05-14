@@ -14,7 +14,6 @@ import { usePhishTank } from "../../hooks/usePhishTank";
 import { AnimatePresence, motion } from "framer-motion";
 import SettingsModal, { AiMode } from "../SettingsModal";
 import { LangCode, translations } from "../translations";
-import { useAppContext } from "../../context/AppContext";
 import XPBar from "../../components/XPBar";
 import { TOP_DOMAINS } from "../api/scan/whitelist";
 import { checkLicenseBeforeScan, getLicenseErrorMessage } from "../../../lib/licenseGatekeeper";
@@ -358,7 +357,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
         handleScan(event);
       }, 500);
     }
-  }, [searchParams, hasAutoScanned, isScanning]);
+  }, [searchParams, hasAutoScanned, isScanning, handleScan]);
 
   return (
     <main className="flex flex-col flex-1 items-center px-6 md:px-10 py-10 relative overflow-hidden">

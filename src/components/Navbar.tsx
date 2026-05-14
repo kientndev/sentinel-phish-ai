@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import {
-  ShieldAlert, Globe, X, Menu, UserCircle
+  ShieldAlert, X, Menu, UserCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth, useUser, SignOutButton } from "@clerk/nextjs";
 import { usePartner } from "../../contexts/PartnerContext";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export default function Navbar() {
@@ -38,7 +39,7 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2 group">
               {logoUrl ? (
-                <img src={logoUrl} alt="Partner Logo" className="h-6 w-auto" />
+                <Image src={logoUrl} alt="Partner Logo" width={100} height={24} className="h-6 w-auto" />
               ) : (
                 <div className="bg-[#00d2ff]/10 p-1.5 rounded-lg group-hover:bg-[#00d2ff]/20 transition-colors border border-[#00d2ff]/20" style={{ backgroundColor: `${primaryColor}10`, borderColor: `${primaryColor}33` }}>
                   <ShieldAlert size={18} style={{ color: primaryColor }} />

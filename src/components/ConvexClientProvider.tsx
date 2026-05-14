@@ -4,11 +4,9 @@ import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ReactNode, useEffect, useState } from "react";
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
-  const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setMounted(true);
     
     const url = process.env.NEXT_PUBLIC_CONVEX_URL;
     console.log("ConvexClientProvider - Raw URL:", url);

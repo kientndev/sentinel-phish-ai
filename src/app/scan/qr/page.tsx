@@ -1,7 +1,7 @@
 "use client";
 
 import { QrCode, Upload, X, AlertTriangle, Shield, ArrowRight, AlertCircle, Camera, CameraOff, RotateCw } from "lucide-react";
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import jsQR from "jsqr";
 
@@ -85,16 +85,16 @@ export default function QRScannerPage() {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFile(e.dataTransfer.files[0]);
     }
-  }, []);
+  }, [handleFile]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     if (e.target.files && e.target.files[0]) {
       handleFile(e.target.files[0]);
     }
-  }, []);
+  }, [handleFile]);
 
-  const handleFile = async (file: File) => {
+  const handleFile = useCallback(async (file: File) => {
     setError(null);
     setScanResult(null);
     
@@ -148,11 +148,12 @@ export default function QRScannerPage() {
         setError("No QR code detected in the image");
       }
     } catch (err) {
+      console.error(err);
       setError("Failed to process image. Please try again.");
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, []);
 
   const readFile = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -163,14 +164,14 @@ export default function QRScannerPage() {
     });
   };
 
-  const isValidUrl = (string: string): boolean => {
+  const isValidUrl = useCallback((string: string): boolean => {
     try {
       new URL(string);
       return true;
-    } catch (_) {
+    } catch {
       return false;
     }
-  };
+  }, []);
 
   const onButtonClick = () => {
     inputRef.current?.click();

@@ -37,8 +37,12 @@ export function getSlugFromHostname(hostname: string): string | null {
   if (parts.length >= 2) {
     const slug = parts[0] === 'www' ? (parts.length >= 3 ? parts[1] : null) : parts[0];
     
-    // Treat the main app domain as no partner (null)
-    if (slug === "sentinelphishai" || slug === "sentinel-phish") {
+    // Treat the main app domain and Vercel preview domains as no partner (null)
+    if (
+      slug === "sentinelphishai" || 
+      slug === "sentinel-phish" || 
+      (slug?.includes("sentinelphishai") && cleanHostname.endsWith(".vercel.app"))
+    ) {
       return null;
     }
     

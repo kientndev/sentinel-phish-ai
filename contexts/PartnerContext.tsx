@@ -3,7 +3,7 @@
 import { createContext, useContext, ReactNode, useMemo, useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { getSlugFromHostname, Partner } from "../lib/partner";
+import { getSlugFromHostname, Partner, DEFAULT_PARTNER } from "../lib/partner";
 
 interface PartnerContextType {
   partner: Partner | null;
@@ -15,7 +15,7 @@ interface PartnerContextType {
 const PartnerContext = createContext<PartnerContextType>({
   partner: null,
   isLoading: true,
-  primaryColor: "#00d2ff", // Default color
+  primaryColor: "#3b82f6", // Updated to match DEFAULT_PARTNER
   logoUrl: null,
 });
 
@@ -30,19 +30,21 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
   const slug = getSlugFromHostname(hostname);
   
   // Use Convex useQuery hook for reactive data fetching
-  // Only call when mounted to avoid SSR errors with missing ConvexProvider
   const partnerData = useQuery(
     api.partners.getPartnerBySlug, 
-    (mounted && slug) ? { slug } : "skip"
+    (mounted && slug && slug !== "sentinel-admin") ? { slug } : "skip"
   );
 
-  // If query returns undefined (loading) or null (not found), or if it errors
-  // Error handling: Convex useQuery might throw if the query itself crashes
-  // We'll use a safe derived state
-  const isLoading = mounted ? (partnerData === undefined) : true;
-  const partner = (mounted && partnerData) ? partnerData : null;
+  // If query returns undefined (loading) or null (not found)
+  const isLoading = mounted ? (partnerData === undefined && slug && slug !== "sentinel-admin") : true;
+  
+  const partner = useMemo(() => {
+    if (!mounted) return null;
+    if (slug === "sentinel-admin") return DEFAULT_PARTNER;
+    return partnerData || null;
+  }, [mounted, slug, partnerData]);
 
-  const primaryColor = partner?.primaryColor || "#00d2ff";
+  const primaryColor = partner?.primaryColor || "#3b82f6";
   const logoUrl = partner?.logoUrl || null;
 
   return (

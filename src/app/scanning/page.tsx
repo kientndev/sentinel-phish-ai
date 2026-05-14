@@ -247,7 +247,7 @@ function ScanningContent() {
   };
 
   // ── Scan handler ────────────────────────────────────────
-  const handleScan = async (e: React.FormEvent) => {
+  const handleScan = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url) return;
 
@@ -298,7 +298,7 @@ function ScanningContent() {
       
       setIsScanning(false);
     }, isWhitelisted ? 800 : 2500); 
-  };
+  }, [url, addScan]);
 
   const handleDownloadReport = () => {
     if (!results) return;

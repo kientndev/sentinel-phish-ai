@@ -126,12 +126,11 @@ const MOCK_NEUTRAL_RESULT = {
       "visual": "Design is original and does not attempt to mimic any known corporate brand or service.",
       "technical": "Secure HTTPS connection with valid domain-validated certificate.",
       "behavior": "Standard web application patterns detected. No credential harvesting forms found."
-    },
     "advisor": {
       "summary": "This site appears to be a legitimate independent project. While the domain is relatively new, it shows no signs of malicious activity.",
       "actionable_advice": [
         "Continue to use standard caution when sharing personal data.",
-        "Verify the site's 'About Us' or 'Contact' page for more info.",
+        "Verify the site's 'About Us' or team page for more info.",
         "Ensure your browser and security software are up to date."
       ]
     },

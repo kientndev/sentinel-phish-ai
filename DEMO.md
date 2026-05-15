@@ -235,7 +235,7 @@ This document provides a structured protocol for creating a high-quality, 60-sec
 ### Call-to-Action
 
 - **End Screen**: "Start Free Trial" or "Contact Sales"
-- **Description**: Link to pricing or contact page
+- **Description**: Link to pricing page
 - **Comments**: Enable for engagement
 - **Cards**: Link to related content
 

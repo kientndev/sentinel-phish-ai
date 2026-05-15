@@ -24,7 +24,7 @@ export const join = mutation({
     });
 
     // Trigger notification action
-    await ctx.scheduler.runAfter(0, api.contact.notifyAdmin, {
+    await ctx.scheduler.runAfter(0, api.notifications.notifyAdmin, {
       type: "waitlist",
       data: {
         email: args.email,

@@ -19,7 +19,7 @@ export default function Footer() {
 
           {/* Right: Commercial Licensing Info */}
           <div className="text-sm text-[#a1a1aa]">
-            Commercial licensing available for MSPs & Fintech. Contact the Founder for inquiries.
+            Commercial licensing available for MSPs & Fintech. Inquire for licensing details.
           </div>
         </div>
       </div>

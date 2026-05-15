@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // We'll generate a high-res, visually appealing QR code pointing to localhost or the Vercel deployed app.
-const targetUrl = 'https://sentinel-phish.vercel.app'; 
+const targetUrl = 'https://sentinelphishai.vercel.app'; 
 const outputPath = 'C:\\Users\\Trikien\\.gemini\\antigravity\\brain\\d93a638c-e9e0-4bbc-a94d-af041e698212\\sentinel_qr.png';
 
 const options = {

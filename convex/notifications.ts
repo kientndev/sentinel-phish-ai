@@ -37,6 +37,7 @@ export const notifyAdmin = action({
       body: JSON.stringify({
         from: "SentinelPhish Outreach <onboarding@resend.dev>",
         to: [to],
+        reply_to: args.data.email,
         subject: subject,
         text: body,
       }),

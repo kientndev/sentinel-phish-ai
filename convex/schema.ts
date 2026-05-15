@@ -28,4 +28,13 @@ export default defineSchema({
     plan: v.string(),
     joinedAt: v.number(),
   }).index("by_email", ["email"]),
+
+  contacts: defineTable({
+    name: v.string(),
+    email: v.string(),
+    subject: v.string(),
+    message: v.string(),
+    attachmentIds: v.optional(v.array(v.string())), // Storage IDs
+    createdAt: v.number(),
+  }),
 });

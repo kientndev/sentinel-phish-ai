@@ -81,7 +81,7 @@ The risk scoring engine combines weighted factors:
 1. **Clone the Repository**
    ```bash
    git clone https://github.com/your-org/sentinel-phish.git
-   cd sentinel-phish
+   cd sentinelphishai
    ```
 
 2. **Install Dependencies**
@@ -163,7 +163,7 @@ If all tests pass, your installation is ready for production use.
 ## 📁 Project Structure
 
 ```
-sentinel-phish/
+sentinelphishai/
 ├── src/
 │   ├── app/
 │   │   ├── api/

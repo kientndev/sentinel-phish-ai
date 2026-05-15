@@ -20,13 +20,15 @@ export const send = mutation({
       createdAt: Date.now(),
     });
 
-    // Optionally notify admin (re-using the logic from notifications)
+    // Trigger admin notification
     try {
       await ctx.scheduler.runAfter(0, api.notifications.notifyAdmin, {
-        type: "waitlist", // We'll just reuse waitlist type or update notifyAdmin to support contact again
+        type: "contact",
         data: {
+          name: args.name,
           email: args.email,
-          plan: `CONTACT: ${args.subject}`,
+          subject: args.subject,
+          message: args.message,
         }
       });
     } catch (e) {

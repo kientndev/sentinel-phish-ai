@@ -3,10 +3,13 @@ import { action } from "./_generated/server";
 
 export const notifyAdmin = action({
   args: {
-    type: v.literal("waitlist"),
+    type: v.union(v.literal("waitlist"), v.literal("contact")),
     data: v.object({
+      name: v.optional(v.string()),
       email: v.string(),
-      plan: v.string(),
+      plan: v.optional(v.string()),
+      subject: v.optional(v.string()),
+      message: v.optional(v.string()),
     }),
   },
   handler: async (ctx, args) => {
@@ -17,8 +20,13 @@ export const notifyAdmin = action({
     }
 
     const to = "kien.eat.pizza@gmail.com";
-    const subject = "New Waitlist Signup";
-    const body = `New waitlist signup: ${args.data.email} for plan ${args.data.plan}`;
+    const subject = args.type === "waitlist" 
+      ? "🛡️ New Waitlist Signup - SentinelPhish" 
+      : `📩 New Contact Message: ${args.data.subject || "No Subject"}`;
+    
+    const body = args.type === "waitlist"
+      ? `New waitlist signup received:\n\nEmail: ${args.data.email}\nPlan: ${args.data.plan}\n\nTimestamp: ${new Date().toLocaleString()}`
+      : `New contact form submission:\n\nFrom: ${args.data.name} (${args.data.email})\nSubject: ${args.data.subject}\n\nMessage:\n${args.data.message}\n\nTimestamp: ${new Date().toLocaleString()}`;
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -27,7 +35,7 @@ export const notifyAdmin = action({
         Authorization: `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: "SentinelPhish <onboarding@resend.dev>",
+        from: "SentinelPhish Outreach <onboarding@resend.dev>",
         to: [to],
         subject: subject,
         text: body,

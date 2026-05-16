@@ -4,7 +4,7 @@ import { fetchMutation } from "convex/nextjs";
 import { api } from "../../../../../convex/_generated/api";
 
 // LemonSqueezy webhook secret
-const WEBHOOK_SECRET = "illke#this12(";
+const WEBHOOK_SECRET = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
 
 interface LemonSqueezyWebhookEvent {
   meta: {
@@ -121,6 +121,14 @@ export async function POST(request: NextRequest) {
         console.error("❌ Failed to update partner license:", error);
         return NextResponse.json({ error: "Failed to update license" }, { status: 500 });
       }
+    } else if (meta.event_name === "subscription_payment_success") {
+      console.log("ℹ️ Subscription payment success received - Logging for future implementation");
+      console.log("Partner Slug:", meta.custom_data?.partner_slug);
+    } else if (meta.event_name === "subscription_expired" || meta.event_name === "order_refunded") {
+      console.log(`⚠️ ${meta.event_name} received - Logging for future revocation implementation`);
+      console.log("Partner Slug:", meta.custom_data?.partner_slug);
+    } else {
+      console.log(`ℹ️ Received unhandled event: ${meta.event_name}`);
     }
 
     return NextResponse.json({ message: "Webhook processed successfully" }, { status: 200 });

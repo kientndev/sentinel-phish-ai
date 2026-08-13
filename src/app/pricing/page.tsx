@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Zap, Shield, Crown, X } from "lucide-react";
+import { Check, Zap, Shield, Crown } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import WaitlistModal from "../../components/WaitlistModal";

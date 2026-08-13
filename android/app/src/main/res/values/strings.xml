@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SentinelPhish AI Security</string>
+    <string name="title_activity_main">SentinelPhish AI Security</string>
+    <string name="package_name">com.sentinelphish.app</string>
+    <string name="custom_url_scheme">com.sentinelphish.app</string>
+</resources>

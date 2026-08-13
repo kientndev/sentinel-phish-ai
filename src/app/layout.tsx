@@ -41,7 +41,7 @@ export default function RootLayout({
     console.log("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:", process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? `${process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.substring(0, 10)}...` : "MISSING (Using placeholder)");
     console.log("NEXT_PUBLIC_CONVEX_URL:", convexUrl || "MISSING");
     console.log("========================");
-  } catch (e) {
+  } catch {
     // Fail silently in environment check
   }
 

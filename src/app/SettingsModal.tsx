@@ -173,6 +173,22 @@ export default function SettingsModal({
           </button>
         </div>
 
+        {/* Help & Support */}
+        <div className="space-y-2 border-t border-white/10 pt-4 mt-1">
+          <label className="block text-[11px] font-semibold uppercase tracking-widest text-[#a1a1aa]">
+            Help & Support
+          </label>
+          <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center space-y-1">
+            <p className="text-xs text-zinc-400">Have questions or feedback?</p>
+            <a 
+              href="mailto:support@sentinelshield.ai" 
+              className="block text-xs font-bold text-[#00d2ff] hover:underline"
+            >
+              support@sentinelshield.ai
+            </a>
+          </div>
+        </div>
+
         {/* Close Button */}
         <button
           onClick={onClose}

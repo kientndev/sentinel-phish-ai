@@ -8,7 +8,7 @@ export default function CapacitorListener() {
   const router = useRouter();
 
   useEffect(() => {
-    let activeListener: any = null;
+    const activeListeners: any[] = [];
 
     const setupListener = async () => {
       try {
@@ -16,9 +16,34 @@ export default function CapacitorListener() {
         
         // Ensure we only bind native listeners if running inside a native shell
         if (Capacitor.isNativePlatform()) {
+          // Dynamically import AdMob utilities to prevent SSR build issues
+          const { initializeAdMob, showBottomBanner } = await import("@/lib/admob");
+          await initializeAdMob();
+          await showBottomBanner();
+
           const { App } = await import("@capacitor/app");
           
-          activeListener = await App.addListener("appUrlOpen", (event) => {
+          // Android Back Button handler
+          const backListener = await App.addListener("backButton", () => {
+            console.log("[Capacitor] Back button pressed");
+            
+            // Check if there is an open settings modal and trigger its close action
+            const closeSettingsBtn = document.querySelector('button[aria-label="Close settings"]') as HTMLButtonElement;
+            if (closeSettingsBtn) {
+              closeSettingsBtn.click();
+              return;
+            }
+            
+            // Navigate back in history if possible, else exit the app container
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              App.exitApp();
+            }
+          });
+          activeListeners.push(backListener);
+          
+          const urlListener = await App.addListener("appUrlOpen", (event) => {
             console.log("[Capacitor] App opened with URL:", event.url);
             
             try {
@@ -39,6 +64,7 @@ export default function CapacitorListener() {
               console.error("[Capacitor] Failed to parse custom deep link URL:", err);
             }
           });
+          activeListeners.push(urlListener);
         }
       } catch (e) {
         console.error("[Capacitor] Failed to configure deep-link appUrlOpen listener:", e);
@@ -48,9 +74,11 @@ export default function CapacitorListener() {
     setupListener();
 
     return () => {
-      if (activeListener) {
-        activeListener.remove();
-      }
+      activeListeners.forEach((listener) => {
+        if (listener && typeof listener.remove === "function") {
+          listener.remove();
+        }
+      });
     };
   }, [router]);
 

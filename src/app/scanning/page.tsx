@@ -157,8 +157,7 @@ function ScanningContent() {
   const [hasAutoScanned, setHasAutoScanned] = useState(false);
   
   // Mock user tier - in production, this would come from Clerk/Convex
-  const userTier = "free"; // Options: "free", "mid", "pro", "vip"
-  const isFreeUser = userTier === "free";
+  const isFreeUser = false;
 
   // Chat state
   const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
@@ -292,6 +291,14 @@ function ScanningContent() {
 
       setResults(data);
       addScan(data.score, data.score >= 70, urlToScan);
+      
+      // Trigger AdMob Interstitial ad
+      try {
+        const { showInterstitialAd } = await import("@/lib/admob");
+        await showInterstitialAd();
+      } catch (err) {
+        console.error("[AdMob] Error showing interstitial ad:", err);
+      }
       
       // PERSIST TO CONVEX - skipped without auth
       // Convex storage disabled when Clerk auth is removed

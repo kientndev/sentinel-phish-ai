@@ -27,8 +27,6 @@ export default function Navbar() {
     { name: "Scanning", href: "/scanning" },
     { name: "QR Shield", href: "/scan/qr", isNew: true },
     { name: "Reports", href: "/reports" },
-    { name: "Pricing", href: "/pricing" },
-    { name: "Contact", href: "/contact" },
   ];
 
   return (
@@ -47,7 +45,7 @@ export default function Navbar() {
                 </div>
               )}
               <span className="font-black text-lg tracking-tight text-white group-hover:text-[#00d2ff] transition-colors" style={{ '--hover-color': primaryColor } as React.CSSProperties}>
-                Sentinel<span className="text-gray-500">Phish</span>
+                Sentinel<span className="text-gray-500">Shield AI</span>
               </span>
             </Link>
           </div>

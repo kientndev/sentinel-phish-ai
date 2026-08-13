@@ -1,5 +1,3 @@
-import { checkPartnerLicense, getSlugFromHostname } from "./partner";
-
 interface LicenseCheckResult {
   valid: boolean;
   reason?: string;
@@ -7,17 +5,8 @@ interface LicenseCheckResult {
 
 // Gatekeeper function to check license before allowing scan
 export async function checkLicenseBeforeScan(): Promise<LicenseCheckResult> {
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  const slug = getSlugFromHostname(hostname);
-  
-  // If no partner slug, allow scan (default branding)
-  if (!slug) {
-    return { valid: true };
-  }
-  
-  // Check partner license
-  const result = await checkPartnerLicense(slug);
-  return result;
+  // Bypassed for mobile release: SentinelShield AI is free-to-use
+  return { valid: true };
 }
 
 // Error message for expired license

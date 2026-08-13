@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.sentinelphish.app',
-  appName: 'SentinelPhish AI Security',
+  appName: 'SentinelShield AI',
   webDir: 'out',
   server: {
     url: 'https://sentinelphish.com',
@@ -10,9 +10,13 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 3000,
+      launchAutoHide: true,
       backgroundColor: '#0b0e14',
       androidScaleType: 'CENTER_CROP',
+      showSpinner: true,
+      androidSpinnerStyle: 'large',
+      spinnerColor: '#00d2ff'
     }
   }
 };

@@ -9,6 +9,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { Toaster } from "sonner";
 import { ClientOnly } from "../components/ClientOnly";
+import CapacitorListener from "../components/CapacitorListener";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -61,6 +62,7 @@ export default function RootLayout({
           >
             <body className="min-h-full flex flex-col bg-[#0b0e14] text-[#fafafa]">
               <AppProvider>
+                <CapacitorListener />
                 <Toaster position="bottom-right" richColors theme="dark" />
                 <ClientOnly fallback={null}>
                   <Navbar />

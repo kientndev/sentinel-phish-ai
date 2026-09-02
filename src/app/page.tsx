@@ -126,15 +126,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Customer Testimonials ─────────────────────────────── */}
-      <CustomerTestimonials />
+      {/* ── Customer Testimonials (Below-the-fold) ──────────────── */}
+      <div className="w-full max-w-6xl lazy-section-container">
+        <CustomerTestimonials />
+      </div>
 
       {/* ── Social Proof ──────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.8 }}
-        className="w-full max-w-6xl border-y border-white/10 py-12 mb-20 bg-black/20 backdrop-blur-sm"
+        transition={{ delay: 0.2, duration: 0.6 }}
+        className="w-full max-w-6xl border-y border-white/10 py-12 mb-20 bg-black/20 backdrop-blur-sm lazy-section-container"
       >
         <p className="text-center text-[#a1a1aa] text-[10px] uppercase font-bold tracking-[0.2em] mb-8">
           Trusted by Security Teams Worldwide
@@ -154,13 +156,13 @@ export default function LandingPage() {
       </motion.div>
 
       {/* ── Features Grid ─────────────────────────────────────── */}
-      <section className="grid md:grid-cols-3 gap-6 max-w-6xl w-full mb-24 px-2">
+      <section className="grid md:grid-cols-3 gap-6 max-w-6xl w-full mb-24 px-2 lazy-section-container">
         {features.map((f, i) => (
           <motion.div
             key={f.title}
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 + i * 0.1, duration: 0.5 }}
+            transition={{ delay: 0.1 + i * 0.08, duration: 0.4 }}
             className="glass-card p-8 border border-white/5 hover:border-white/15 transition-all duration-300 group"
             style={{ "--glow-color": f.glow } as React.CSSProperties}
           >
@@ -177,8 +179,8 @@ export default function LandingPage() {
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="w-full max-w-4xl mb-24 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-[#00d2ff]/5 p-12 text-center"
+        transition={{ delay: 0.3 }}
+        className="w-full max-w-4xl mb-24 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-[#00d2ff]/5 p-12 text-center lazy-section-container"
       >
         <ShieldAlert className="w-12 h-12 text-red-500 mx-auto mb-4 drop-shadow-[0_0_16px_rgba(239,68,68,0.5)]" />
         <h2 className="text-3xl font-black text-white mb-3">Ready to Defend Your Network?</h2>

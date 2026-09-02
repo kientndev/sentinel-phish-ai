@@ -40,18 +40,19 @@ body {
   overflow-x: hidden;
 }
 
-/* Animated scanline/grid overlay */
+/* Hardware-accelerated background scanline grid with GPU layer isolation */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(0, 210, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 210, 255, 0.025) 1px, transparent 1px);
+    linear-gradient(rgba(0, 210, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 210, 255, 0.02) 1px, transparent 1px);
   background-size: 48px 48px;
-  animation: grid-drift 20s linear infinite;
   pointer-events: none;
   z-index: 0;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 /* All direct children of body stack above the grid */
@@ -60,86 +61,67 @@ body > * {
   z-index: 1;
 }
 
-@keyframes grid-drift {
-  0%   { background-position: 0 0; }
-  100% { background-position: 48px 48px; }
-}
-
-
 /* ============================================
-   GLASSMORPHISM CARDS
+   HARDWARE-ACCELERATED GLASSMORPHISM
+   Subtle blur + solid translucent fallbacks to prevent GPU compositor thrashing
    ============================================ */
 .glass-card {
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(18, 21, 29, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  transform: translateZ(0);
+  will-change: transform, opacity;
 }
 
 .glass-card-inner {
   background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 0.75rem;
 }
 
 /* ============================================
-   NEON GLOW EFFECTS — #00d2ff
+   BELOW-THE-FOLD OPTIMIZATION
+   Skips layout, style, and paint calculations until near viewport
+   ============================================ */
+.lazy-section-container {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 500px;
+}
+
+/* ============================================
+   NEON GLOW EFFECTS — Optimized for GPU
    ============================================ */
 @keyframes neon-pulse {
   0%, 100% {
-    text-shadow:
-      0 0 6px rgba(0, 210, 255, 0.4),
-      0 0 20px rgba(0, 210, 255, 0.2),
-      0 0 40px rgba(0, 210, 255, 0.1);
-    filter: drop-shadow(0 0 8px rgba(0, 210, 255, 0.5));
+    text-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
   }
   50% {
-    text-shadow:
-      0 0 10px rgba(0, 210, 255, 0.8),
-      0 0 30px rgba(0, 210, 255, 0.5),
-      0 0 60px rgba(0, 210, 255, 0.3);
-    filter: drop-shadow(0 0 16px rgba(0, 210, 255, 0.8));
-  }
-}
-
-@keyframes icon-pulse-glow {
-  0%, 100% {
-    filter: drop-shadow(0 0 4px rgba(0, 210, 255, 0.4));
-    color: #60a5fa;
-  }
-  50% {
-    filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.9));
-    color: #00d2ff;
+    text-shadow: 0 0 16px rgba(0, 210, 255, 0.7);
   }
 }
 
 @keyframes border-glow-pulse {
   0%, 100% {
-    box-shadow:
-      0 0 10px rgba(0, 210, 255, 0.1),
-      inset 0 0 10px rgba(0, 210, 255, 0.02);
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.1);
   }
   50% {
-    box-shadow:
-      0 0 20px rgba(0, 210, 255, 0.25),
-      inset 0 0 20px rgba(0, 210, 255, 0.05);
+    box-shadow: 0 0 18px rgba(0, 210, 255, 0.25);
   }
 }
 
 .neon-pulse-text {
   animation: neon-pulse 3s ease-in-out infinite;
-}
-
-.neon-pulse-icon {
-  animation: icon-pulse-glow 3s ease-in-out infinite;
+  will-change: text-shadow;
 }
 
 .neon-border-pulse {
   animation: border-glow-pulse 3s ease-in-out infinite;
+  will-change: box-shadow;
 }
 
 /* ============================================
@@ -155,7 +137,7 @@ body > * {
 .modal-overlay {
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.75);
 }
 
 /* ============================================
@@ -176,38 +158,39 @@ body > * {
 }
 
 /* ============================================
-   GLOW UTILITY CLASSES
+   GLOW UTILITY CLASSES (GPU-safe box-shadows)
    ============================================ */
 .glow-sm {
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
 }
 
 .glow-md {
-  box-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 210, 255, 0.25);
 }
 
 .glow-lg {
-  box-shadow: 0 0 30px rgba(0, 210, 255, 0.4);
+  box-shadow: 0 0 30px rgba(0, 210, 255, 0.35);
 }
 
 .glow-purple {
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
 }
 
 /* ============================================
-   MARQUEE ANIMATION
+   MARQUEE ANIMATION (Hardware-accelerated)
    ============================================ */
 @keyframes marquee {
   0% {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
 .animate-marquee {
   animation: marquee 30s linear infinite;
+  will-change: transform;
 }
 
 .animate-marquee:hover {

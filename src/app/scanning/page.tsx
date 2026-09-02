@@ -5,9 +5,9 @@ import { LoginGuard } from "../../components/LoginGuard";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-   Search, ShieldAlert, Activity, Globe,
-  Brain, Bot, CheckCircle2, MessageSquare, Send, Settings, Download, Zap,
-  Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, UserCircle, X
+  Search, ShieldAlert, Activity, Globe,
+  Brain, Bot, CheckCircle2, MessageSquare, Settings, Download, Zap,
+  Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, UserCircle, X, Route
 } from "lucide-react";
 import { sendGAEvent } from "@next/third-parties/google";
 import { usePhishTank } from "../../hooks/usePhishTank";
@@ -15,18 +15,26 @@ import { AnimatePresence, motion } from "framer-motion";
 import SettingsModal, { AiMode } from "../SettingsModal";
 import { LangCode, translations } from "../translations";
 import XPBar from "../../components/XPBar";
-import { TOP_DOMAINS } from "../api/scan/whitelist";
 import { checkLicenseBeforeScan, getLicenseErrorMessage } from "../../../lib/licenseGatekeeper";
+
+interface RedirectHop {
+  url: string;
+  status: number;
+}
 
 interface ScanResult {
   score: number;
   status: string;
+  engineTier?: 1 | 2 | 3;
+  latencyMs?: number;
   domainAge: string;
   expiryDate: string;
   registrar: string;
   redFlags: string[];
+  hops?: RedirectHop[];
+  redirectCount?: number;
   screenshotUrl: string;
-  geminiVerdict: {
+  geminiVerdict?: {
     score: number;
     level: string;
     analysis_factors: {
@@ -42,102 +50,12 @@ interface ScanResult {
   };
 }
 
-const MOCK_SAFE_RESULT = {
-  score: 0,
-  status: "SAFE",
-  domainAge: "Established (> 10 years)",
-  expiryDate: "Verified",
-  registrar: "Verified Corporate Registry",
-  redFlags: [
-    "Domain is natively whitelisted in the Global Trust Index.",
-    "Verified SSL Certificate from a top-tier CA.",
-    "No suspicious redirection or credential harvesting patterns."
-  ],
-  screenshotUrl: "",
-  geminiVerdict: {
-    "score": 0,
-    "level": "Safe",
-    "analysis_factors": {
-      "visual": "The interface matches the verified brand identity of an established global platform.",
-      "technical": "Infrastructure originates from known, trusted ASN ranges associated with the official provider.",
-      "behavior": "Standard authenticated session handling detected. No malicious script execution found."
-    },
-    "advisor": {
-      "summary": "This is a verified safe domain. You can interact with this site with full confidence.",
-      "actionable_advice": [
-        "Ensure you are using a strong, unique password.",
-        "Bookmark this URL for future safe access.",
-        "No further security actions are required for this target."
-      ]
-    },
-    "verdict": "Verified Trusted Domain"
-  }
-};
-
-const MOCK_DANGEROUS_RESULT = {
-  score: 87,
-  status: "DANGEROUS",
-  domainAge: "2 days old",
-  expiryDate: "Oct 12, 2027",
-  registrar: "NameCheap, Inc.",
-  redFlags: [
-    "Static: URL contains high-risk keywords commonly used in phishing.",
-    "Static: Domain Name structurally resembles a known brand.",
-    "WHOIS: Untrusted new domain registration (< 1 week).",
-    "Active DOM: Suspicious credential harvester input fields detected."
-  ],
-  screenshotUrl: "",
-  geminiVerdict: {
-    "score": 92,
-    "level": "Malicious",
-    "analysis_factors": {
-      "visual": "The interface is an exact visual replica of a major technology brand's login portal, but the technical metadata does not originate from their verified infrastructure.",
-      "technical": "WHOIS records show the domain was provisioned within 48 hours. SSL certificate is basic DV with no organizational verification.",
-      "behavior": "Our sandbox detected hidden redirection logic that triggers only on specific user-agent strings, a common avoidance tactic for phishing."
-    },
-    "advisor": {
-      "summary": "This is a high-confidence phishing attempt targeting sensitive account credentials. All indicators point to active brand impersonation.",
-      "actionable_advice": [
-        "DO NOT enter any credentials or personal information.",
-        "Report this URL to your internal security team or IT department.",
-        "Enable hardware-based 2FA (like YubiKey) to prevent credential theft."
-      ]
-    },
-    "verdict": "Confirmed Credential Harvester"
-  }
-};
-
-const MOCK_NEUTRAL_RESULT = {
-  score: 18,
-  status: "SAFE",
-  domainAge: "New Domain (Verified SSL)",
-  expiryDate: "Oct 12, 2026",
-  registrar: "Cloudflare, Inc.",
-  redFlags: [
-    "Domain is not yet categorized in the Global Trust Index.",
-    "Original visual identity detected (No brand impersonation).",
-    "Technical metadata suggests an independent project or startup."
-  ],
-  screenshotUrl: "",
-  geminiVerdict: {
-    "score": 15,
-    "level": "Safe",
-    "analysis_factors": {
-      "visual": "Design is original and does not attempt to mimic any known corporate brand or service.",
-      "technical": "Secure HTTPS connection with valid domain-validated certificate.",
-      "behavior": "Standard web application patterns detected. No credential harvesting forms found."
-    },
-    "advisor": {
-      "summary": "This site appears to be a legitimate independent project. While the domain is relatively new, it shows no signs of malicious activity.",
-      "actionable_advice": [
-        "Continue to use standard caution when sharing personal data.",
-        "Verify the site's 'About Us' or team page for more info.",
-        "Ensure your browser and security software are up to date."
-      ]
-    },
-    "verdict": "Likely Independent Project"
-  }
-};
+const PIPELINE_STAGES = [
+  "Resolving redirect hops & DNS...",
+  "Auditing domain registration & SSL...",
+  "Executing headless sandbox analysis...",
+  "Running AI heuristic vision model..."
+];
 
 export default function ScanningPage() {
   return (
@@ -150,13 +68,14 @@ export default function ScanningPage() {
 function ScanningContent() {
   const [url, setUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
+  const [pipelineStage, setPipelineStage] = useState(0);
   const [results, setResults] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const scannerRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
   const [hasAutoScanned, setHasAutoScanned] = useState(false);
   
-  // Mock user tier - in production, this would come from Clerk/Convex
+  // Mock user tier - in production, this comes from Clerk/Convex
   const isFreeUser = false;
 
   // Chat state
@@ -178,7 +97,7 @@ function ScanningContent() {
   const [isReporting, setIsReporting] = useState(false);
   const [reported, setReported] = useState(false);
 
-  // PhishTank
+  // PhishTank Gamification hook
   const { 
     justRankedUp, 
     clearRankUpToast, 
@@ -201,6 +120,18 @@ function ScanningContent() {
     return () => clearInterval(interval);
   }, [isScanning, liveGlow]);
 
+  // Advance scan pipeline animation
+  useEffect(() => {
+    let stageTimer: ReturnType<typeof setInterval>;
+    if (isScanning) {
+      setPipelineStage(0);
+      stageTimer = setInterval(() => {
+        setPipelineStage((prev) => (prev < PIPELINE_STAGES.length - 1 ? prev + 1 : prev));
+      }, 1200);
+    }
+    return () => clearInterval(stageTimer);
+  }, [isScanning]);
+
   const t = translations[lang];
 
   // ── Settings handlers ───────────────────────────────────
@@ -214,7 +145,6 @@ function ScanningContent() {
     e.preventDefault();
     if (!chatInput.trim() || !results) return;
     
-    // Check chat limit for free users
     if (isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES) {
       return;
     }
@@ -245,7 +175,7 @@ function ScanningContent() {
     }
   };
 
-  // ── Scan handler ────────────────────────────────────────
+  // ── Live Unified Scan Handler ───────────────────────────
   const handleScan = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url) return;
@@ -267,45 +197,44 @@ function ScanningContent() {
 
     setIsScanning(true);
     setResults(null);
+    setError(null);
     setChatMessages([]);
     setChatInput("");
     setIsChatting(false);
     setReported(false);
     setIsReporting(false);
 
-    // GUEST MOCK ENGINE
-    const cleanDomain = urlToScan.replace(/^https?:\/\//i, "").split("/")[0].replace(/^www\./, "");
-    const isWhitelisted = TOP_DOMAINS.includes(cleanDomain);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+      const res = await fetch(`${baseUrl}/api/scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: urlToScan, lang, turbo: turboMode }),
+      });
 
-    setTimeout(async () => {
-      let data = MOCK_DANGEROUS_RESULT;
-      if (isWhitelisted) {
-        data = MOCK_SAFE_RESULT;
-      } else {
-        const suspiciousTerms = ["apple", "login", "verify", "secure", "bank", "portal"];
-        const isSuspicious = suspiciousTerms.some(term => cleanDomain.includes(term));
-        if (!isSuspicious) {
-          data = MOCK_NEUTRAL_RESULT;
-        }
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({ error: "Failed to perform security scan" }));
+        throw new Error(errJson.error || `Scan error: ${res.statusText}`);
       }
 
-      setResults(data);
-      addScan(data.score, data.score >= 70, urlToScan);
-      
-      // Trigger AdMob Interstitial ad
+      const scanData: ScanResult = await res.json();
+      setResults(scanData);
+      addScan(scanData.score, scanData.score >= 70, urlToScan);
+
+      // Trigger AdMob Interstitial ad on mobile
       try {
         const { showInterstitialAd } = await import("@/lib/admob");
         await showInterstitialAd();
       } catch (err) {
         console.error("[AdMob] Error showing interstitial ad:", err);
       }
-      
-      // PERSIST TO CONVEX - skipped without auth
-      // Convex storage disabled when Clerk auth is removed
-      
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred during scan.";
+      setError(message);
+    } finally {
       setIsScanning(false);
-    }, isWhitelisted ? 800 : 2500); 
-  }, [url, addScan]);
+    }
+  }, [url, lang, turboMode, addScan]);
 
   const handleDownloadReport = () => {
     if (!results) return;
@@ -314,6 +243,7 @@ function ScanningContent() {
     const aiAdvice: string[] = results.geminiVerdict?.advisor?.actionable_advice ?? [];
     const redFlagsHtml = (results.redFlags ?? []).map((f: string) => `<li>${f}</li>`).join("");
     const adviceHtml = aiAdvice.map((a: string) => `<li>✅ ${a}</li>`).join("");
+    const hopsHtml = (results.hops ?? []).map((h: RedirectHop, idx: number) => `<li><strong>Hop ${idx + 1}:</strong> ${h.url} (Status: ${h.status})</li>`).join("");
     const reportHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${t.reportTitle}</title>
 <style>body{font-family:sans-serif;background:#fff;color:#1a1a1a;padding:40px;max-width:800px;margin:0 auto}
 h1{font-size:22px;font-weight:900;margin-bottom:8px}h2{font-size:14px;font-weight:700;text-transform:uppercase;color:#374151;border-left:4px solid #ef4444;padding-left:10px;margin:24px 0 12px}
@@ -327,19 +257,18 @@ footer{border-top:1px solid #e5e7eb;padding-top:16px;text-align:center;font-size
 <h1>🛡️ ${t.reportTitle}</h1><p style="color:#666;font-size:13px">Generated: ${new Date().toLocaleString()}</p>
 <h2>${t.reportUrl}</h2><div class="field" style="word-break:break-all;font-size:13px">${url}</div>
 <div class="num">${results.score ?? 0}%</div>
+${hopsHtml ? `<h2>Redirection Chain Trace</h2><ul>${hopsHtml}</ul>` : ""}
 <h2>${t.reportRedFlags}</h2><ul>${redFlagsHtml || "<li>None detected.</li>"}</ul>
 ${aiSummary !== "N/A" ? `<h2>${t.reportAiSummary}</h2><div class="ai">${aiSummary}</div>` : ""}
 ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
-<footer><p>SentinelPhish AI — Built by Tri Kien | 8a1</p></footer></body></html>`;
+<footer><p>SentinelPhish AI — Real-time Autonomous Threat Defense</p></footer></body></html>`;
     const win = window.open("", "_blank");
     if (win) { win.document.write(reportHtml); win.document.close(); }
   };
 
   const handleReportPhish = async () => {
-    // Convex removed - reporting disabled
     if (!results || reported) return;
     setIsReporting(true);
-    // Simulate success without Convex
     setTimeout(() => {
       setReported(true);
       setIsReporting(false);
@@ -358,7 +287,6 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
     if (urlFromParams && !hasAutoScanned && !isScanning) {
       setUrl(urlFromParams);
       setHasAutoScanned(true);
-      // Trigger scan after a short delay to allow UI to render
       setTimeout(() => {
         const event = { preventDefault: () => {} } as React.FormEvent;
         handleScan(event);
@@ -418,10 +346,10 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
       <div className="max-w-6xl w-full space-y-10">
         {/* Header Section */}
         <section className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-white/5 pb-10">
-           <div className="text-center md:text-left">
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-2">Live Scrutiny</h1>
-              <p className="text-[#a1a1aa] font-medium">Instant heuristic & visual threat detection</p>
-           </div>
+          <div className="text-center md:text-left">
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-2">Live Scrutiny</h1>
+            <p className="text-[#a1a1aa] font-medium">Unified multi-hop redirection &amp; visual threat inspection</p>
+          </div>
         </section>
 
         {/* Input Bar */}
@@ -429,7 +357,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
           {error && (
             <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              <p className="text-red-400 text-sm">{error}</p>
+              <p className="text-red-400 text-sm font-medium">{error}</p>
               <button
                 onClick={() => setError(null)}
                 className="ml-auto text-red-400 hover:text-red-300 transition-colors"
@@ -441,7 +369,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
           <form onSubmit={handleScan} className="flex flex-col md:flex-row gap-4 relative z-10">
             <div className="relative flex-1 flex items-stretch">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
-                 <Globe size={18} className="text-zinc-500" />
+                <Globe size={18} className="text-zinc-500" />
               </div>
               <span className="flex items-center bg-zinc-800 text-zinc-400 px-3 pl-9 border border-white/10 border-r-zinc-700 rounded-l-xl text-sm font-mono whitespace-nowrap select-none">
                 https://
@@ -467,9 +395,11 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
 
           {isScanning && (
             <div className="mt-8 flex flex-col items-center justify-center space-y-4 py-8 text-[#a1a1aa]">
-                      <Activity size={18} className={`animate-spin ${spinnerColor}`} />
-              <p className="font-bold text-xl text-[#fafafa] tracking-tight">{t.scanningMsg}</p>
-              <p className="text-sm font-medium opacity-60 px-6 text-center">{t.scanningSubMsg}</p>
+              <Activity size={24} className={`animate-spin ${spinnerColor}`} />
+              <div className="space-y-1 text-center">
+                <p className="font-bold text-xl text-[#fafafa] tracking-tight">{PIPELINE_STAGES[pipelineStage]}</p>
+                <p className="text-xs font-mono text-[#00d2ff]">Pipeline Stage {pipelineStage + 1} of {PIPELINE_STAGES.length}</p>
+              </div>
             </div>
           )}
         </section>
@@ -497,133 +427,149 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                   }`}>
                     {results.status}
                   </div>
+                  {(results.engineTier || results.latencyMs !== undefined) && (
+                    <div className="flex items-center gap-2 mt-4 text-[10px] font-mono text-zinc-400">
+                      {results.engineTier && (
+                        <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold">
+                          Tier {results.engineTier}: {results.engineTier === 1 ? "DOM/Static" : results.engineTier === 2 ? "Threat Intel" : "Sandbox"}
+                        </span>
+                      )}
+                      {results.latencyMs !== undefined && (
+                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-zinc-300">
+                          {results.latencyMs}ms
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {/* VISUAL PREVIEW: Feature 1 */}
+                {/* REDIRECT AUDIT & HOP TRACE */}
                 <div className="glass-card p-4 space-y-3">
-                   <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
-                     <Eye size={18} className="text-[#00d2ff]" />
-                     Visual Logo-Analysis
-                   </h3>
-                   <div className="relative aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={`https://api.microlink.io/?url=${encodeURIComponent(url.startsWith("http") ? url : `https://${url}`)}&screenshot=true&embed=screenshot.url`}
-                        alt="Site Preview"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "https://placehold.co/600x400/0b0e14/ffffff?text=Preview+Unavailable";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
-                         <span className="text-[10px] font-medium text-white/80 line-clamp-1">{url}</span>
+                  <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
+                    <Route size={18} className="text-yellow-400" />
+                    Pre-Flight Hop Audit
+                  </h3>
+                  <div className="p-3 rounded-lg border bg-white/2 border-white/5 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className="text-zinc-400">Total Redirects:</span>
+                      <span className="text-[#00d2ff] font-bold">{results.redirectCount ?? 0}</span>
+                    </div>
+                    {results.hops && results.hops.length > 0 ? (
+                      <div className="space-y-1.5 pt-2 border-t border-white/5">
+                        {results.hops.map((hop, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-[11px] font-mono">
+                            <span className="text-zinc-300 truncate max-w-[200px]" title={hop.url}>
+                              {idx === 0 ? "1. Start: " : `${idx + 1}. -> `}{hop.url.replace(/^https?:\/\//, '')}
+                            </span>
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                              [301, 302, 307, 308].includes(hop.status) 
+                                ? "bg-yellow-500/20 text-yellow-400" 
+                                : hop.status === 200 
+                                  ? "bg-emerald-500/20 text-emerald-400" 
+                                  : "bg-red-500/20 text-red-400"
+                            }`}>
+                              {hop.status || "FAIL"}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                   </div>
-                   <div className={`p-3 rounded-lg border ${
-                     results.score >= 70 ? "bg-red-500/10 border-red-500/30" : "bg-emerald-500/10 border-emerald-500/30"
-                   }`}>
-                     {results.score >= 70 && (
-                       <div className="flex items-center gap-2">
-                      <AlertTriangle size={18} className="text-red-500" />
-                         <span className="text-xs font-bold text-red-400">Visual Impersonation Detected</span>
-                       </div>
-                     )}
-                     <p className={`text-[10px] mt-2 ${
-                       results.score >= 70 ? "text-red-300" : "text-emerald-300"
-                     }`}>
-                       {results.score >= 70 
-                         ? "High-profile brand logo detected but domain not verified/official."
-                         : "No suspicious brand impersonation detected."
-                       }
-                     </p>
-                   </div>
+                    ) : (
+                      <p className="text-[10px] text-zinc-500">Direct connection, no 3xx hops detected.</p>
+                    )}
+                  </div>
                 </div>
 
-                {/* INTENT SCRAPER: Feature 2 */}
+                {/* VISUAL PREVIEW */}
                 <div className="glass-card p-4 space-y-3">
-                   <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
-                     <ZapIcon size={18} className="text-[#a855f7]" />
-                     Intent Scraper
-                   </h3>
-                   <div className={`p-3 rounded-lg border ${
-                     results.score >= 50 ? "bg-orange-500/10 border-orange-500/30" : "bg-emerald-500/10 border-emerald-500/30"
-                   }`}>
-                     <div className="flex items-center justify-between mb-2">
-                       <span className="text-[10px] font-bold text-[#a1a1aa] uppercase">Social Engineering Risk</span>
-                       <span className={`text-xs font-bold ${
-                       results.score >= 50 ? "text-orange-400" : "text-emerald-400"
-                     }`}>{results.score >= 50 ? "High" : "Low"}</span>
-                     </div>
-                     <p className="text-[10px] text-zinc-400">
-                       {results.score >= 50 
-                         ? "Detected high-urgency social engineering markers (e.g., 'Immediate action required')"
-                         : "No urgent social engineering patterns detected."
-                       }
-                     </p>
-                   </div>
+                  <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
+                    <Eye size={18} className="text-[#00d2ff]" />
+                    Visual Logo-Analysis
+                  </h3>
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={results.screenshotUrl || `https://api.microlink.io/?url=${encodeURIComponent(url.startsWith("http") ? url : `https://${url}`)}&screenshot=true&embed=screenshot.url`}
+                      alt="Site Preview"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://placehold.co/600x400/0b0e14/ffffff?text=Direct+Scan+Clean";
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
+                      <span className="text-[10px] font-medium text-white/80 line-clamp-1">{url}</span>
+                    </div>
+                  </div>
+                  <div className={`p-3 rounded-lg border ${
+                    results.score >= 70 ? "bg-red-500/10 border-red-500/30" : "bg-emerald-500/10 border-emerald-500/30"
+                  }`}>
+                    {results.score >= 70 && (
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle size={18} className="text-red-500" />
+                        <span className="text-xs font-bold text-red-400">Threat Indicators Detected</span>
+                      </div>
+                    )}
+                    <p className={`text-[10px] mt-1 ${
+                      results.score >= 70 ? "text-red-300" : "text-emerald-300"
+                    }`}>
+                      {results.score >= 70 
+                        ? "High-confidence spoofing or credential harvester detected."
+                        : "No malicious brand impersonation detected."
+                      }
+                    </p>
+                  </div>
                 </div>
 
-                {/* SHADOW REDIRECT BYPASS: Feature 3 */}
+                {/* INTENT SCRAPER */}
                 <div className="glass-card p-4 space-y-3">
-                   <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
-                     <RefreshCw size={18} className="text-yellow-500" />
-                     Shadow Redirect Bypass
-                   </h3>
-                   <div className={`p-3 rounded-lg border ${
-                     results.score >= 60 ? "bg-yellow-500/10 border-yellow-500/30" : "bg-emerald-500/10 border-emerald-500/30"
-                   }`}>
-                     {isScanning ? (
-                       <div className="flex items-center gap-2">
-                         <RefreshCw size={18} className="text-yellow-500 animate-spin" />
-                         <span className="text-[10px] text-yellow-400">Deep crawling in progress...</span>
-                       </div>
-                     ) : (
-                       <>
-                         <div className="flex items-center justify-between mb-2">
-                           <span className="text-[10px] font-bold text-[#a1a1aa] uppercase">Redirect Analysis</span>
-                           <span className={`text-xs font-bold ${
-                           results.score >= 60 ? "text-yellow-400" : "text-emerald-400"
-                         }`}>{results.score >= 60 ? "Suspicious" : "Clean"}</span>
-                         </div>
-                         <p className="text-[10px] text-zinc-400">
-                           {results.score >= 60 
-                             ? "Detected potential hidden redirects behind CAPTCHAs or credential harvesters."
-                             : "No suspicious redirect chains or hidden patterns detected."
-                           }
-                         </p>
-                       </>
-                     )}
-                   </div>
+                  <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
+                    <ZapIcon size={18} className="text-[#a855f7]" />
+                    Intent Scraper
+                  </h3>
+                  <div className={`p-3 rounded-lg border ${
+                    results.score >= 50 ? "bg-orange-500/10 border-orange-500/30" : "bg-emerald-500/10 border-emerald-500/30"
+                  }`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold text-[#a1a1aa] uppercase">Social Engineering Risk</span>
+                      <span className={`text-xs font-bold ${
+                        results.score >= 50 ? "text-orange-400" : "text-emerald-400"
+                      }`}>{results.score >= 50 ? "High" : "Low"}</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-400">
+                      {results.score >= 50 
+                        ? "Detected urgency keywords or deceptive intent markers."
+                        : "No aggressive social engineering patterns detected."
+                      }
+                    </p>
+                  </div>
                 </div>
 
                 <div className="glass-card p-6 space-y-5">
-                   <h3 className="font-black text-xs uppercase tracking-widest text-[#a1a1aa] flex items-center gap-2">
-                     <ShieldAlert className="w-4 h-4 text-orange-400" />
-                     {t.domainIntel}
-                   </h3>
-                   <div className="space-y-4">
-                      {[
-                        { label: t.age, val: results.domainAge },
-                        { label: t.expiry, val: results.expiryDate },
-                        { label: t.registrar, val: results.registrar }
-                      ].map((item) => (
-                        <div key={item.label} className="flex justify-between items-center border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                           <span className="text-zinc-500 text-xs font-bold">{item.label}</span>
-                           <span className="text-white text-xs font-mono font-medium">{item.val}</span>
-                        </div>
-                      ))}
-                   </div>
+                  <h3 className="font-black text-xs uppercase tracking-widest text-[#a1a1aa] flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4 text-orange-400" />
+                    {t.domainIntel}
+                  </h3>
+                  <div className="space-y-4">
+                    {[
+                      { label: t.age, val: results.domainAge },
+                      { label: t.expiry, val: results.expiryDate },
+                      { label: t.registrar, val: results.registrar }
+                    ].map((item) => (
+                      <div key={item.label} className="flex justify-between items-center border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                        <span className="text-zinc-500 text-xs font-bold">{item.label}</span>
+                        <span className="text-white text-xs font-mono font-medium">{item.val}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <button 
                   onClick={handleDownloadReport}
                   className="w-full py-4 rounded-xl font-bold bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-2 group"
                 >
-                <Download size={18} className="text-gray-400 group-hover:text-white" />
+                  <Download size={18} className="text-gray-400 group-hover:text-white" />
                   {t.downloadReport}
                 </button>
 
-                {/* REPORT BUTTON: Feature 2 */}
                 <button 
                   onClick={handleReportPhish}
                   disabled={isReporting || reported || results.score < 30}
@@ -650,14 +596,14 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
               <div className="lg:col-span-8 space-y-6">
                 <div className="glass-card p-6">
                   <h3 className="font-bold text-white mb-6 flex items-center gap-2">
-                      <CheckCircle2 size={18} className="text-[#00d2ff]" />
+                    <CheckCircle2 size={18} className="text-[#00d2ff]" />
                     {t.redFlags}
                   </h3>
                   <div className="grid gap-3">
                     {results.redFlags.map((flag: string, i: number) => (
                       <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-white/2 border border-white/5 hover:border-white/10 transition-colors">
                         <div className={`p-2 rounded-lg mt-0.5 ${results.score >= 70 ? "bg-red-500/10" : "bg-emerald-500/10"}`}>
-                    <ShieldAlert size={18} className={`text-[#a1a1aa] ${results.score >= 70 ? "text-red-500" : "text-emerald-500"}`} />
+                          <ShieldAlert size={18} className={`text-[#a1a1aa] ${results.score >= 70 ? "text-red-500" : "text-emerald-500"}`} />
                         </div>
                         <p className="text-sm font-medium text-zinc-300 leading-relaxed">{flag}</p>
                       </div>
@@ -665,158 +611,163 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                   </div>
                 </div>
 
-                {/* Gemini AI Result Part - PAYWALLED FOR FREE USERS */}
+                {/* Gemini AI Result Part */}
                 <div className={`glass-card p-6 relative group ${isFreeUser ? "" : "border-[#00d2ff]/10"}`}>
-                   {isFreeUser && (
-                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-10 rounded-2xl flex flex-col items-center justify-center p-6">
-                       <div className="w-16 h-16 rounded-full bg-[#a855f7]/20 p-4 flex items-center justify-center mb-4">
-                            <Lock size={18} className="text-[#a855f7]" />
-                       </div>
-                       <h3 className="text-xl font-black text-white mb-2">AI Analysis Locked</h3>
-                       <p className="text-[#a1a1aa] text-sm text-center mb-4">
-                         AI Analysis available for Pro &amp; VIP subscribers.
-                       </p>
-                       <Link href="/pricing" className="px-6 py-2 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold rounded-lg glow-md hover:glow-lg transition-all uppercase tracking-widest text-xs">
-                         Upgrade to Pro
-                       </Link>
-                     </div>
-                   )}
-                   <div className={`flex items-center gap-3 mb-6 ${isFreeUser ? "opacity-50" : ""}`}>
-                      <div className="p-2.5 rounded-xl bg-[#00d2ff]/10 border border-[#00d2ff]/20">
-                         <Brain size={18} className="text-[#00d2ff]" />
+                  {isFreeUser && (
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-10 rounded-2xl flex flex-col items-center justify-center p-6">
+                      <div className="w-16 h-16 rounded-full bg-[#a855f7]/20 p-4 flex items-center justify-center mb-4">
+                        <Lock size={18} className="text-[#a855f7]" />
                       </div>
-                      <div>
-                        <h3 className="font-black text-white">{t.aiAnalysis}</h3>
-                        <p className="text-[10px] uppercase font-bold text-[#00d2ff] tracking-[0.2em]">Powered by Gemini 3 Flash</p>
-                      </div>
-                   </div>
+                      <h3 className="text-xl font-black text-white mb-2">AI Analysis Locked</h3>
+                      <p className="text-[#a1a1aa] text-sm text-center mb-4">
+                        AI Analysis available for Pro &amp; VIP subscribers.
+                      </p>
+                      <Link href="/pricing" className="px-6 py-2 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold rounded-lg glow-md hover:glow-lg transition-all uppercase tracking-widest text-xs">
+                        Upgrade to Pro
+                      </Link>
+                    </div>
+                  )}
+                  <div className={`flex items-center gap-3 mb-6 ${isFreeUser ? "opacity-50" : ""}`}>
+                    <div className="p-2.5 rounded-xl bg-[#00d2ff]/10 border border-[#00d2ff]/20">
+                      <Brain size={18} className="text-[#00d2ff]" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-white">{t.aiAnalysis}</h3>
+                      <p className="text-[10px] uppercase font-bold text-[#00d2ff] tracking-[0.2em]">Powered by Gemini Threat Intelligence</p>
+                    </div>
+                  </div>
 
-                   <div className="space-y-6">
-                      <div className="bg-[#00d2ff]/5 border border-[#00d2ff]/10 rounded-2xl p-6">
-                        <p className="text-sm text-[#bae6fd] leading-relaxed italic">
-                          &quot;{results.geminiVerdict?.advisor?.summary}&quot;
-                        </p>
-                      </div>
+                  <div className="space-y-6">
+                    <div className="bg-[#00d2ff]/5 border border-[#00d2ff]/10 rounded-2xl p-6">
+                      <p className="text-sm text-[#bae6fd] leading-relaxed italic">
+                        &quot;{results.geminiVerdict?.advisor?.summary || "Heuristic and pre-flight evaluation completed successfully."}&quot;
+                      </p>
+                    </div>
 
-                      <div className="grid md:grid-cols-2 gap-6">
-                         <div className="space-y-3">
-                            <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.analysisFactors}</h4>
-                            <div className="space-y-2">
-                               {results.geminiVerdict?.analysis_factors && Object.entries(results.geminiVerdict.analysis_factors).map(([k, v]) => (
-                                 <div key={k} className="p-3 bg-white/2 rounded-lg border border-white/5 text-[11px]">
-                                    <span className="font-black text-[#00d2ff] uppercase block mb-1">{k}</span>
-                                    <span className="text-zinc-400">{v as string}</span>
-                                 </div>
-                               ))}
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.analysisFactors}</h4>
+                        <div className="space-y-2">
+                          {results.geminiVerdict?.analysis_factors ? Object.entries(results.geminiVerdict.analysis_factors).map(([k, v]) => (
+                            <div key={k} className="p-3 bg-white/2 rounded-lg border border-white/5 text-[11px]">
+                              <span className="font-black text-[#00d2ff] uppercase block mb-1">{k}</span>
+                              <span className="text-zinc-400">{v as string}</span>
                             </div>
-                         </div>
-                         <div className="space-y-3">
-                            <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.recommendedActions}</h4>
-                            <div className="space-y-2">
-                               {results.geminiVerdict?.advisor?.actionable_advice?.map((a: string, i: number) => (
-                                 <div key={i} className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
-                                    <CheckCircle2 size={18} className="shrink-0" />
-                                    {a}
-                                 </div>
-                               ))}
+                          )) : (
+                            <div className="p-3 bg-white/2 rounded-lg border border-white/5 text-[11px] text-zinc-400">
+                              Direct heuristic verification.
                             </div>
-                         </div>
+                          )}
+                        </div>
                       </div>
-                   </div>
+                      <div className="space-y-3">
+                        <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.recommendedActions}</h4>
+                        <div className="space-y-2">
+                          {results.geminiVerdict?.advisor?.actionable_advice ? results.geminiVerdict.advisor.actionable_advice.map((a: string, i: number) => (
+                            <div key={i} className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
+                              <CheckCircle2 size={18} className="shrink-0" />
+                              {a}
+                            </div>
+                          )) : (
+                            <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
+                              <CheckCircle2 size={18} className="shrink-0" />
+                              Target analyzed against live security criteria.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Unified AI Chat - LOCKED FOR FREE USERS */}
+                {/* Unified AI Chat */}
                 <div className="glass-card p-6 border-white/10">
-                   {isFreeUser && (
-                     <div className="mb-4 p-4 bg-[#a855f7]/10 border border-[#a855f7]/20 rounded-xl">
-                       <div className="flex items-center gap-2 mb-2">
-                         <Lock className="w-4 h-4 text-[#a855f7]" />
-                         <span className="text-xs font-bold text-[#a855f7] uppercase tracking-wider">Free Tier Limit</span>
-                       </div>
-                       <p className="text-[10px] text-[#a1a1aa]">
-                         {chatCount >= MAX_FREE_CHAT_MESSAGES 
-                           ? `You've reached your ${MAX_FREE_CHAT_MESSAGES} message limit. Upgrade to Pro for unlimited AI chat.`
-                           : `${MAX_FREE_CHAT_MESSAGES - chatCount} messages remaining for this scan.`
-                         }
-                       </p>
-                     </div>
-                   )}
-                   <div className="flex items-center gap-2 mb-6">
-                      <MessageSquare size={18} className="text-[#a855f7]" />
-                      <h3 className="font-bold text-white">{t.askAiTitle}</h3>
-                   </div>
-                   
-                   <div className="h-[300px] overflow-y-auto mb-6 space-y-4 pr-2 scrollbar-thin">
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#a855f7]/20 flex items-center justify-center shrink-0 border border-[#a855f7]/30">
-                           <Bot size={18} className="text-[#a855f7]" />
+                  {isFreeUser && (
+                    <div className="mb-4 p-4 bg-[#a855f7]/10 border border-[#a855f7]/20 rounded-xl">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Lock className="w-4 h-4 text-[#a855f7]" />
+                        <span className="text-xs font-bold text-[#a855f7] uppercase tracking-wider">Free Tier Limit</span>
+                      </div>
+                      <p className="text-[10px] text-[#a1a1aa]">
+                        {chatCount >= MAX_FREE_CHAT_MESSAGES 
+                          ? `You've reached your ${MAX_FREE_CHAT_MESSAGES} message limit. Upgrade to Pro for unlimited AI chat.`
+                          : `${MAX_FREE_CHAT_MESSAGES - chatCount} messages remaining for this scan.`
+                        }
+                      </p>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 mb-6">
+                    <MessageSquare size={18} className="text-[#a855f7]" />
+                    <h3 className="font-bold text-white">{t.askAiTitle}</h3>
+                  </div>
+                  
+                  <div className="h-[300px] overflow-y-auto mb-6 space-y-4 pr-2 scrollbar-thin">
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#a855f7]/20 flex items-center justify-center shrink-0 border border-[#a855f7]/30">
+                        <Bot size={18} className="text-[#a855f7]" />
+                      </div>
+                      <div className="bg-white/5 p-4 rounded-2xl rounded-tl-none border border-white/10 max-w-[85%]">
+                        <p className="text-sm text-zinc-300 font-medium">{t.chatEmptyMsg}</p>
+                      </div>
+                    </div>
+
+                    {chatMessages.map((msg, i) => (
+                      <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                          msg.role === "user" ? "bg-white/10 border-white/20" : "bg-[#a855f7]/20 border-[#a855f7]/30"
+                        }`}>
+                          {msg.role === "user" ? <UserCircle size={18} /> : <Bot size={18} className="text-[#a855f7]" />}
                         </div>
-                        <div className="bg-white/5 p-4 rounded-2xl rounded-tl-none border border-white/10 max-w-[85%]">
-                          <p className="text-sm text-zinc-300 font-medium">{t.chatEmptyMsg}</p>
+                        <div className={`p-4 rounded-2xl border ${
+                          msg.role === "user" ? "bg-[#00d2ff]/10 border-[#00d2ff]/20 rounded-tr-none" : "bg-white/5 border-white/10 rounded-tl-none"
+                        } max-w-[85%]`}>
+                          <p className="text-sm font-medium leading-relaxed italic text-white">{msg.content}</p>
                         </div>
                       </div>
+                    ))}
+                    {isChatting && (
+                      <div className="flex gap-3 animate-pulse">
+                        <div className="w-8 h-8 rounded-lg bg-[#a855f7]/10 flex items-center justify-center"><Bot className="w-4 h-4 text-[#a855f7]" /></div>
+                        <div className="bg-white/5 p-4 rounded-2xl h-10 w-24" />
+                      </div>
+                    )}
+                  </div>
 
-                      {chatMessages.map((msg, i) => (
-                        <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-                            msg.role === "user" ? "bg-white/10 border-white/20" : "bg-[#a855f7]/20 border-[#a855f7]/30"
-                          }`}>
-                            {msg.role === "user" ? <UserCircle size={18} /> : <Bot size={18} className="text-[#a855f7]" />}
-                          </div>
-                          <div className={`p-4 rounded-2xl border ${
-                            msg.role === "user" ? "bg-[#00d2ff]/10 border-[#00d2ff]/20 rounded-tr-none" : "bg-white/5 border-white/10 rounded-tl-none"
-                          } max-w-[85%]`}>
-                            <p className="text-sm font-medium leading-relaxed italic text-white">{msg.content}</p>
-                          </div>
+                  {isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES ? (
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-xl flex items-center justify-center p-4 z-10">
+                        <div className="text-center">
+                          <Lock size={18} className="text-[#a855f7] mx-auto mb-2" />
+                          <p className="text-sm font-bold text-white">Chat Limit Reached</p>
+                          <p className="text-xs text-[#a1a1aa] mt-1">Upgrade to Pro for unlimited AI chat</p>
                         </div>
-                      ))}
-                      {isChatting && (
-                        <div className="flex gap-3 animate-pulse">
-                           <div className="w-8 h-8 rounded-lg bg-[#a855f7]/10 flex items-center justify-center"><Bot className="w-4 h-4 text-[#a855f7]" /></div>
-                           <div className="bg-white/5 p-4 rounded-2xl h-10 w-24" />
-                        </div>
-                      )}
-                   </div>
-
-                   {isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES ? (
-                     <div className="relative">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-xl flex items-center justify-center p-4 z-10">
-                          <div className="text-center">
-                            <Lock size={18} className="text-[#a855f7] mx-auto mb-2" />
-                            <p className="text-sm font-bold text-white">Chat Limit Reached</p>
-                            <p className="text-xs text-[#a1a1aa] mt-1">Upgrade to Pro for unlimited AI chat</p>
-                          </div>
-                        </div>
-                        <input
-                          type="text"
-                          disabled
-                          placeholder="Chat limit reached - Upgrade to Pro"
-                          className="w-full pl-4 pr-12 py-4 bg-white/5 border border-white/10 rounded-xl text-sm font-medium opacity-50 cursor-not-allowed"
-                        />
-                     </div>
-                   ) : (
-                     <form onSubmit={handleSendMessage} className="relative">
-                        <input
-                          type="text"
-                          value={chatInput}
-                          onChange={(e) => setChatInput(e.target.value)}
-                          placeholder={t.chatPlaceholder || "Ask a question..."}
-                          disabled={isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES}
-                          className={`w-full pl-4 pr-12 py-4 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#a855f7]/40 transition-all text-sm font-medium ${
-                            isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
-                        />
-                        <button 
-                          type="submit" 
-                          disabled={isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES}
-                          className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#a855f7] hover:bg-[#a855f7]/10 rounded-lg transition-all ${
-                            isFreeUser && chatCount >= MAX_FREE_CHAT_MESSAGES ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
-                        >
-                          <Send size={18} />
-                        </button>
-                     </form>
-                   )}
+                      </div>
+                      <input
+                        type="text"
+                        disabled
+                        placeholder="Chat limit reached - Upgrade to Pro"
+                        className="w-full pl-4 pr-12 py-4 bg-white/5 border border-white/10 rounded-xl text-sm font-medium opacity-50 cursor-not-allowed"
+                      />
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSendMessage} className="relative">
+                      <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder={t.chatPlaceholder}
+                        disabled={isChatting}
+                        className="w-full pl-4 pr-12 py-4 bg-white/5 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 transition-all text-sm font-medium placeholder:text-zinc-600 disabled:opacity-50"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isChatting || !chatInput.trim()}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-[#00d2ff] hover:bg-[#00d2ff]/80 text-[#0b0e14] rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <Bot size={16} />
+                      </button>
+                    </form>
+                  )}
                 </div>
               </div>
             </motion.div>

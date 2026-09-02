@@ -1,0 +1,130 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil\fcharset0 Consolas;}{\f2\fnil\fcharset0 Segoe UI;}}
+{\colortbl ;\red11\green14\blue20;\red0\green102\blue204;\red220\green38\blue38;\red30\green41\blue59;\red100\green116\blue139;\red16\green185\blue129;\red234\green88\blue12;\red248\green250\blue252;\red226\green232\blue240;}
+\viewkind4\uc1 
+\paperw12240\paperh15840\margl1440\margr1440\margt1440\margb1440
+\pard\sa300\qc{\f2\fs44\b\cf1 SentinelPhish Project & Heuristic Engine Audit Report\par}
+\pard\sa200\qc{\f0\fs20\cf5 Generated: September 2026 | Comprehensive Technical Due Diligence\par}
+\pard\sa300\qc{\cf9\line\par}
+
+\pard\sa200{\f2\fs28\b\cf2 1. Repository Architecture & Tech Stack\par}
+
+\pard\sa100{\f0\fs22\b Directory Structure:\par}
+\pard\sa150\li720{\f1\fs18\cf4 
+sentinel-phish/\par
++-- android/                         # Capacitor Android native project & gradle wrapper\par
++-- capacitor.config.ts              # Mobile wrapper config (App ID: com.sentinelphish.app)\par
++-- convex/                          # Convex backend schemas and server functions\par
+|   +-- schema.ts                    # Tables: users, partners, waitlist, contacts\par
+|   +-- users.ts                     # User XP, blocked threats, total scans mutation/queries\par
+|   +-- partners.ts                  # White-label partner license verification\par
+|   +-- waitlist.ts                  # Waitlist submissions\par
+|   +-- contact.ts                   # Inbound support forms\par
++-- lib/                             # Core business logic & licensing\par
+|   +-- licenseGatekeeper.ts         # Client-side white-label license & domain check\par
+|   +-- partner.ts                   # Domain-to-partner branding resolvers\par
++-- public/                          # Static assets, branding, QR audio/visual files\par
++-- src/\par
+    +-- app/                         # Next.js App Router\par
+    |   +-- api/\par
+    |   |   +-- scan/\par
+    |   |   |   +-- route.ts         # Primary scanner endpoint (Playwright + WHOIS + Gemini)\par
+    |   |   |   +-- whitelist.ts     # In-memory top ~80 Alexa/Tranco domains list\par
+    |   |   +-- chat/route.ts        # AI cybersecurity advisor stream/completion\par
+    |   |   +-- credits/route.ts     # User credits check endpoint\par
+    |   |   +-- webhooks/lemonsqueezy/route.ts # Payment webhook listener\par
+    |   +-- scanning/page.tsx        # Main live URL scan UI and result renderer\par
+    |   +-- scan/qr/page.tsx         # Mobile QR code scanner component\par
+    |   +-- dashboard/page.tsx       # Analytics & scan history view\par
+    |   +-- pricing/page.tsx         # Commercial tier matrix (Pro/Enterprise)\par
+    |   +-- admin/page.tsx           # Partner license management UI\par
+    |   +-- layout.tsx & page.tsx    # Root layout & landing page\par
+    |   +-- globals.css              # Theme & glassmorphism tokens\par
+    +-- components/                  # UI components (Navbar, LoginGuard, XPBar, Modals)\par
+    +-- hooks/                       # Custom hooks (usePhishTank, useConvexAuth)\par
+    +-- services/\par
+        +-- metrics_engine.py        # Standalone Python/SQLAlchemy metrics computation engine\par
+}
+
+\pard\sa100{\f0\fs22\b Core Framework & Specifications:\par}
+\pard\sa100\li720{\f0\fs20\bullet  \b Web Framework:\b0  Next.js 15.1.3 (App Router), React 18.3.1, TypeScript 5.x\par}
+\pard\sa100\li720{\f0\fs20\bullet  \b Runtime:\b0  Node.js (Next.js serverless functions) & Python 3.x (metrics service)\par}
+\pard\sa100\li720{\f0\fs20\bullet  \b Styling:\b0  Tailwind CSS v4 with custom glassmorphism design tokens\par}
+\pard\sa100\li720{\f0\fs20\bullet  \b Mobile Engine:\b0  Capacitor 6.1.2 (Android wrapper & AdMob monetization)\par}
+\pard\sa150\li720{\f0\fs20\bullet  \b Backend & Auth Status:\b0  Clerk (@clerk/nextjs 7.3.0) & Convex (1.37.0). Client-side UI currently operates with localStorage fallback state in guest mode.\par}
+
+\pard\sa100{\f0\fs22\b Environment Configuration (.env):\par}
+\pard\sa100\li720{\f0\fs20\bullet  \b GOOGLE_API_KEY / GEMINI_API_KEY:\b0  Gemini 1.5 Pro / Flash threat analysis & chat\par}
+\pard\sa100\li720{\f0\fs20\bullet  \b NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY & CLERK_SECRET_KEY:\b0  User authentication\par}
+\pard\sa100\li720{\f0\fs20\bullet  \b NEXT_PUBLIC_CONVEX_URL:\b0  Real-time database sync deployment\par}
+\pard\sa100\li720{\f0\fs20\bullet  \b LEMONSQUEEZY_WEBHOOK_SECRET:\b0  Subscription payment fulfillment\par}
+\pard\sa200\li720{\f0\fs20\bullet  \b NEXT_PUBLIC_ADMOB_*:\b0  App ID, Banner ID, Interstitial Unit IDs\par}
+
+\pard\sa200{\f2\fs28\b\cf2 2. Current Detection Pipeline Breakdown\par}
+
+\pard\sa100{\f0\fs22\b Execution Workflow:\par}
+\pard\sa100\li720{\f0\fs20 1. \b Input Sanitization:\b0  Extracts hostname, removes `www.`, checks against top whitelist (~80 global domains).\par}
+\pard\sa100\li720{\f0\fs20 2. \b Static Rule Engine:\b0  Analyzes insecure HTTP (+20), phishing keywords (+50), and lookalike typosquatting (+30).\par}
+\pard\sa100\li720{\f0\fs20 3. \b WHOIS & RDAP Intel:\b0  Queries rdap.org / whoiser. Domains younger than 3 years add +20 risk points.\par}
+\pard\sa100\li720{\f0\fs20 4. \b Headless Browser Sandbox:\b0  Playwright launches headless Chromium (@sparticuz/chromium), waits for networkidle, checks password fields, and takes high-res screenshots.\par}
+\pard\sa150\li720{\f0\fs20 5. \b Multimodal LLM Verdict:\b0  Sends screenshot + threat metadata to Gemini 1.5 Pro for MFA fatigue, brand impersonation, and social engineering analysis.\par}
+
+\pard\sa100{\f0\fs22\b Risk Score & Status Classification:\par}
+\pard\sa100\li720{\f0\fs20\bullet  \b 0 - 30 (SAFE):\b0  Verified legitimate domain or clean heuristic record (\cf6 Emerald\cf0)\par}
+\pard\sa100\li720{\f0\fs20\bullet  \b 31 - 69 (SUSPICIOUS):\b0  Moderate risk markers or new unverified registration (\cf7 Orange\cf0)\par}
+\pard\sa200\li720{\f0\fs20\bullet  \b 70 - 100 (DANGEROUS):\b0  Confirmed brand impersonation or credential harvester (\cf3 Red\cf0)\par}
+
+\pard\sa200{\f2\fs28\b\cf2 3. API Contract & Data Schema\par}
+
+\pard\sa100{\f0\fs22\b Primary Endpoint: POST /api/scan\par}
+\pard\sa100\li720{\f0\fs20\b Request Payload (JSON):\b0\par}
+\pard\sa100\li720{\f1\fs18\cf4 \{\par
+  "url": "https://secure-login-appleid.xyz",\par
+  "lang": "en",\par
+  "turbo": false\par
+\}\par}
+
+\pard\sa100\li720{\f0\fs20\b Response Payload (JSON Schema):\b0\par}
+\pard\sa150\li720{\f1\fs18\cf4 \{\par
+  "score": 87,\par
+  "status": "DANGEROUS",\par
+  "domainAge": "1 months",\par
+  "expiryDate": "2027-10-12",\par
+  "registrar": "NameCheap, Inc.",\par
+  "redFlags": [\par
+    "Static: URL utilizes highly specific phishing keywords.",\par
+    "Static: Domain Name structurally resembles a known brand.",\par
+    "WHOIS: New domain registration.",\par
+    "CRITICAL: Suspicious lookalike domain actively containing a credential harvester form."\par
+  ],\par
+  "screenshotUrl": "data:image/png;base64,...",\par
+  "geminiVerdict": \{\par
+    "score": 92,\par
+    "level": "Malicious",\par
+    "analysis_factors": \{\par
+      "visual": "Exact visual replica of Apple ID login portal.",\par
+      "technical": "Domain provisioned < 48 hours ago on untrusted registrar.",\par
+      "behavior": "Hidden credential harvesting form targeting Apple ID credentials."\par
+    \},\par
+    "advisor": \{\par
+      "summary": "High-confidence phishing attempt targeting credentials.",\par
+      "actionable_advice": ["DO NOT enter credentials.", "Report to IT Security."]\par
+    \},\par
+    "verdict": "Confirmed Credential Harvester"\par
+  \}\par
+\}\par}
+
+\pard\sa100{\f0\fs22\b Persistence Model:\par}
+\pard\sa200\li720{\f0\fs20 The API route is currently \b stateless\b0  in-flight. Frontend persistence uses localStorage (`phishTank_history`), with Convex database tables ready for centralized logging upon auth activation.\par}
+
+\pard\sa200{\f2\fs28\b\cf2 4. Technical Gaps & Limitations for Commercial B2B\par}
+
+\pard\sa100\li720{\f0\fs20 1. \b Short URLs & Redirection Chains:\b0  No upfront HTTP 3xx redirection hop tracing before launching headless browser.\par}
+\pard\sa100\li720{\f0\fs20 2. \b Anti-Bot & Cloaking Evasion:\b0  Basic headless browser flags are detectable by modern phishing kits which serve safe pages to bots.\par}
+\pard\sa100\li720{\f0\fs20 3. \b Threat Intel Feeds:\b0  Lacks third-party threat feed enrichment (Google Safe Browsing, VirusTotal, URLhaus).\par}
+\pard\sa100\li720{\f0\fs20 4. \b Serverless Resource Heavy:\b0  Launching Chromium per request causes high latency (5-15s) and memory consumption under concurrency.\par}
+\pard\sa100\li720{\f0\fs20 5. \b Rate Limiting & Auth:\b0  No tenant-level token bucket rate limiting on /api/scan, exposing backend to quota exhaustion.\par}
+\pard\sa200\li720{\f0\fs20 6. \b Client/Server Mismatch:\b0  Guest UI uses simulated scans rather than unified routing to the backend scan engine.\par}
+
+\pard\sa300\qc{\cf9\line\par}
+\pard\sa100\qc{\f0\fs18\cf5 SentinelPhish AI Commercial Technical Audit - Confidential\par}
+}

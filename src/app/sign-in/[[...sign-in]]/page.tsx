@@ -28,17 +28,19 @@ export default function SignInPage() {
               elements: {
                 rootBox: "w-full",
                 card: "bg-slate-900/60 border border-slate-800 backdrop-blur-xl shadow-2xl rounded-xl p-6",
-                headerTitle: "hidden",
-                headerSubtitle: "hidden",
+                headerTitle: "text-white font-mono font-bold text-lg",
+                headerSubtitle: "text-slate-400 font-mono text-xs",
+                dividerText: "text-slate-400 font-mono text-xs uppercase",
+                dividerLine: "bg-slate-800",
+                socialButtonsBlockButton:
+                  "bg-slate-900 border border-slate-700 text-white font-mono hover:bg-slate-800",
+                socialButtonsBlockButtonText: "text-slate-200 font-mono text-xs",
+                formFieldLabel: "text-slate-300 font-mono text-xs",
+                formFieldInput:
+                  "bg-slate-950 border border-slate-800 text-slate-100 placeholder:text-slate-600 font-mono text-sm focus:border-cyan-500",
                 formButtonPrimary:
                   "bg-cyan-600 hover:bg-cyan-500 text-white font-mono text-xs uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)]",
-                socialButtonsBlockButton:
-                  "bg-slate-950/80 border border-slate-800 hover:border-slate-700 text-slate-200 font-mono text-xs",
-                formFieldInput:
-                  "bg-slate-950 border-slate-800 text-slate-100 font-mono text-xs focus:border-cyan-500",
                 footerActionLink: "text-cyan-400 hover:text-cyan-300 font-mono text-xs",
-                dividerLine: "bg-slate-800",
-                dividerText: "text-slate-500 font-mono text-xs",
               },
             }}
           />

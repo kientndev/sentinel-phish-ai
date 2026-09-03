@@ -1,0 +1,21 @@
+export const clerkCyberAppearance = {
+  elements: {
+    rootBox: "w-full",
+    card: "bg-slate-900/50 backdrop-blur-2xl border border-cyan-500/20 shadow-[0_0_50px_-12px_rgba(6,182,212,0.2)] rounded-2xl p-6 sm:p-8 w-full",
+    headerTitle: "text-white font-bold tracking-tight text-xl font-mono",
+    headerSubtitle: "text-slate-400 text-sm font-sans",
+    socialButtonsBlockButton: "bg-slate-950/80 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/40 text-slate-200 transition-all font-mono text-xs shadow-inner",
+    socialButtonsBlockButtonText: "font-mono text-xs text-slate-300",
+    formButtonPrimary: "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium shadow-[0_0_20px_rgba(6,182,212,0.35)] transition-all font-mono text-sm py-2.5",
+    formFieldLabel: "text-slate-300 font-mono text-xs",
+    formFieldInput: "bg-slate-950/90 border border-slate-800 text-cyan-300 font-mono text-sm placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 rounded-xl transition-all",
+    dividerLine: "bg-slate-800",
+    dividerText: "text-slate-500 font-mono text-xs uppercase tracking-wider",
+    footerActionLink: "text-cyan-400 hover:text-cyan-300 font-mono font-medium",
+    footerActionText: "text-slate-400 font-sans text-xs",
+    identityPreviewText: "text-slate-300 font-mono",
+    identityPreviewEditButton: "text-cyan-400 hover:text-cyan-300 font-mono",
+    formFieldAction: "text-cyan-400 hover:text-cyan-300 font-mono text-xs",
+    alert: "bg-red-500/10 border border-red-500/30 text-red-400 font-mono text-xs rounded-xl",
+  },
+};

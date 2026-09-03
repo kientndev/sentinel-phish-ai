@@ -63,7 +63,11 @@ export default function DashboardMetrics() {
         latencyMs: s.latencyMs,
         timestamp: s.createdAt,
       }))
-    : localHistory;
+    : localHistory.map((item) => ({
+        url: item.url,
+        score: item.score,
+        timestamp: new Date(item.timestamp).getTime(),
+      }));
 
   const dailyScans = scanHistory.filter((s: DisplayScanItem) => {
     const scanDate = new Date(s.timestamp);

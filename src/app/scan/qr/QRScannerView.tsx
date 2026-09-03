@@ -452,9 +452,9 @@ export default function QRScannerView() {
 
           <button
             onClick={handleDeepScan}
-            className="w-full px-6 py-3 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold rounded-xl hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+            className="w-full px-6 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-mono font-bold rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.35)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all uppercase tracking-wider text-xs flex items-center justify-center gap-2"
           >
-            <span>Perform Deep AI Scan with Gemini</span>
+            <span>Analyze with SentinelShield</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

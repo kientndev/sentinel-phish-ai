@@ -37,4 +37,18 @@ export default defineSchema({
     attachmentIds: v.optional(v.array(v.string())), // Storage IDs
     createdAt: v.number(),
   }),
+
+  scans: defineTable({
+    userId: v.optional(v.string()), // Clerk user ID
+    targetUrl: v.string(),
+    riskScore: v.number(),
+    status: v.string(), // "SAFE" | "SUSPICIOUS" | "MALICIOUS" | "DANGEROUS"
+    engineTier: v.number(), // 1, 2, or 3
+    latencyMs: v.number(),
+    threatDetails: v.array(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user_id", ["userId"])
+    .index("by_created_at", ["createdAt"]),
 });
+

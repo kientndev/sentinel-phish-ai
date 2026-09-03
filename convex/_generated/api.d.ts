@@ -11,6 +11,7 @@
 import type * as contact from "../contact.js";
 import type * as notifications from "../notifications.js";
 import type * as partners from "../partners.js";
+import type * as scans from "../scans.js";
 import type * as users from "../users.js";
 import type * as waitlist from "../waitlist.js";
 
@@ -24,6 +25,7 @@ declare const fullApi: ApiFromModules<{
   contact: typeof contact;
   notifications: typeof notifications;
   partners: typeof partners;
+  scans: typeof scans;
   users: typeof users;
   waitlist: typeof waitlist;
 }>;

@@ -2,14 +2,70 @@
 
 import { 
   ShieldAlert, Activity, 
-  BarChart2, Flame, Clock, TrendingUp
+  BarChart2, Flame, Clock, Zap, ArrowRight
 } from "lucide-react";
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { usePhishTank } from "../../hooks/usePhishTank";
 
+interface DisplayScanItem {
+  url: string;
+  score: number;
+  engineTier?: number;
+  latencyMs?: number;
+  timestamp: number;
+}
+
+interface ConvexScanDoc {
+  _id: string;
+  userId?: string;
+  targetUrl: string;
+  riskScore: number;
+  status: string;
+  engineTier: number;
+  latencyMs: number;
+  threatDetails: string[];
+  createdAt: number;
+}
+
 export default function DashboardMetrics() {
-  const { totalScans, threatsBlocked, scanHistory } = usePhishTank();
-  const dailyScans = scanHistory.filter(s => {
+  const { user } = useUser();
+  const convexScans = useQuery(
+    api.scans.getUserScans,
+    user?.id ? { userId: user.id } : "skip"
+  ) as ConvexScanDoc[] | undefined;
+
+  const { totalScans: localScans, threatsBlocked: localBlocked, scanHistory: localHistory } = usePhishTank();
+
+  // Prefer live Convex authenticated scans if user is logged in and scans exist
+  const hasConvexData = Array.isArray(convexScans) && convexScans.length > 0;
+  
+  const totalScans = hasConvexData ? convexScans.length : localScans;
+  const threatsBlocked = hasConvexData
+    ? convexScans.filter((s: ConvexScanDoc) => (s.riskScore ?? 0) >= 70 || s.status === "DANGEROUS" || s.status === "MALICIOUS").length
+    : localBlocked;
+
+  const avgLatency = hasConvexData
+    ? Math.round(
+        convexScans.reduce((acc: number, curr: ConvexScanDoc) => acc + (curr.latencyMs || 250), 0) /
+          Math.max(1, convexScans.length)
+      )
+    : 240;
+
+  const scanHistory: DisplayScanItem[] = hasConvexData
+    ? convexScans.map((s: ConvexScanDoc) => ({
+        url: s.targetUrl,
+        score: s.riskScore,
+        engineTier: s.engineTier,
+        latencyMs: s.latencyMs,
+        timestamp: s.createdAt,
+      }))
+    : localHistory;
+
+  const dailyScans = scanHistory.filter((s: DisplayScanItem) => {
     const scanDate = new Date(s.timestamp);
     const today = new Date();
     return scanDate.toDateString() === today.toDateString();
@@ -42,10 +98,6 @@ export default function DashboardMetrics() {
   }
   const areaPath = `${dPath} L ${chartWidth} ${chartHeight} L 0 ${chartHeight} Z`;
 
-  const safetyRating = totalScans > 0 ? Math.round(((totalScans - threatsBlocked) / totalScans) * 100) : 100;
-  const ringCircumference = 2 * Math.PI * 28;
-  const dashoffset = ringCircumference - (safetyRating / 100) * ringCircumference;
-
   const getRiskColor = (score: number) => {
     if (score >= 70) return "text-red-500";
     if (score >= 30) return "text-orange-400";
@@ -72,16 +124,9 @@ export default function DashboardMetrics() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="glass-card p-6 flex flex-col items-center justify-center text-center">
-          <div className="relative w-16 h-16 flex items-center justify-center mb-4">
-            <svg className="absolute inset-0 w-full h-full rotate-[-90deg]">
-              <circle cx="32" cy="32" r="28" fill="transparent" stroke="white" strokeOpacity="0.05" strokeWidth="4" />
-              <circle cx="32" cy="32" r="28" fill="transparent" stroke="#10b981" strokeWidth="4" 
-                strokeDasharray={ringCircumference} strokeDashoffset={dashoffset} strokeLinecap="round" />
-            </svg>
-            <TrendingUp className="w-6 h-6 text-[#10b981]" />
-          </div>
-          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#a1a1aa] mb-1">Safety Rating</span>
-          <span className="text-4xl font-black text-white">{safetyRating}%</span>
+          <Zap className="w-8 h-8 text-cyan-400 mb-4" />
+          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#a1a1aa] mb-1">Avg Resolution</span>
+          <span className="text-4xl font-black text-white">{avgLatency}ms</span>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
@@ -143,43 +188,81 @@ export default function DashboardMetrics() {
 
       {/* Detailed History Table */}
       <section className="glass-card p-6 overflow-hidden">
-        <h2 className="text-xl font-black text-white mb-6 flex items-center gap-2">
-          <Clock className="w-5 h-5 text-zinc-500" />
-          Incidence Log (Last 30)
-        </h2>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="border-b border-white/5">
-              <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-[#a1a1aa]">
-                <th className="px-4 py-4">Status</th>
-                <th className="px-4 py-4">Target URL</th>
-                <th className="px-4 py-4">Risk %</th>
-                <th className="px-4 py-4">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {scanHistory.slice(0, 30).map((scan, i: number) => (
-                <tr key={i} className="group hover:bg-white/2 transition-colors">
-                  <td className="px-4 py-4">
-                    <div className={`p-2 w-fit rounded-lg ${scan.score >= 70 ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"}`}>
-                      <ShieldAlert className="w-4 h-4" />
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="max-w-[300px] truncate font-mono text-xs text-white group-hover:text-[#00d2ff] transition-colors">{scan.url}</div>
-                  </td>
-                  <td className="px-4 py-4 font-black text-sm">
-                    <span className={getRiskColor(scan.score)}>{scan.score}%</span>
-                  </td>
-                  <td className="px-4 py-4 text-[10px] font-bold text-[#52525b] font-mono">
-                    {new Date(scan.timestamp).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-black text-white flex items-center gap-2">
+            <Clock className="w-5 h-5 text-zinc-500" />
+            Incidence Log (Last 30)
+          </h2>
+          {hasConvexData && (
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+              Live Cloud Sync
+            </span>
+          )}
         </div>
+        
+        {scanHistory.length === 0 ? (
+          <div className="py-16 text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto text-cyan-400">
+              <ShieldAlert className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-white font-bold text-lg">No Scans Recorded Yet</p>
+              <p className="text-slate-400 text-sm mt-1">Run your first threat analysis to populate your live telemetry.</p>
+            </div>
+            <Link
+              href="/scanning"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
+            >
+              Run First Scan
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="border-b border-white/5">
+                <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-[#a1a1aa]">
+                  <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4">Target URL</th>
+                  <th className="px-4 py-4">Engine Tier</th>
+                  <th className="px-4 py-4">Risk %</th>
+                  <th className="px-4 py-4">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {scanHistory.slice(0, 30).map((scan: DisplayScanItem, i: number) => (
+                  <tr key={i} className="group hover:bg-white/2 transition-colors">
+                    <td className="px-4 py-4">
+                      <div className={`p-2 w-fit rounded-lg ${scan.score >= 70 ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"}`}>
+                        <ShieldAlert className="w-4 h-4" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="max-w-[280px] truncate font-mono text-xs text-white group-hover:text-[#00d2ff] transition-colors">{scan.url}</div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                        scan.engineTier === 1 
+                          ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" 
+                          : scan.engineTier === 2 
+                            ? "bg-amber-500/15 text-amber-400 border border-amber-500/30" 
+                            : "bg-purple-500/15 text-cyan-300 border border-cyan-500/30"
+                      }`}>
+                        Tier {scan.engineTier || 1}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 font-black text-sm">
+                      <span className={getRiskColor(scan.score)}>{scan.score}%</span>
+                    </td>
+                    <td className="px-4 py-4 text-[10px] font-bold text-[#52525b] font-mono">
+                      {new Date(scan.timestamp).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   );

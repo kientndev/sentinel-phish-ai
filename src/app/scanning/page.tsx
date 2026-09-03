@@ -382,20 +382,33 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                   }`}>
                     {results.status}
                   </div>
-                  {(results.engineTier || results.latencyMs !== undefined) && (
-                    <div className="flex items-center gap-2 mt-4 text-[10px] font-mono text-zinc-400">
-                      {results.engineTier && (
-                        <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold">
-                          Tier {results.engineTier}: {results.engineTier === 1 ? "DOM/Static" : results.engineTier === 2 ? "Threat Intel" : "Sandbox"}
-                        </span>
-                      )}
-                      {results.latencyMs !== undefined && (
-                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-zinc-300">
-                          {results.latencyMs}ms
-                        </span>
-                      )}
-                    </div>
-                  )}
+
+                  {/* Tier Telemetry & Latency Badges */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 mt-4 font-mono text-[11px]">
+                    {results.engineTier === 1 && (
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        TIER 1 // DOM &amp; HTTP PRE-FLIGHT
+                      </span>
+                    )}
+                    {results.engineTier === 2 && (
+                      <span className="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                        TIER 2 // URLHAUS THREAT FEED
+                      </span>
+                    )}
+                    {results.engineTier === 3 && (
+                      <span className="px-2.5 py-1 rounded-full bg-purple-500/15 border border-cyan-500/30 text-cyan-300 font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                        TIER 3 // GUARDED BROWSER &amp; VISION
+                      </span>
+                    )}
+                    {results.latencyMs !== undefined && (
+                      <span className="px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-700/80 text-cyan-400 font-mono font-semibold flex items-center gap-1">
+                        ⚡ {results.latencyMs}ms
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* REDIRECT AUDIT & HOP TRACE */}

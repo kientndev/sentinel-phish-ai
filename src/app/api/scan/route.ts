@@ -134,12 +134,34 @@ const LANG_NAMES: Record<string, string> = {
   en: 'English', vi: 'Vietnamese', ja: 'Japanese', es: 'Spanish', zh: 'Chinese (Simplified)',
 };
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: CORS_HEADERS,
+  });
+}
+
+function jsonWithCors(body: any, init?: { status?: number }) {
+  return NextResponse.json(body, {
+    status: init?.status ?? 200,
+    headers: {
+      ...CORS_HEADERS,
+    },
+  });
+}
+
 export async function POST(req: Request) {
   const startTime = Date.now();
   try {
     const { url, lang = 'en', turbo = false } = await req.json();
     const languageName = LANG_NAMES[lang] ?? 'English';
-    if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    if (!url) return jsonWithCors({ error: 'URL is required' }, { status: 400 });
 
     const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
 
@@ -154,7 +176,7 @@ export async function POST(req: Request) {
       const inputParsed = new URL(normalizedInputUrl);
       const inputDomain = inputParsed.hostname.toLowerCase().replace(/^www\./, '');
       if (TOP_DOMAINS.includes(inputDomain)) {
-        return NextResponse.json({
+        return jsonWithCors({
           score: 0,
           status: 'SAFE',
           engineTier: 1,
@@ -189,7 +211,7 @@ export async function POST(req: Request) {
     // Step 2: Level 2 Real-Time Threat Intelligence Query (URLhaus)
     const threatIntel = await queryThreatIntel(normalizedInputUrl);
     if (threatIntel.isThreat) {
-      return NextResponse.json({
+      return jsonWithCors({
         score: 98,
         status: 'DANGEROUS',
         engineTier: 2,
@@ -234,7 +256,7 @@ export async function POST(req: Request) {
     if (redirectAudit.circuitBroken) {
       riskScore = 90;
       flags.push(`CIRCUIT BREAKER: ${redirectAudit.circuitBreakReason}`);
-      return NextResponse.json({
+      return jsonWithCors({
         score: riskScore,
         status: 'DANGEROUS',
         engineTier: 1,
@@ -266,7 +288,7 @@ export async function POST(req: Request) {
     // Final destination whitelist check
     const isWhitelisted = TOP_DOMAINS.includes(finalDomain);
     if (isWhitelisted) {
-      return NextResponse.json({
+      return jsonWithCors({
         score: 0,
         status: 'SAFE',
         engineTier: 1,
@@ -342,7 +364,7 @@ export async function POST(req: Request) {
     // High confidence fast-exit condition (Score >= 85 at Level 1 DOM / Static)
     if (riskScore >= 85 && !turbo) {
       const finalScore = Math.min(riskScore, 100);
-      return NextResponse.json({
+      return jsonWithCors({
         score: finalScore,
         status: 'DANGEROUS',
         engineTier: 1,
@@ -448,7 +470,7 @@ Final Destination: ${finalUrl} | Initial Input: ${normalizedInputUrl} | Domain A
     if (riskScore > 30) status = 'SUSPICIOUS';
     if (riskScore >= 70) status = 'DANGEROUS';
 
-    return NextResponse.json({
+    return jsonWithCors({
       score: riskScore,
       status,
       engineTier,
@@ -463,7 +485,7 @@ Final Destination: ${finalUrl} | Initial Input: ${normalizedInputUrl} | Domain A
       geminiVerdict
     });
   } catch (error: any) {
-    return NextResponse.json({ 
+    return jsonWithCors({ 
       error: error.message,
       engineTier: 1,
       latencyMs: Date.now() - startTime,

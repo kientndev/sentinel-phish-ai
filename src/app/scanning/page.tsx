@@ -161,16 +161,15 @@ function ScanningContent() {
     setIsReporting(false);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
-      const res = await fetch(`${baseUrl}/api/scan`, {
+      const res = await fetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: urlToScan, lang, turbo: turboMode }),
       });
 
       if (!res.ok) {
-        const errJson = await res.json().catch(() => ({ error: "Failed to perform security scan" }));
-        throw new Error(errJson.error || `Scan error: ${res.statusText}`);
+        const errJson = await res.json().catch(() => ({ error: `Scan error (${res.status}): ${res.statusText}` }));
+        throw new Error(errJson.error || `Scan error (${res.status}): ${res.statusText}`);
       }
 
       const scanData: ScanResult = await res.json();

@@ -55,11 +55,7 @@ export default function AiChatDrawer({
     setIsChatting(true);
 
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_BASE_URL ||
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        (typeof window !== "undefined" ? window.location.origin : "");
-      const res = await fetch(`${baseUrl}/api/chat`, {
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages, context: results, lang, aiMode }),

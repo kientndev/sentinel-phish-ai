@@ -15,5 +15,5 @@ export const TOP_DOMAINS = [
   "discord.com", "openai.com", "slack.com", "trello.com", "medium.com",
   "quora.com", "imgur.com", "vimeo.com", "stackoverflow.com", "github.io",
   "gitlab.com", "bitbucket.org", "deviantart.com", "behance.net", "dribbble.com",
-  "shopify.com", "stripe.com", "cloudflare.com"
+  "shopify.com", "stripe.com", "cloudflare.com", "vercel.com", "vercel.app", "netlify.app", "pages.dev"
 ];

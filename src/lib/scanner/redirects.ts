@@ -65,6 +65,14 @@ export async function traceRedirectChain(initialUrl: string, maxHops = 5): Promi
       };
     }
 
+    const standardHeaders = {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept':
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+    };
+
     try {
       // First attempt with HEAD request
       let response: Response;
@@ -72,10 +80,8 @@ export async function traceRedirectChain(initialUrl: string, maxHops = 5): Promi
         response = await fetch(currentUrl, {
           method: 'HEAD',
           redirect: 'manual',
-          signal: AbortSignal.timeout(4000),
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 SentinelPhish/1.0',
-          },
+          signal: AbortSignal.timeout(5000),
+          headers: standardHeaders,
         });
 
         // 405 Method Not Allowed fallback to GET
@@ -83,10 +89,8 @@ export async function traceRedirectChain(initialUrl: string, maxHops = 5): Promi
           response = await fetch(currentUrl, {
             method: 'GET',
             redirect: 'manual',
-            signal: AbortSignal.timeout(4000),
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 SentinelPhish/1.0',
-            },
+            signal: AbortSignal.timeout(5000),
+            headers: standardHeaders,
           });
         }
       } catch {
@@ -94,10 +98,8 @@ export async function traceRedirectChain(initialUrl: string, maxHops = 5): Promi
         response = await fetch(currentUrl, {
           method: 'GET',
           redirect: 'manual',
-          signal: AbortSignal.timeout(4000),
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 SentinelPhish/1.0',
-          },
+          signal: AbortSignal.timeout(5000),
+          headers: standardHeaders,
         });
       }
 

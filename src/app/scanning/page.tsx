@@ -28,6 +28,7 @@ interface ScanResult {
   status: string;
   engineTier?: 1 | 2 | 3;
   latencyMs?: number;
+  connectionStatus?: 'REACHABLE' | 'UNREACHABLE' | 'TIMEOUT';
   domainAge: string;
   expiryDate: string;
   registrar: string;

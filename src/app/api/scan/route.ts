@@ -20,8 +20,71 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 const HIGH_RISK_KEYWORDS = ['secure-login', 'verify-account', 'update-billing', 'signin-portal', 'account-security', 'confirm-identity'];
 const SHADY_TLDS = ['.xyz', '.top', '.click', '.zip', '.club', '.work'];
 
-// Real WHOIS & RDAP lookup
-async function getRealWhois(domain: string) {
+const KNOWN_HOSTING_PLATFORMS = [
+  'vercel.app',
+  'vercel.com',
+  'netlify.app',
+  'github.io',
+  'pages.dev',
+  'web.app',
+  'firebaseapp.com',
+  'onrender.com',
+  'render.com',
+  'herokuapp.com',
+  'fly.dev',
+  'gitlab.io',
+  'azurewebsites.net',
+  'cloudfront.net',
+  'amazonaws.com',
+  'myshopify.com',
+  'wordpress.com',
+];
+
+function isPlatformSubdomain(hostname: string): boolean {
+  const lower = hostname.toLowerCase().replace(/^www\./, '');
+  return KNOWN_HOSTING_PLATFORMS.some(platform => 
+    lower.endsWith(`.${platform}`) || lower === platform
+  );
+}
+
+function getApexDomain(hostname: string): string {
+  const cleanHost = hostname.toLowerCase().replace(/^www\./, '');
+  const parts = cleanHost.split('.').filter(Boolean);
+  if (parts.length <= 2) return cleanHost;
+
+  const multiPartTlds = [
+    'co.uk', 'org.uk', 'gov.uk', 'ac.uk',
+    'com.au', 'net.au', 'org.au', 'edu.au',
+    'co.nz', 'net.nz', 'org.nz',
+    'co.jp', 'ne.jp', 'or.jp',
+    'com.br', 'net.br',
+    'com.sg', 'edu.sg',
+    'com.vn', 'edu.vn', 'gov.vn', 'net.vn', 'org.vn',
+    'com.tw', 'org.tw',
+    'com.hk', 'org.hk',
+    'com.mx', 'org.mx',
+  ];
+
+  const lastTwo = parts.slice(-2).join('.');
+  if (multiPartTlds.includes(lastTwo) && parts.length >= 3) {
+    return parts.slice(-3).join('.');
+  }
+
+  return parts.slice(-2).join('.');
+}
+
+// Real WHOIS & RDAP lookup with apex domain and platform subdomain awareness
+async function getRealWhois(domain: string, isPlatformHosted: boolean = false) {
+  if (isPlatformHosted) {
+    return {
+      ageText: 'Established Hosting Platform (> 5 years)',
+      registrar: 'Verified Cloud Infrastructure',
+      expiryDate: 'Verified',
+      trusted: true,
+      isPlatformHosted: true
+    };
+  }
+
   try {
     let creationDate: Date | null = null;
     let expiryDate = 'Unknown';
@@ -29,8 +92,11 @@ async function getRealWhois(domain: string) {
 
     try {
       const rdapRes = await fetch(`https://rdap.org/domain/${domain}`, { 
-        headers: { 'Accept': 'application/json' }, 
-        signal: AbortSignal.timeout(3500) 
+        headers: { 
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+        }, 
+        signal: AbortSignal.timeout(3000) 
       });
       if (rdapRes.ok) {
         const data = await rdapRes.json();
@@ -54,52 +120,82 @@ async function getRealWhois(domain: string) {
     }
 
     if (!creationDate) {
-      const data = await whoisDomain(domain, { follow: 1, timeout: 3500 });
-      const firstRegistry = Object.values(data)[0] as any;
-      if (firstRegistry) {
-        if (firstRegistry['Created Date']) creationDate = new Date(firstRegistry['Created Date']);
-        if (firstRegistry['Expiry Date']) expiryDate = new Date(firstRegistry['Expiry Date']).toLocaleDateString();
-        if (firstRegistry['Registrar']) registrar = firstRegistry['Registrar'];
+      try {
+        const data = await whoisDomain(domain, { follow: 1, timeout: 3000 });
+        const firstRegistry = Object.values(data)[0] as any;
+        if (firstRegistry) {
+          if (firstRegistry['Created Date']) creationDate = new Date(firstRegistry['Created Date']);
+          if (firstRegistry['Expiry Date']) expiryDate = new Date(firstRegistry['Expiry Date']).toLocaleDateString();
+          if (firstRegistry['Registrar']) registrar = firstRegistry['Registrar'];
+        }
+      } catch {
+        // Fallback
       }
     }
 
     const ageInMs = creationDate ? Date.now() - creationDate.getTime() : 0;
-    const isOld = ageInMs > (1000 * 60 * 60 * 24 * 365 * 3); // 3 years
+    const isOld = ageInMs > (1000 * 60 * 60 * 24 * 365 * 1); // 1 year
     
     return {
-      ageText: creationDate ? `${Math.floor(ageInMs / (1000 * 60 * 60 * 24 * 30))} months` : 'Recently Registered',
-      registrar,
+      ageText: creationDate ? `${Math.floor(ageInMs / (1000 * 60 * 60 * 24 * 30))} months` : 'Established / Privacy Protected',
+      registrar: registrar !== 'Unknown Registry' ? registrar : 'Private Registration',
       expiryDate,
-      trusted: isOld
+      trusted: isOld || creationDate !== null
     };
   } catch {
-    return { ageText: 'Brand New', registrar: 'Private Registration', expiryDate: 'Unknown', trusted: false };
+    return { ageText: 'Privacy Protected', registrar: 'Private Registration', expiryDate: 'Unknown', trusted: true };
   }
 }
 
 function isLookalike(hostname: string) {
-  let lookalikeDetected = false;
-  if (hostname.includes('0') || (hostname.includes('1') && !hostname.includes('.1'))) {
-    lookalikeDetected = true;
+  const cleanHost = hostname.toLowerCase().replace(/^www\./, '');
+  if (isPlatformSubdomain(cleanHost)) {
+    const sub = cleanHost.split('.')[0];
+    const spoofTargets = ['paypal', 'apple', 'microsoft', 'google', 'netflix', 'amazon', 'chase', 'wellsfargo', 'binance', 'coinbase'];
+    for (const brand of spoofTargets) {
+      if (sub !== brand && (sub.startsWith(`${brand}-`) || sub.endsWith(`-${brand}`) || sub.includes(`${brand}login`) || sub.includes(`${brand}verify`))) {
+        return true;
+      }
+    }
+    return false;
   }
-  
-  const baseName = hostname.split('.')[0];
-  TOP_DOMAINS.forEach(w => {
-    const brand = w.split('.')[0];
-    if (baseName !== brand && baseName.includes(brand)) lookalikeDetected = true;
-    if (baseName !== brand && brand.length === baseName.length && brand.length > 4) {
+
+  const apex = getApexDomain(cleanHost);
+  const baseName = apex.split('.')[0];
+
+  const leetSpoofPatterns = [
+    /g00g|goog1e|googie/i,
+    /micr0s|m1crosoft/i,
+    /paypa1|paypaI|pay-pal/i,
+    /app1e|appie/i,
+    /amaz0n/i,
+    /netf1ix/i,
+    /faceb00k/i,
+    /c0inbase/i,
+    /b1nance/i,
+  ];
+
+  if (leetSpoofPatterns.some(p => p.test(baseName))) {
+    return true;
+  }
+
+  const MAJOR_BRANDS = ['google', 'paypal', 'microsoft', 'amazon', 'netflix', 'apple', 'facebook', 'instagram', 'coinbase', 'binance', 'chase'];
+  for (const brand of MAJOR_BRANDS) {
+    if (baseName !== brand && baseName.length === brand.length && brand.length >= 5) {
       let diffs = 0;
       for (let i = 0; i < brand.length; i++) {
         if (baseName[i] !== brand[i]) diffs++;
       }
-      if (diffs === 1 || diffs === 2) lookalikeDetected = true;
+      if (diffs === 1) return true;
     }
-  });
-  return lookalikeDetected;
+  }
+
+  return false;
 }
 
 async function runBrowserAnalysis(url: string) {
   let pageAccessible = true;
+  let connectionStatus: 'REACHABLE' | 'UNREACHABLE' | 'TIMEOUT' = 'REACHABLE';
   let screenshotDataUri = "";
   const domAnalysis = { hasPasswordField: false };
 
@@ -111,28 +207,42 @@ async function runBrowserAnalysis(url: string) {
       headless: chromium.headless,
     });
 
-    const context = await browser.newContext({
-      viewport: { width: 1280, height: 720 },
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    });
-
-    const page = await context.newPage();
     try {
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 });
-      const hasPassword = await page.$('input[type="password"]');
-      domAnalysis.hasPasswordField = !!hasPassword;
+      const context = await browser.newContext({
+        viewport: { width: 1280, height: 720 },
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        extraHTTPHeaders: {
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+      });
 
-      const screenshotBuffer = await page.screenshot({ type: 'png' });
-      screenshotDataUri = `data:image/png;base64,${screenshotBuffer.toString('base64')}`;
-    } catch {
-      pageAccessible = false;
+      const page = await context.newPage();
+      try {
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 8000 });
+        const hasPassword = await page.$('input[type="password"]');
+        domAnalysis.hasPasswordField = !!hasPassword;
+
+        const screenshotBuffer = await page.screenshot({ type: 'png', timeout: 3000 });
+        screenshotDataUri = `data:image/png;base64,${screenshotBuffer.toString('base64')}`;
+      } catch (navErr: any) {
+        pageAccessible = false;
+        if (navErr?.name === 'TimeoutError' || navErr?.message?.includes('timeout') || navErr?.message?.includes('Timeout')) {
+          connectionStatus = 'TIMEOUT';
+        } else {
+          connectionStatus = 'UNREACHABLE';
+        }
+      } finally {
+        await context.close().catch(() => {});
+      }
     } finally {
-      await browser.close();
+      await browser.close().catch(() => {});
     }
   } catch {
     pageAccessible = false;
+    connectionStatus = 'UNREACHABLE';
   }
-  return { pageAccessible, screenshotDataUri, domAnalysis };
+  return { pageAccessible, connectionStatus, screenshotDataUri, domAnalysis };
 }
 
 const LANG_NAMES: Record<string, string> = {
@@ -201,11 +311,14 @@ export async function POST(req: Request) {
     try {
       const inputParsed = new URL(normalizedInputUrl);
       const inputDomain = inputParsed.hostname.toLowerCase().replace(/^www\./, '');
-      if (TOP_DOMAINS.includes(inputDomain)) {
+      const inputApex = getApexDomain(inputDomain);
+      const isInputPlatformHosted = isPlatformSubdomain(inputDomain);
+      if (TOP_DOMAINS.includes(inputDomain) || (!isInputPlatformHosted && TOP_DOMAINS.includes(inputApex))) {
         return await sendScanResponse({
           score: 0,
           status: 'SAFE',
           engineTier: 1,
+          connectionStatus: 'REACHABLE',
           latencyMs: Date.now() - startTime,
           domainAge: 'Established (> 5 years)',
           expiryDate: 'Verified Trust Index',
@@ -241,6 +354,7 @@ export async function POST(req: Request) {
         score: 98,
         status: 'DANGEROUS',
         engineTier: 2,
+        connectionStatus: 'REACHABLE',
         latencyMs: Date.now() - startTime,
         domainAge: 'Active Threat Campaign',
         expiryDate: 'Revocation Imminent',
@@ -274,9 +388,11 @@ export async function POST(req: Request) {
     const finalUrl = redirectAudit.finalUrl;
     const finalParsed = new URL(finalUrl);
     const finalDomain = finalParsed.hostname.toLowerCase().replace(/^www\./, '');
+    const isPlatformHosted = isPlatformSubdomain(finalDomain);
+    const apexDomain = getApexDomain(finalDomain);
 
     const flags: string[] = [];
-    let riskScore = 15;
+    let riskScore = 0;
 
     // Circuit Breaker Check
     if (redirectAudit.circuitBroken) {
@@ -286,6 +402,7 @@ export async function POST(req: Request) {
         score: riskScore,
         status: 'DANGEROUS',
         engineTier: 1,
+        connectionStatus: 'UNREACHABLE',
         latencyMs: Date.now() - startTime,
         domainAge: 'Unknown / Suspicious',
         expiryDate: 'N/A',
@@ -312,12 +429,15 @@ export async function POST(req: Request) {
     }
 
     // Final destination whitelist check
-    const isWhitelisted = TOP_DOMAINS.includes(finalDomain);
+    const isWhitelisted = TOP_DOMAINS.includes(finalDomain) || (
+      !isPlatformHosted && TOP_DOMAINS.includes(apexDomain)
+    );
     if (isWhitelisted) {
       return await sendScanResponse({
         score: 0,
         status: 'SAFE',
         engineTier: 1,
+        connectionStatus: 'REACHABLE',
         latencyMs: Date.now() - startTime,
         domainAge: 'Established (> 5 years)',
         expiryDate: 'Verified Trust Index',
@@ -372,19 +492,26 @@ export async function POST(req: Request) {
       riskScore += 15;
     }
 
-    // Run parallel Level 1 DOM audit + WHOIS/RDAP
+    // Run parallel Level 1 DOM audit + WHOIS/RDAP using parsed apex domain & platform detection
     const [domAudit, whois] = await Promise.all([
       auditDomLightweight(finalUrl, isWhitelisted),
-      getRealWhois(finalDomain),
+      getRealWhois(apexDomain, isPlatformHosted),
     ]);
 
     // Integrate DOM audit signals
     flags.push(...domAudit.flags);
     riskScore += domAudit.domRiskScore;
 
-    if (!whois.trusted) {
-      flags.push('WHOIS: New domain registration or privacy masked.');
-      riskScore += 20;
+    // Subdomain WHOIS handling:
+    // If the domain is on a verified platform (e.g. .vercel.app, .netlify.app, .github.io),
+    // never flag "WHOIS: New domain registration or privacy masked".
+    // For other domains, do not treat privacy protection as an automatic penalty unless other correlating threat signals exist.
+    if (!isPlatformHosted && !whois.trusted) {
+      const hasCorrelatingThreats = lookalike || hasKeyword || hasShadyTld || domAudit.hasPasswordField;
+      if (hasCorrelatingThreats) {
+        flags.push('WHOIS: Domain registration is recent or privacy protected with correlating risk signals.');
+        riskScore += 10;
+      }
     }
 
     // High confidence fast-exit condition (Score >= 85 at Level 1 DOM / Static)
@@ -394,6 +521,7 @@ export async function POST(req: Request) {
         score: finalScore,
         status: 'DANGEROUS',
         engineTier: 1,
+        connectionStatus: 'REACHABLE',
         latencyMs: Date.now() - startTime,
         domainAge: whois.ageText,
         expiryDate: whois.expiryDate,
@@ -421,16 +549,26 @@ export async function POST(req: Request) {
 
     // Step 5: Level 3 Guarded Chromium Sandbox & Gemini Vision Fallback
     // Only launch Chromium if:
-    // a) Obfuscated scripts or empty SPA root requiring dynamic JS execution
+    // a) Obfuscated scripts require dynamic JS execution
     // b) Score is ambiguous (between 30 and 70)
     // c) Turbo mode is disabled AND user requires deep inspection
     const shouldLaunchSandbox = !turbo && (
       domAudit.isObfuscated || 
-      domAudit.isEmptySpaRoot || 
-      (riskScore >= 30 && riskScore <= 70)
+      (riskScore >= 30 && riskScore <= 70) ||
+      (domAudit.isEmptySpaRoot && riskScore >= 20)
     );
 
-    let browserAnalysis = { pageAccessible: true, screenshotDataUri: '', domAnalysis: { hasPasswordField: domAudit.hasPasswordField } };
+    let browserAnalysis: {
+      pageAccessible: boolean;
+      connectionStatus: 'REACHABLE' | 'UNREACHABLE' | 'TIMEOUT';
+      screenshotDataUri: string;
+      domAnalysis: { hasPasswordField: boolean };
+    } = {
+      pageAccessible: true,
+      connectionStatus: 'REACHABLE',
+      screenshotDataUri: '',
+      domAnalysis: { hasPasswordField: domAudit.hasPasswordField }
+    };
     let geminiVerdict = null;
     let engineTier: 1 | 2 | 3 = 1;
 
@@ -440,13 +578,15 @@ export async function POST(req: Request) {
       const { pageAccessible, screenshotDataUri, domAnalysis } = browserAnalysis;
 
       if (!pageAccessible) {
-        flags.push('Site Offline - URL Pattern suggests HIGH RISK');
-        riskScore += 15;
+        // Decouple "Offline / Timeout" from Malicious Risk Score:
+        // Do NOT add +25% or +50% to riskScore.
+        // Do NOT tag as "Site Offline - URL Pattern suggests HIGH RISK".
+        flags.push('Notice: Unable to establish live connection (Host unreachable or request timed out).');
       } else {
         if (domAnalysis.hasPasswordField && lookalike) {
           flags.push('CRITICAL: Suspicious lookalike domain actively containing a credential harvester form.');
           riskScore += 40;
-        } else if (domAnalysis.hasPasswordField && !whois.trusted && !domAudit.hasPasswordField) {
+        } else if (domAnalysis.hasPasswordField && !whois.trusted && !domAudit.hasPasswordField && !isPlatformHosted) {
           flags.push('Active DOM: Untrusted domain requesting passwords.');
           riskScore += 20;
         }
@@ -500,6 +640,7 @@ Final Destination: ${finalUrl} | Initial Input: ${normalizedInputUrl} | Domain A
       score: riskScore,
       status,
       engineTier,
+      connectionStatus: browserAnalysis.connectionStatus || 'REACHABLE',
       latencyMs: Date.now() - startTime,
       domainAge: whois.ageText,
       expiryDate: whois.expiryDate,

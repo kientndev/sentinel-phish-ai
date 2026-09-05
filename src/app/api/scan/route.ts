@@ -15,34 +15,7 @@ import { queryThreatIntel } from '@/lib/scanner/threatIntel';
 
 export const maxDuration = 60; 
 
-const convexClient = process.env.NEXT_PUBLIC_CONVEX_URL
-  ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
-  : null;
-
-async function persistScanToConvex(params: {
-  userId?: string;
-  targetUrl: string;
-  riskScore: number;
-  status: string;
-  engineTier: number;
-  latencyMs: number;
-  threatDetails: string[];
-}) {
-  if (!convexClient) return;
-  try {
-    await convexClient.mutation(api.scans.recordScan, {
-      userId: params.userId,
-      targetUrl: params.targetUrl,
-      riskScore: params.riskScore,
-      status: params.status,
-      engineTier: params.engineTier,
-      latencyMs: params.latencyMs,
-      threatDetails: params.threatDetails,
-    });
-  } catch (err) {
-    console.error("[Convex Persistence] Failed to record scan:", err);
-  }
-} 
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 const HIGH_RISK_KEYWORDS = ['secure-login', 'verify-account', 'update-billing', 'signin-portal', 'account-security', 'confirm-identity'];
 const SHADY_TLDS = ['.xyz', '.top', '.click', '.zip', '.club', '.work'];
@@ -191,29 +164,27 @@ function jsonWithCors(body: any, init?: { status?: number }) {
 export async function POST(req: Request) {
   const startTime = Date.now();
   try {
+    const { userId } = await auth();
     const { url, lang = 'en', turbo = false } = await req.json();
     const languageName = LANG_NAMES[lang] ?? 'English';
     if (!url) return jsonWithCors({ error: 'URL is required' }, { status: 400 });
 
-    let userId: string | undefined;
-    try {
-      const session = await auth();
-      userId = session.userId || undefined;
-    } catch {
-      // Unauthenticated / guest scan
-    }
-
     const sendScanResponse = async (payload: any, status = 200) => {
       if (status === 200 && payload.score !== undefined) {
-        await persistScanToConvex({
-          userId,
-          targetUrl: url,
-          riskScore: payload.score,
-          status: payload.status || 'SAFE',
-          engineTier: payload.engineTier || 1,
-          latencyMs: payload.latencyMs ?? (Date.now() - startTime),
-          threatDetails: payload.redFlags || [],
-        });
+        const latencyMs = Date.now() - startTime;
+        try {
+          await convex.mutation(api.scans.recordScan, {
+            userId: userId ?? undefined,
+            targetUrl: url,
+            riskScore: payload.score,
+            status: payload.status || 'SAFE',
+            engineTier: payload.engineTier || 1,
+            latencyMs,
+            threatDetails: payload.redFlags || [],
+          });
+        } catch (err) {
+          console.error("[Convex Persistence] Failed to record scan:", err);
+        }
       }
       return jsonWithCors(payload, { status });
     };

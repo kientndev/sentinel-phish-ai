@@ -39,16 +39,16 @@ export default defineSchema({
   }),
 
   scans: defineTable({
-    userId: v.optional(v.string()), // Clerk user ID
+    userId: v.optional(v.string()),
     targetUrl: v.string(),
     riskScore: v.number(),
-    status: v.string(), // "SAFE" | "SUSPICIOUS" | "MALICIOUS" | "DANGEROUS"
-    engineTier: v.number(), // 1, 2, or 3
+    status: v.string(),
+    engineTier: v.number(),
     latencyMs: v.number(),
     threatDetails: v.array(v.string()),
     createdAt: v.number(),
   })
-    .index("by_user_id", ["userId"])
+    .index("by_user", ["userId"])
     .index("by_created_at", ["createdAt"]),
 });
 

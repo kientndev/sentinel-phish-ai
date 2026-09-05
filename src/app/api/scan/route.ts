@@ -487,8 +487,25 @@ export async function POST(req: Request) {
       riskScore += 30;
     }
 
-    if (redirectAudit.redirectCount > 2) {
-      flags.push(`Redirects: Deep redirection chain (${redirectAudit.redirectCount} hops) detected.`);
+    const isAuthHandshake = redirectAudit.hops.every(h => {
+      try {
+        const hHost = new URL(h.url).hostname.toLowerCase();
+        return (
+          hHost === finalParsed.hostname.toLowerCase() ||
+          hHost.endsWith(`.${apexDomain}`) ||
+          hHost.includes('clerk.accounts.dev') ||
+          hHost.includes('accounts.dev') ||
+          hHost.endsWith('.clerk.com') ||
+          hHost === 'accounts.google.com' ||
+          hHost.endsWith('.auth0.com')
+        );
+      } catch {
+        return false;
+      }
+    });
+
+    if (redirectAudit.redirectCount > 2 && !isAuthHandshake) {
+      flags.push(`Redirects: Deep cross-domain redirection chain (${redirectAudit.redirectCount} hops) detected.`);
       riskScore += 15;
     }
 

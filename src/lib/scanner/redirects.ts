@@ -74,34 +74,12 @@ export async function traceRedirectChain(initialUrl: string, maxHops = 5): Promi
     };
 
     try {
-      // First attempt with HEAD request
-      let response: Response;
-      try {
-        response = await fetch(currentUrl, {
-          method: 'HEAD',
-          redirect: 'manual',
-          signal: AbortSignal.timeout(5000),
-          headers: standardHeaders,
-        });
-
-        // 405 Method Not Allowed fallback to GET
-        if (response.status === 405) {
-          response = await fetch(currentUrl, {
-            method: 'GET',
-            redirect: 'manual',
-            signal: AbortSignal.timeout(5000),
-            headers: standardHeaders,
-          });
-        }
-      } catch {
-        // Retry with GET if HEAD failed completely (e.g. network/socket close)
-        response = await fetch(currentUrl, {
-          method: 'GET',
-          redirect: 'manual',
-          signal: AbortSignal.timeout(5000),
-          headers: standardHeaders,
-        });
-      }
+      const response = await fetch(currentUrl, {
+        method: 'GET',
+        redirect: 'manual',
+        signal: AbortSignal.timeout(3500),
+        headers: standardHeaders,
+      });
 
       hops.push({ url: currentUrl, status: response.status });
 
@@ -111,6 +89,9 @@ export async function traceRedirectChain(initialUrl: string, maxHops = 5): Promi
       if (isRedirect && location) {
         // Resolve relative redirects against current URL
         const nextUrl = new URL(location, currentUrl).toString();
+        if (hops.some(h => h.url === nextUrl)) {
+          break; // Circular redirect loop detected
+        }
         currentUrl = nextUrl;
         hopCount++;
       } else {

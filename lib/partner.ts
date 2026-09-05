@@ -21,35 +21,62 @@ export const DEFAULT_PARTNER: Partner = {
   licenseExpiry: 1767225600000, // Dec 31, 2025 approx
 };
 
+// Primary apex domains and app hosts that are NEVER partner slugs
+const PRIMARY_APP_HOSTS = new Set([
+  'localhost',
+  '127.0.0.1',
+  'sentinelphish.com',
+  'www.sentinelphish.com',
+  'sentinelphishai.vercel.app',
+  'sentinel-phish.vercel.app',
+]);
+
+const RESERVED_SLUGS = new Set([
+  'sentinelphish',
+  'sentinelphishai',
+  'sentinel-phish',
+  'www',
+  'admin',
+  'api',
+  'app',
+  'dashboard',
+  'auth',
+  'mail',
+]);
+
 // Extract slug from hostname
 export function getSlugFromHostname(hostname: string): string | null {
-  // Remove port if present
-  const cleanHostname = hostname.split(':')[0];
+  if (!hostname) return null;
+  const cleanHostname = hostname.split(':')[0].toLowerCase().trim();
   
-  // For localhost, return null (default branding)
-  if (cleanHostname === 'localhost' || cleanHostname === '127.0.0.1') {
+  if (PRIMARY_APP_HOSTS.has(cleanHostname)) {
     return null;
   }
+
+  if (cleanHostname.endsWith('.vercel.app') && cleanHostname.includes('sentinelphish')) {
+    return null;
+  }
+
+  const parts = cleanHostname.split('.').filter(Boolean);
   
-  // Extract subdomain (slug) from hostname
-  const parts = cleanHostname.split('.');
-  
-  if (parts.length >= 2) {
-    const slug = parts[0] === 'www' ? (parts.length >= 3 ? parts[1] : null) : parts[0];
-    
-    // Treat the main app domain and Vercel preview domains as no partner (null)
-    if (
-      slug === "sentinelphishai" || 
-      slug === "sentinel-phish" || 
-      (slug?.includes("sentinelphishai") && cleanHostname.endsWith(".vercel.app"))
-    ) {
+  // An apex domain like domain.com has 2 parts; only 3+ parts has a subdomain
+  if (parts.length <= 2) {
+    return null;
+  }
+
+  let candidateSlug = parts[0];
+  if (candidateSlug === 'www') {
+    if (parts.length <= 3) {
       return null;
     }
-    
-    return slug;
+    candidateSlug = parts[1];
   }
-  
-  return null;
+
+  if (RESERVED_SLUGS.has(candidateSlug)) {
+    return null;
+  }
+
+  return candidateSlug;
 }
 
 // Get partner by slug

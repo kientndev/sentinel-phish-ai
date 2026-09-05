@@ -18,8 +18,10 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(),
     logoUrl: v.optional(v.string()),
-    primaryColor: v.string(),
-    licenseExpiry: v.number(), // Timestamp in milliseconds
+    customDomain: v.optional(v.string()),
+    isActive: v.optional(v.boolean()),
+    primaryColor: v.optional(v.string()),
+    licenseExpiry: v.optional(v.number()),
   })
     .index("by_slug", ["slug"]),
   

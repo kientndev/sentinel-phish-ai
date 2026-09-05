@@ -3,13 +3,26 @@ import { mutation, query } from "./_generated/server";
 
 // Get partner by slug
 export const getPartnerBySlug = query({
-  args: { slug: v.string() },
+  args: {
+    slug: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
-    const partner = await ctx.db
-      .query("partners")
-      .filter((q) => q.eq(q.field("slug"), args.slug))
-      .first();
-    return partner;
+    const slug = args.slug;
+    if (!slug) {
+      return null;
+    }
+
+    try {
+      const partner = await ctx.db
+        .query("partners")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .first();
+
+      return partner ?? null;
+    } catch (err) {
+      console.error("Error querying partner by slug:", err);
+      return null;
+    }
   },
 });
 
@@ -90,22 +103,30 @@ export const deletePartner = mutation({
 
 // Check if partner license is valid
 export const checkLicense = query({
-  args: { slug: v.string() },
+  args: { slug: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const partner = await ctx.db
-      .query("partners")
-      .filter((q) => q.eq(q.field("slug"), args.slug))
-      .first();
-    
-    if (!partner) {
-      return { valid: false, reason: "Partner not found" };
+    if (!args.slug) {
+      return { valid: true };
     }
-    
-    const now = Date.now();
-    if (partner.licenseExpiry < now) {
-      return { valid: false, reason: "License expired" };
+
+    try {
+      const partner = await ctx.db
+        .query("partners")
+        .withIndex("by_slug", (q) => q.eq("slug", args.slug!))
+        .first();
+      
+      if (!partner) {
+        return { valid: false, reason: "Partner not found" };
+      }
+      
+      const now = Date.now();
+      if (partner.licenseExpiry && partner.licenseExpiry < now) {
+        return { valid: false, reason: "License expired" };
+      }
+      
+      return { valid: true };
+    } catch {
+      return { valid: true };
     }
-    
-    return { valid: true };
   },
 });

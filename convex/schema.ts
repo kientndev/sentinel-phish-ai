@@ -7,13 +7,19 @@ export default defineSchema({
     email: v.optional(v.string()),
     name: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
-    totalScans: v.number(),
-    threatsBlocked: v.number(),
-    xp: v.number(),
-    level: v.number(),
-  })
-    .index("by_clerk_id", ["clerkId"])
-    .index("by_xp", ["xp"]),
+
+    // Gamification metrics (must be optional for legacy accounts)
+    level: v.optional(v.number()),
+    xp: v.optional(v.number()),
+    threatsBlocked: v.optional(v.number()),
+    totalScans: v.optional(v.number()),
+
+    // Plan & quota metrics
+    plan: v.optional(v.string()),
+    auditCount: v.optional(v.number()),
+    generateCount: v.optional(v.number()),
+    resetDate: v.optional(v.number()),
+  }).index("by_clerk_id", ["clerkId"]),
   partners: defineTable({
     name: v.string(),
     slug: v.string(),

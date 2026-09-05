@@ -14,10 +14,12 @@ const LANG_NAMES: Record<string, string> = {
 
 export async function POST(req: Request) {
   try {
-    const { messages, context, lang = 'en', aiMode = 'concise' } = await req.json();
+    const body = await req.json();
+    const { messages, context, scanContext, lang = 'en', aiMode = 'concise' } = body;
+    const activeContext = context || scanContext || {};
 
-    if (!messages || !context) {
-      return NextResponse.json({ error: 'Messages and context are required' }, { status: 400 });
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ error: 'Messages are required' }, { status: 400 });
     }
 
     const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
@@ -34,36 +36,68 @@ export async function POST(req: Request) {
       ? `Use a Detailed/Educational tone. Explain concepts step-by-step, define technical terms in simple language, and use examples. This is for a classroom or educational demo, so be thorough and approachable.`
       : `Use a Direct/Concise tone. Give short, clear, professional answers. Avoid unnecessary elaboration.`;
 
-    const systemInstruction = `You are the SentinelPhish AI Dialogue Agent, an expert cybersecurity assistant.
-Your job is to explain the security analysis of the current website to the user in a helpful and calm tone.
+    const systemInstruction = `You are SentinelShield AI / SentinelPhish AI, an expert cybersecurity and phishing detection advisor.
+Your job is to explain the security analysis of the current website to the user in a helpful, calm, and authoritative tone.
 IMPORTANT: You MUST respond ENTIRELY in ${languageName}. Do not use any other language.
 Response Style: ${modeInstruction}
 
 Here is the context of the website analysis:
-URL: ${context.url}
-Risk Score: ${context.score}/100
-Status: ${context.status}
-Domain Intel: Age: ${context.domainAge}, Registrar: ${context.registrar}
-Heuristic Flags: ${(context.redFlags ?? []).join(', ')}`;
+URL: ${activeContext.url || activeContext.targetUrl || 'N/A'}
+Risk Score: ${activeContext.score !== undefined ? activeContext.score : (activeContext.riskScore ?? 'N/A')}/100
+Status: ${activeContext.status || 'N/A'}
+Domain Intel: Age: ${activeContext.domainAge || 'N/A'}, Registrar: ${activeContext.registrar || 'N/A'}
+Heuristic Flags: ${(activeContext.redFlags ?? activeContext.threatDetails ?? []).join(', ') || 'None'}`;
 
+    // Use a stable production model identifier
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       systemInstruction
     });
 
-    // Format messages for Gemini Chat
-    const chatSequence = messages.map((m: any) => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }]
-    }));
+    // Map frontend messages to valid Gemini Content objects
+    // Note: Gemini roles are strictly "user" and "model" (NOT "assistant" or "system")
+    const formattedContents = messages
+      .filter((m: any) => m && (m.content || m.text))
+      .map((msg: { role: string; content?: string; text?: string }) => ({
+        role: msg.role === 'assistant' || msg.role === 'model' ? 'model' : 'user',
+        parts: [{ text: msg.content || msg.text || '' }],
+      }));
 
-    const result = await model.generateContent(chatSequence);
-    const responseText = result.response.text() || "";
+    // Ensure the conversation starts with a user message
+    while (formattedContents.length > 0 && formattedContents[0].role === 'model') {
+      formattedContents.shift();
+    }
+
+    if (formattedContents.length === 0) {
+      return NextResponse.json({ error: 'At least one user message is required' }, { status: 400 });
+    }
+
+    // Merge consecutive turns with the same role into a single Content object
+    const mergedContents: { role: string; parts: { text: string }[] }[] = [];
+    for (const msg of formattedContents) {
+      const last = mergedContents[mergedContents.length - 1];
+      if (last && last.role === msg.role) {
+        last.parts.push(...msg.parts);
+      } else {
+        mergedContents.push({
+          role: msg.role,
+          parts: [...msg.parts],
+        });
+      }
+    }
+
+    // Call generateContent passing { contents: mergedContents } directly
+    const result = await model.generateContent({
+      contents: mergedContents,
+    });
+
+    const responseText = result.response.text() || '';
 
     return NextResponse.json({ reply: responseText });
 
   } catch (error: any) {
-    console.error('Chat API Error:', error);
+    console.error('Advisor chat error:', error);
     return NextResponse.json({ error: error.message || 'Failed to generate response' }, { status: 500 });
   }
 }
+

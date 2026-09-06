@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Send, Upload, CheckCircle2, Paperclip, X, Shield, Mail, Globe, Github, Linkedin, Twitter } from "lucide-react";
+import { Send, Upload, CheckCircle2, Paperclip, X, Shield, Mail, Globe, Github, Linkedin, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -75,12 +75,18 @@ export default function ContactPage() {
         }
       }
 
+      // Pre-filled mailto redirect to kien@sentinelphish.com ensuring messages are never dropped
+      const mailtoUrl = `mailto:kien@sentinelphish.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent("From: " + formData.name + " (" + formData.email + ")\n\n" + formData.message)}`;
+      window.location.href = mailtoUrl;
+
       setIsSuccess(true);
       setFormData({ name: "", email: "", subject: "Feedback", message: "" });
       setFiles([]);
       toast.success("Message received. Our security team will review it shortly.");
     } catch (error) {
       console.error("Submission error:", error);
+      const mailtoUrl = `mailto:kien@sentinelphish.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent("From: " + formData.name + " (" + formData.email + ")\n\n" + formData.message)}`;
+      window.location.href = mailtoUrl;
       toast.success("Message received. Our security team will review it shortly.");
       setIsSuccess(true);
     } finally {
@@ -314,10 +320,10 @@ export default function ContactPage() {
                 For urgent threat disclosures, enterprise deployment inquiries, or false positive reviews:
               </p>
               <a
-                href="mailto:contact@sentinelphish.com"
+                href="mailto:kien@sentinelphish.com"
                 className="block w-full py-3 px-4 bg-black/40 border border-white/10 hover:border-[#00d2ff]/40 rounded-xl text-sm font-mono text-[#00d2ff] hover:underline text-center transition-all"
               >
-                contact@sentinelphish.com
+                kien@sentinelphish.com
               </a>
             </div>
 
@@ -348,20 +354,20 @@ export default function ContactPage() {
                 </a>
 
                 <a
-                  href="https://x.com"
+                  href="https://peerlist.io/kieneatpizza"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between px-4 py-3 bg-black/30 hover:bg-white/5 border border-white/10 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white transition-all group"
                 >
                   <span className="flex items-center gap-2.5">
-                    <Twitter className="w-4 h-4 text-zinc-400 group-hover:text-[#00d2ff]" />
-                    X (Twitter) Updates
+                    <Share2 className="w-4 h-4 text-zinc-400 group-hover:text-[#00d2ff]" />
+                    Peerlist Profile
                   </span>
-                  <span className="text-[10px] font-mono text-zinc-500 group-hover:text-[#00d2ff]">@SentinelPhish →</span>
+                  <span className="text-[10px] font-mono text-zinc-500 group-hover:text-[#00d2ff]">@kieneatpizza →</span>
                 </a>
 
                 <a
-                  href="https://linkedin.com"
+                  href="https://www.linkedin.com/in/trikien-founder/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between px-4 py-3 bg-black/30 hover:bg-white/5 border border-white/10 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white transition-all group"

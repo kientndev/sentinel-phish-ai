@@ -36,10 +36,10 @@ export default function Navbar() {
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-3">
         <div className="bg-[#0b0e14]/70 backdrop-blur-md border border-white/10 rounded-2xl glow-sm flex items-center justify-between px-4 md:px-6 py-3">
           {/* Left + Center: Brand Logo & Navigation Links */}
-          <div className="flex items-center gap-8 lg:gap-10">
+          <div className="flex items-center gap-6 lg:gap-8">
             {/* Brand Logo */}
             <Link
-              href={isSignedIn ? "/dashboard" : "/"}
+              href="/"
               className="flex items-center gap-2.5 group shrink-0"
             >
               {logoUrl ? (
@@ -57,16 +57,16 @@ export default function Navbar() {
               </span>
             </Link>
 
-            {/* Navigation Links */}
-            <div className="hidden md:flex items-center gap-6 lg:gap-8">
+            {/* Navigation Items - Rendered as individual buttons/links */}
+            <div className="hidden md:flex items-center gap-1.5 lg:gap-2">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`text-sm font-medium tracking-wide transition-all relative ${
+                  className={`text-sm font-medium tracking-wide transition-all relative px-3 py-1.5 rounded-xl ${
                     pathname === link.href
-                      ? "text-[#00d2ff]"
-                      : "text-[#a1a1aa] hover:text-white"
+                      ? "text-[#00d2ff] bg-[#00d2ff]/10 font-semibold"
+                      : "text-[#a1a1aa] hover:text-white hover:bg-white/5"
                   }`}
                   style={
                     pathname === link.href
@@ -74,17 +74,11 @@ export default function Navbar() {
                       : undefined
                   }
                 >
-                  {link.name}
+                  <span>{link.name}</span>
                   {link.isNew && (
                     <span className="ml-1.5 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-500/30">
                       NEW
                     </span>
-                  )}
-                  {pathname === link.href && (
-                    <span
-                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#00d2ff]"
-                      style={{ backgroundColor: primaryColor }}
-                    />
                   )}
                 </Link>
               ))}

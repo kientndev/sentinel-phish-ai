@@ -27,6 +27,7 @@ export default function Navbar() {
     { name: "Scanning", href: "/scanning" },
     { name: "QR Shield", href: "/scan/qr", isNew: true },
     { name: "Reports", href: "/reports" },
+    { name: "Contact", href: "/contact" },
   ];
 
   return (
@@ -34,54 +35,64 @@ export default function Navbar() {
       {/* Floating Glassmorphism Navbar */}
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-3">
         <div className="bg-[#0b0e14]/70 backdrop-blur-md border border-white/10 rounded-2xl glow-sm flex items-center justify-between px-4 md:px-6 py-3">
-          {/* Left: Logo */}
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2 group">
+          {/* Left + Center: Brand Logo & Navigation Links */}
+          <div className="flex items-center gap-8 lg:gap-10">
+            {/* Brand Logo */}
+            <Link
+              href={isSignedIn ? "/dashboard" : "/"}
+              className="flex items-center gap-2.5 group shrink-0"
+            >
               {logoUrl ? (
                 <Image src={logoUrl} alt="Partner Logo" width={100} height={24} className="h-6 w-auto" />
               ) : (
-                <div className="bg-[#00d2ff]/10 p-1.5 rounded-lg group-hover:bg-[#00d2ff]/20 transition-colors border border-[#00d2ff]/20" style={{ backgroundColor: `${primaryColor}10`, borderColor: `${primaryColor}33` }}>
+                <div
+                  className="bg-[#00d2ff]/10 p-1.5 rounded-lg group-hover:bg-[#00d2ff]/20 transition-colors border border-[#00d2ff]/20"
+                  style={{ backgroundColor: `${primaryColor}10`, borderColor: `${primaryColor}33` }}
+                >
                   <ShieldAlert size={18} style={{ color: primaryColor }} />
                 </div>
               )}
-              <span className="font-black text-lg tracking-tight text-white group-hover:text-[#00d2ff] transition-colors" style={{ '--hover-color': primaryColor } as React.CSSProperties}>
-                Sentinel<span className="text-gray-500">Shield AI</span>
+              <span className="font-black text-lg tracking-tight text-white group-hover:text-[#00d2ff] transition-colors">
+                Sentinel<span className="text-[#00d2ff]">Phish</span>
               </span>
             </Link>
-          </div>
 
-          {/* Center: Navigation Links */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={`text-sm font-medium tracking-wide transition-all relative ${
-                  pathname === link.href
-                    ? "text-[#00d2ff]"
-                    : "text-[#a1a1aa] hover:text-blue-400"
-                }`}
-                style={
-                  pathname === link.href
-                    ? { color: primaryColor }
-                    : undefined
-                }
-              >
-                {link.name}
-                {link.isNew && (
-                  <span className="ml-1.5 px-1 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-500/30">
-                    NEW
-                  </span>
-                )}
-                {pathname === link.href && (
-                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#00d2ff]" style={{ backgroundColor: primaryColor }} />
-                )}
-              </Link>
-            ))}
+            {/* Navigation Links */}
+            <div className="hidden md:flex items-center gap-6 lg:gap-8">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`text-sm font-medium tracking-wide transition-all relative ${
+                    pathname === link.href
+                      ? "text-[#00d2ff]"
+                      : "text-[#a1a1aa] hover:text-white"
+                  }`}
+                  style={
+                    pathname === link.href
+                      ? { color: primaryColor }
+                      : undefined
+                  }
+                >
+                  {link.name}
+                  {link.isNew && (
+                    <span className="ml-1.5 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-500/30">
+                      NEW
+                    </span>
+                  )}
+                  {pathname === link.href && (
+                    <span
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#00d2ff]"
+                      style={{ backgroundColor: primaryColor }}
+                    />
+                  )}
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Right: Status + User Actions */}
-          <div className="flex items-center gap-3 flex-1 justify-end">
+          <div className="flex items-center gap-3 shrink-0">
             {/* Status Dot */}
             <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -126,6 +137,7 @@ export default function Navbar() {
             <button
               className="md:hidden p-2 text-[#a1a1aa] hover:text-white"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label="Toggle Navigation Menu"
             >
               {isOpen ? <X size={18} /> : <Menu size={18} />}
             </button>

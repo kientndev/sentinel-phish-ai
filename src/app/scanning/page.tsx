@@ -433,14 +433,14 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder={t.scannerPlaceholder}
-                className="w-full pl-3 pr-4 py-4 bg-white/5 border border-white/10 border-l-0 text-[#fafafa] rounded-r-xl focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 transition-all font-mono shadow-inner placeholder:text-[#52525b] flex-1"
+                className="w-full pl-3 pr-4 py-4 bg-white/5 border border-white/10 border-l-0 text-[#fafafa] rounded-r-xl focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 transition-all font-mono shadow-inner placeholder:text-[#52525b] flex-1 min-w-0 text-sm md:text-base"
                 required
               />
             </div>
             <button
               type="submit"
               disabled={isScanning}
-              className="px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed glow-md hover:glow-lg tracking-wide"
+              className="w-full md:w-auto px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed glow-md hover:glow-lg tracking-wide shrink-0"
             >
               <Search size={18} />
               {t.scanBtn}

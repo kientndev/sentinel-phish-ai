@@ -1,4 +1,5 @@
 import { ShieldAlert } from "lucide-react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -12,14 +13,18 @@ export default function Footer() {
             </div>
             <div className="flex flex-col">
               <p className="text-sm text-[#fafafa] font-medium">
-                © 2026 Sentinel Phish AI. All Rights Reserved.
+                © 2026 SentinelPhish AI. All Rights Reserved.
               </p>
             </div>
           </div>
 
-          {/* Right: Commercial Licensing Info */}
-          <div className="text-sm text-[#a1a1aa]">
-            Commercial licensing available for MSPs & Fintech. Inquire for licensing details.
+          {/* Right: Links & Commercial Licensing Info */}
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-[#a1a1aa]">
+            <Link href="/contact" className="hover:text-[#00d2ff] transition-colors font-medium">
+              Contact Intelligence
+            </Link>
+            <span className="hidden sm:inline text-white/20">|</span>
+            <span>Commercial licensing available for MSPs &amp; Fintech.</span>
           </div>
         </div>
       </div>

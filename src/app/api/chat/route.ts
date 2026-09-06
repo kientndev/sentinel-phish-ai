@@ -48,12 +48,6 @@ Status: ${activeContext.status || 'N/A'}
 Domain Intel: Age: ${activeContext.domainAge || 'N/A'}, Registrar: ${activeContext.registrar || 'N/A'}
 Heuristic Flags: ${(activeContext.redFlags ?? activeContext.threatDetails ?? []).join(', ') || 'None'}`;
 
-    // Use a stable production model identifier
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      systemInstruction
-    });
-
     // Map frontend messages to valid Gemini Content objects
     // Note: Gemini roles are strictly "user" and "model" (NOT "assistant" or "system")
     const formattedContents = messages
@@ -86,12 +80,45 @@ Heuristic Flags: ${(activeContext.redFlags ?? activeContext.threatDetails ?? [])
       }
     }
 
-    // Call generateContent passing { contents: mergedContents } directly
-    const result = await model.generateContent({
-      contents: mergedContents,
-    });
+    // Modern Gemini model candidate cascade (auto-fallbacks if a model is deprecated/retired on v1beta)
+    const candidateModels = [
+      process.env.GEMINI_MODEL,
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash-latest",
+      "gemini-2.5-pro",
+      "gemini-1.5-pro-latest",
+      "gemini-pro",
+      "gemini-1.5-flash",
+    ].filter(Boolean) as string[];
 
-    const responseText = result.response.text() || '';
+    let responseText = '';
+    let lastError: any = null;
+
+    for (const modelName of candidateModels) {
+      try {
+        const model = genAI.getGenerativeModel({ 
+          model: modelName,
+          systemInstruction,
+        });
+
+        const result = await model.generateContent({
+          contents: mergedContents,
+        });
+
+        responseText = result.response.text() || '';
+        if (responseText) {
+          break;
+        }
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`[Advisor Chat] Model "${modelName}" failed:`, err.message);
+      }
+    }
+
+    if (!responseText) {
+      throw lastError || new Error('All candidate Gemini models failed to generate content');
+    }
 
     return NextResponse.json({ reply: responseText });
 

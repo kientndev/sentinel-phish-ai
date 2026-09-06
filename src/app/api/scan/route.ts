@@ -612,7 +612,15 @@ export async function POST(req: Request) {
       if (apiKey && screenshotDataUri) {
         try {
           const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+          const candidateScanModels = [
+            process.env.GEMINI_VISION_MODEL || process.env.GEMINI_MODEL,
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-2.5-pro",
+            "gemini-1.5-pro-latest",
+            "gemini-1.5-pro",
+          ].filter(Boolean) as string[];
           
           const prompt = `You are SentinelPhish AI, an elite cybersecurity analyst (Specializing in 2026 Threat Trends).
 CRITICAL LANGUAGE INSTRUCTION: Write ALL response text in ${languageName}.
@@ -637,11 +645,22 @@ Final Destination: ${finalUrl} | Initial Input: ${normalizedInputUrl} | Domain A
 }`;
 
           const imagePart = { inlineData: { data: screenshotDataUri.split(',')[1], mimeType: "image/png" } };
-          const result = await model.generateContent([prompt, imagePart]);
-          const response = await result.response;
-          const responseText = response.text();
-          const jsonMatch = responseText.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) || responseText.match(/(\{[\s\S]*?\})/);
-          if (jsonMatch && jsonMatch[1]) geminiVerdict = JSON.parse(jsonMatch[1]);
+
+          for (const modelName of candidateScanModels) {
+            try {
+              const model = genAI.getGenerativeModel({ model: modelName });
+              const result = await model.generateContent([prompt, imagePart]);
+              const response = await result.response;
+              const responseText = response.text();
+              const jsonMatch = responseText.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) || responseText.match(/(\{[\s\S]*?\})/);
+              if (jsonMatch && jsonMatch[1]) {
+                geminiVerdict = JSON.parse(jsonMatch[1]);
+                break;
+              }
+            } catch (scanModelErr: any) {
+              console.warn(`[Gemini Vision Scan] Model "${modelName}" failed:`, scanModelErr?.message);
+            }
+          }
         } catch {
           // Gemini AI Error fallback
         }

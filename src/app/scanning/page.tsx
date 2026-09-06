@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { LoginGuard } from "../../components/LoginGuard";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import {
   Search, ShieldAlert, Activity, Globe,
   Brain, CheckCircle2, Settings, Download, Zap,
-  Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, X, Route
+  Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, X, Route, Shield
 } from "lucide-react";
 import { sendGAEvent } from "@next/third-parties/google";
 import { usePhishTank } from "../../hooks/usePhishTank";
@@ -60,11 +60,7 @@ const PIPELINE_STAGES = [
 ];
 
 export default function ScanningPage() {
-  return (
-    <LoginGuard>
-      <ScanningContent />
-    </LoginGuard>
-  );
+  return <ScanningContent />;
 }
 
 function ScanningContent() {
@@ -77,6 +73,24 @@ function ScanningContent() {
   const searchParams = useSearchParams();
   const [hasAutoScanned, setHasAutoScanned] = useState(false);
   
+  // Auth & Guest Quota State
+  const { isSignedIn, isLoaded } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  const [guestScans, setGuestScans] = useState<number>(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const saved = localStorage.getItem("sentinel_guest_scans");
+      if (saved) {
+        setGuestScans(parseInt(saved, 10) || 0);
+      }
+    } catch (e) {
+      console.error("Failed to read sentinel_guest_scans:", e);
+    }
+  }, []);
+
   // Mock user tier - in production, this comes from Clerk/Convex
   const isFreeUser = false;
 
@@ -140,6 +154,21 @@ function ScanningContent() {
     e.preventDefault();
     if (!url) return;
 
+    // Guest quota enforcement: allow 3 free preview scans before auth lock
+    if (isLoaded && !isSignedIn) {
+      let currentCount = 0;
+      try {
+        currentCount = parseInt(localStorage.getItem("sentinel_guest_scans") || "0", 10);
+      } catch {
+        currentCount = guestScans;
+      }
+
+      if (currentCount >= 3) {
+        setShowAuthModal(true);
+        return;
+      }
+    }
+
     // Check license before allowing scan
     const licenseCheck = await checkLicenseBeforeScan();
     if (!licenseCheck.valid) {
@@ -177,6 +206,18 @@ function ScanningContent() {
       setResults(scanData);
       addScan(scanData.score, scanData.score >= 70, urlToScan);
 
+      // Increment guest quota on success
+      if (!isSignedIn) {
+        try {
+          const currentCount = parseInt(localStorage.getItem("sentinel_guest_scans") || "0", 10);
+          const nextCount = currentCount + 1;
+          localStorage.setItem("sentinel_guest_scans", nextCount.toString());
+          setGuestScans(nextCount);
+        } catch (e) {
+          console.error("Failed to update guest scans count:", e);
+        }
+      }
+
       // Trigger AdMob Interstitial ad on mobile
       try {
         const { showInterstitialAd } = await import("@/lib/admob");
@@ -190,7 +231,7 @@ function ScanningContent() {
     } finally {
       setIsScanning(false);
     }
-  }, [url, lang, turboMode, addScan]);
+  }, [url, lang, turboMode, addScan, isLoaded, isSignedIn, guestScans]);
 
   const handleDownloadReport = () => {
     if (!results) return;
@@ -289,6 +330,63 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
         setLiveGlow={setLiveGlow}
       />
 
+      {/* Sentinel Access Required Auth Gate Modal for Guests */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-md bg-[#0b0e14] border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl text-center space-y-6"
+            >
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors p-1"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex justify-center">
+                <div className="p-6 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-white/10">
+                  <Shield className="w-14 h-14 text-blue-400" />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                  Sentinel Access Required
+                </h2>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  You have used all 3 free preview scans. Please sign in or create an account for unlimited real-time threat analysis.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 pt-2">
+                <Link
+                  href="/sign-up"
+                  className="w-full py-3.5 px-4 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] hover:opacity-95 text-white font-bold rounded-xl transition-all shadow-lg text-sm flex items-center justify-center gap-2"
+                >
+                  Sign Up Free
+                </Link>
+                <Link
+                  href="/sign-in"
+                  className="w-full py-3 px-4 bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white font-semibold rounded-xl border border-white/10 transition-all text-sm flex items-center justify-center gap-2"
+                >
+                  <Lock className="w-4 h-4" />
+                  Sign In
+                </Link>
+              </div>
+
+              <div className="text-xs text-zinc-500">
+                <span>Free account · Instant access · No credit card required</span>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Floating Settings Button */}
       <button
         onClick={() => setSettingsOpen(true)}
@@ -348,6 +446,24 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
               {t.scanBtn}
             </button>
           </form>
+
+          {/* Guest preview quota feedback badge */}
+          {mounted && isLoaded && !isSignedIn && (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400 pt-3 border-t border-white/5">
+              <div className="inline-flex items-center gap-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#00d2ff]/10 text-[#00d2ff] border border-[#00d2ff]/20">
+                  Preview scan: {Math.max(0, 3 - guestScans)} remaining
+                </span>
+                <span>Sign up for unlimited analysis.</span>
+              </div>
+              <Link
+                href="/sign-up"
+                className="text-[#00d2ff] hover:text-[#00d2ff]/80 font-semibold underline underline-offset-2 transition-colors"
+              >
+                Sign up free →
+              </Link>
+            </div>
+          )}
 
           {isScanning && (
             <div className="mt-8 flex flex-col items-center justify-center space-y-4 py-8 text-[#a1a1aa]">

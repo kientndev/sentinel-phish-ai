@@ -23,8 +23,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://sentinelphish.com'),
   title: "SentinelShield AI - Real-time AI Phishing Detector",
   description: "Advanced URL Scrutiny and Phishing Detection.",
+  openGraph: {
+    title: "SentinelShield AI - Real-time AI Phishing Detector",
+    description: "Advanced URL Scrutiny and Phishing Detection.",
+    url: "https://sentinelphish.com",
+    siteName: "SentinelPhish",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SentinelShield AI - Real-time AI Phishing Detector",
+    description: "Advanced URL Scrutiny and Phishing Detection.",
+  },
   icons: {
     icon: [
       { url: "/shield.png", sizes: "any" },

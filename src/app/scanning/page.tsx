@@ -7,7 +7,8 @@ import { useAuth } from "@clerk/nextjs";
 import {
   Search, ShieldAlert, Activity, Globe,
   Brain, CheckCircle2, Settings, Download, Zap,
-  Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, X, Route, Shield
+  Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, X, Route, Shield,
+  ThumbsUp, ThumbsDown
 } from "lucide-react";
 import { sendGAEvent } from "@next/third-parties/google";
 import { usePhishTank } from "../../hooks/usePhishTank";
@@ -105,6 +106,47 @@ function ScanningContent() {
   // Reporting state
   const [isReporting, setIsReporting] = useState(false);
   const [reported, setReported] = useState(false);
+
+  // Quick 1-click accuracy feedback state
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (results && url) {
+      try {
+        const saved = localStorage.getItem(`sentinel_accuracy_${url.toLowerCase().trim()}`);
+        setFeedbackSubmitted(!!saved);
+      } catch {
+        setFeedbackSubmitted(false);
+      }
+    } else {
+      setFeedbackSubmitted(false);
+    }
+  }, [results, url]);
+
+  const handleAccuracyFeedback = (type: "helpful" | "inaccurate") => {
+    // Instantly replace buttons with subtle thanks text to prevent multiple clicks
+    setFeedbackSubmitted(true);
+    try {
+      if (url) {
+        localStorage.setItem(
+          `sentinel_accuracy_${url.toLowerCase().trim()}`,
+          JSON.stringify({
+            type,
+            score: results?.score,
+            timestamp: Date.now(),
+            targetUrl: url,
+          })
+        );
+      }
+      sendGAEvent("event", "accuracy_feedback", {
+        feedback_type: type,
+        target_url: url,
+        risk_score: results?.score,
+      });
+    } catch (err) {
+      console.warn("Accuracy feedback fallback:", err);
+    }
+  };
 
   // PhishTank Gamification hook
   const { 
@@ -761,6 +803,42 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                           )}
                         </div>
                       </div>
+                    </div>
+
+                    {/* 1-Click Accuracy Feedback Bar */}
+                    <div className="pt-5 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-xs font-medium text-zinc-400">
+                        Was this intelligence accurate?
+                      </span>
+                      {feedbackSubmitted ? (
+                        <motion.span
+                          initial={{ opacity: 0, y: 2 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-xs text-zinc-400 font-medium flex items-center gap-1.5"
+                        >
+                          <CheckCircle2 size={13} className="text-[#00d2ff]" />
+                          Thanks for helping train SentinelPhish!
+                        </motion.span>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleAccuracyFeedback("helpful")}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-zinc-300 hover:text-emerald-300 font-medium transition-all active:scale-95 text-xs group"
+                          >
+                            <ThumbsUp size={13} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+                            <span>👍 Helpful</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAccuracyFeedback("inaccurate")}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-red-500/15 border border-white/10 hover:border-red-500/30 text-zinc-300 hover:text-red-300 font-medium transition-all active:scale-95 text-xs group"
+                          >
+                            <ThumbsDown size={13} className="text-red-400 group-hover:scale-110 transition-transform" />
+                            <span>👎 Inaccurate</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

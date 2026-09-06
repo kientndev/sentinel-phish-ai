@@ -26,12 +26,7 @@ export const metadata: Metadata = {
   title: "SentinelShield AI - Real-time AI Phishing Detector",
   description: "Advanced URL Scrutiny and Phishing Detection.",
   icons: {
-    icon: [
-      { url: "/icon.png", type: "image/png" },
-      { url: "/favicon.ico" },
-    ],
-    shortcut: "/favicon.ico",
-    apple: "/apple-icon.png",
+    icon: "/icon.png",
   },
 };
 

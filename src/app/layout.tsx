@@ -32,11 +32,20 @@ export const metadata: Metadata = {
     url: "https://sentinelphish.com",
     siteName: "SentinelPhish",
     type: "website",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "SentinelShield AI - Real-time AI Phishing Detector",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "SentinelShield AI - Real-time AI Phishing Detector",
     description: "Advanced URL Scrutiny and Phishing Detection.",
+    images: ["/opengraph-image.png"],
   },
   icons: {
     icon: [

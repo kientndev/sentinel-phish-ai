@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, AlertTriangle, Shield, ArrowRight, AlertCircle, Camera, CameraOff, RotateCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import jsQR from "jsqr";
@@ -26,6 +26,7 @@ export default function QRScannerView() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const isCameraActiveRef = useRef(false);
 
   const evaluateUrl = (url: string): ScanResult => {
     const redFlags: string[] = [];
@@ -79,14 +80,38 @@ export default function QRScannerView() {
     });
   };
 
+  const stopCamera = async () => {
+    isCameraActiveRef.current = false;
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+      });
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    setIsCameraActive(false);
+  };
+
   const handleFile = useCallback(async (file: File) => {
     setError(null);
     setScanResult(null);
     
-    if (!file.type.match(/image\/(jpeg|png)/)) {
-      setError("Please upload a .jpg or .png file");
+    if (!file.type.startsWith("image/")) {
+      setError("Please upload a valid image file (.png, .jpg, .jpeg, .webp)");
       return;
     }
+
+    // Stop active camera when image file is uploaded
+    await stopCamera();
 
     setIsAnalyzing(true);
 
@@ -130,6 +155,29 @@ export default function QRScannerView() {
       setIsAnalyzing(false);
     }
   }, [isValidUrl]);
+
+  // Global Clipboard Paste Listener (Win + Shift + S, Cmd + Shift + 4, Ctrl + V)
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf("image") !== -1) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            handleFile(file);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [handleFile]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -181,26 +229,6 @@ export default function QRScannerView() {
     }
   };
 
-  const stopCamera = async () => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
-        track.stop();
-      });
-      streamRef.current = null;
-    }
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-
-    setIsCameraActive(false);
-  };
-
   const scanQRCode = () => {
     if (!videoRef.current || !canvasRef.current) return;
 
@@ -210,23 +238,25 @@ export default function QRScannerView() {
     if (!ctx) return;
 
     const scan = () => {
-      if (!isCameraActive || !videoRef.current) return;
+      if (!isCameraActiveRef.current || !videoRef.current) return;
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0);
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
 
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: "dontInvert",
-      });
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
 
-      if (code) {
-        if (isValidUrl(code.data)) {
-          stopCamera();
-          const result = evaluateUrl(code.data);
-          setScanResult(result);
-          return;
+        if (code) {
+          if (isValidUrl(code.data)) {
+            stopCamera();
+            const result = evaluateUrl(code.data);
+            setScanResult(result);
+            return;
+          }
         }
       }
 
@@ -243,40 +273,44 @@ export default function QRScannerView() {
     await new Promise(resolve => setTimeout(resolve, 300));
     
     try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      let deviceId: string | undefined;
-      
-      if (videoDevices.length > 0) {
-        const backCamera = videoDevices.find(device => 
-          device.label.toLowerCase().includes('back') || 
-          device.label.toLowerCase().includes('rear') ||
-          device.label.toLowerCase().includes('environment')
-        );
-        deviceId = backCamera ? backCamera.deviceId : videoDevices[0].deviceId;
-      }
-      
-      const constraints: MediaStreamConstraints = {
-        video: deviceId 
-          ? { deviceId: { exact: deviceId }, aspectRatio: 1.0 }
-          : { facingMode: facingMode, aspectRatio: 1.0 },
-      };
+      let stream: MediaStream;
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      // Update constraints from { facingMode: { exact: "environment" } } to { video: { facingMode: "environment" } }
+      // with a graceful fallback to { video: true } if environment mode fails.
+      try {
+        const constraints: MediaStreamConstraints = {
+          video: { facingMode: facingMode },
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (envErr) {
+        console.warn("Camera with facingMode failed, falling back to { video: true }:", envErr);
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
+
       streamRef.current = stream;
+      isCameraActiveRef.current = true;
+      setIsCameraActive(true);
 
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute('autoplay', '');
-        videoRef.current.setAttribute('playsinline', '');
-        videoRef.current.setAttribute('muted', '');
-        await videoRef.current.play();
-        scanQRCode();
-      }
+        const video = videoRef.current;
+        video.srcObject = stream;
+        video.setAttribute('autoplay', '');
+        video.setAttribute('playsinline', '');
+        video.setAttribute('muted', '');
 
-      setIsCameraActive(true);
+        video.onloadedmetadata = async () => {
+          try {
+            await video.play();
+            scanQRCode();
+          } catch (playErr) {
+            console.error("Error playing video:", playErr);
+          }
+        };
+      }
     } catch (err) {
       setCameraError(`Unable to access camera: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      isCameraActiveRef.current = false;
+      setIsCameraActive(false);
     } finally {
       setIsStartingCamera(false);
     }
@@ -306,7 +340,7 @@ export default function QRScannerView() {
         <input
           ref={inputRef}
           type="file"
-          accept=".jpg,.jpeg,.png"
+          accept="image/*"
           onChange={handleChange}
           className="hidden"
         />
@@ -326,7 +360,7 @@ export default function QRScannerView() {
                 Drag &amp; drop your QR code image here
               </p>
               <p className="text-[#a1a1aa] text-sm mb-4">
-                Supports .jpg and .png files
+                Supports .png, .jpg, .jpeg, and .webp files
               </p>
               <button
                 onClick={onButtonClick}
@@ -386,7 +420,14 @@ export default function QRScannerView() {
             </div>
           )}
 
-          <div className="relative w-full max-w-md mx-auto bg-[#0b0e14] rounded-xl overflow-hidden border border-white/10" style={{ minHeight: '300px' }}>
+          <div
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            className="relative w-full max-w-md mx-auto bg-[#0b0e14] rounded-xl overflow-hidden border border-white/10"
+            style={{ minHeight: '300px' }}
+          >
             <video
               ref={videoRef}
               className="w-full h-auto object-cover"
@@ -402,13 +443,26 @@ export default function QRScannerView() {
             </div>
           </div>
 
-          <button
-            onClick={flipCamera}
-            className="mt-4 w-full px-6 py-4 bg-white/5 border border-white/10 text-white font-bold rounded-xl hover:bg-white/10 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
-          >
-            <RotateCw className="w-5 h-5" />
-            Flip Camera
-          </button>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={flipCamera}
+              className="px-4 py-3.5 bg-white/5 border border-white/10 text-white font-bold rounded-xl hover:bg-white/10 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+            >
+              <RotateCw className="w-4 h-4" />
+              Flip Camera
+            </button>
+            <label className="px-4 py-3.5 bg-[#00d2ff]/10 hover:bg-[#00d2ff]/20 border border-[#00d2ff]/30 text-[#00d2ff] hover:text-white font-bold rounded-xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(0,210,255,0.15)]">
+              <Upload className="w-4 h-4" />
+              <span>Upload Image / Drop QR</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleChange}
+                className="hidden"
+              />
+            </label>
+          </div>
         </div>
       )}
 

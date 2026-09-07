@@ -34,7 +34,7 @@ export function LoginGuard({ children }: LoginGuardProps) {
               Sentinel Access Required
             </h1>
             <p className="text-zinc-400">
-              Please sign in to access the Sentinel Phish dashboard
+              Please sign in to access the SentinelPhish dashboard
             </p>
           </div>
 

@@ -86,6 +86,7 @@ function ScanningContent() {
 
   useEffect(() => {
     setMounted(true);
+    document.title = "Live Security Scanner | SentinelPhish";
     try {
       const saved = localStorage.getItem("sentinel_guest_scans");
       if (saved) {

@@ -14,7 +14,7 @@ export default function SignInPage() {
               SYSTEM_ACCESS
             </h1>
             <p className="text-xs text-slate-400 font-mono">
-              Authenticate to manage your SentinelShield monitors.
+              Authenticate to manage your SentinelPhish monitors.
             </p>
           </div>
 

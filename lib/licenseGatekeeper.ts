@@ -5,7 +5,7 @@ interface LicenseCheckResult {
 
 // Gatekeeper function to check license before allowing scan
 export async function checkLicenseBeforeScan(): Promise<LicenseCheckResult> {
-  // Bypassed for mobile release: SentinelShield AI is free-to-use
+  // Bypassed for mobile release: SentinelPhish AI is free-to-use
   return { valid: true };
 }
 

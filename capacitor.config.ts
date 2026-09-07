@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.sentinelphish.app',
-  appName: 'SentinelShield AI',
+  appName: 'SentinelPhish',
   webDir: 'out',
   server: {
     url: 'https://sentinelphish.com',

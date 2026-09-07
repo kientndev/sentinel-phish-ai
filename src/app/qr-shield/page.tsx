@@ -1,10 +1,14 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { QrCode, ArrowLeft, Sparkles, Scan } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function QRShieldPreviewPage() {
+  useEffect(() => {
+    document.title = "QR Shield | SentinelPhish";
+  }, []);
   return (
     <main className="flex-1 flex flex-col items-center justify-center p-6 min-h-[75vh] bg-[#0b0e14] relative overflow-hidden text-[#fafafa]">
       {/* Ambient Cyber Glows */}

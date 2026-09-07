@@ -181,10 +181,10 @@ export default function SettingsModal({
           <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center space-y-1">
             <p className="text-xs text-zinc-400">Have questions or feedback?</p>
             <a 
-              href="mailto:support@sentinelshield.ai" 
+              href="mailto:kien@sentinelphish.com" 
               className="block text-xs font-bold text-[#00d2ff] hover:underline"
             >
-              support@sentinelshield.ai
+              kien@sentinelphish.com
             </a>
           </div>
         </div>

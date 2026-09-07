@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import XPBar from "../../components/XPBar";
 import { ClientOnly } from "../../components/ClientOnly";
@@ -13,6 +14,10 @@ const DashboardMetrics = dynamic(() => import("./DashboardMetrics"), {
 });
 
 export default function DashboardPage() {
+  useEffect(() => {
+    document.title = "Security Dashboard | SentinelPhish";
+  }, []);
+
   return (
     <LoginGuard>
       <ClientOnly fallback={<DashboardLoading />}>

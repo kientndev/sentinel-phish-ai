@@ -454,7 +454,7 @@ export default function QRScannerView() {
             onClick={handleDeepScan}
             className="w-full px-6 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-mono font-bold rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.35)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all uppercase tracking-wider text-xs flex items-center justify-center gap-2"
           >
-            <span>Analyze with SentinelShield</span>
+            <span>Analyze with SentinelPhish</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

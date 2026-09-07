@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       ? `Use a Detailed/Educational tone. Explain concepts step-by-step, define technical terms in simple language, and use examples. This is for a classroom or educational demo, so be thorough and approachable.`
       : `Use a Direct/Concise tone. Give short, clear, professional answers. Avoid unnecessary elaboration.`;
 
-    const systemInstruction = `You are SentinelShield AI / SentinelPhish AI, an expert cybersecurity and phishing detection advisor.
+    const systemInstruction = `You are SentinelPhish, an expert cybersecurity and phishing detection advisor.
 Your job is to explain the security analysis of the current website to the user in a helpful, calm, and authoritative tone.
 IMPORTANT: You MUST respond ENTIRELY in ${languageName}. Do not use any other language.
 Response Style: ${modeInstruction}

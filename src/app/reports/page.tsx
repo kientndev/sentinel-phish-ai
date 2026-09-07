@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShieldCheck, Calendar, Globe, AlertTriangle, ExternalLink, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -9,6 +9,10 @@ import { usePhishTank } from "../../hooks/usePhishTank";
 export default function ReportsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const { scanHistory } = usePhishTank();
+
+  useEffect(() => {
+    document.title = "Threat Reports | SentinelPhish";
+  }, []);
 
   // Convert scan history to reports format and get 10 latest
   const reports = scanHistory.slice(0, 10).map((scan, index) => ({

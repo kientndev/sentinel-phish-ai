@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send, Upload, CheckCircle2, Paperclip, X, Shield, Mail, Globe, Github, Linkedin, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "convex/react";
@@ -19,6 +19,10 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    document.title = "Contact Intelligence | SentinelPhish";
+  }, []);
 
   const generateUploadUrl = useMutation(api.contact.generateUploadUrl);
   const sendContact = useMutation(api.contact.send);

@@ -9,6 +9,8 @@
  */
 
 import type * as contact from "../contact.js";
+import type * as feedback from "../feedback.js";
+import type * as guestScans from "../guestScans.js";
 import type * as notifications from "../notifications.js";
 import type * as partners from "../partners.js";
 import type * as scans from "../scans.js";
@@ -23,6 +25,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   contact: typeof contact;
+  feedback: typeof feedback;
+  guestScans: typeof guestScans;
   notifications: typeof notifications;
   partners: typeof partners;
   scans: typeof scans;

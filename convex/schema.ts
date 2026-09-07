@@ -58,5 +58,22 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_created_at", ["createdAt"]),
+
+  scanFeedback: defineTable({
+    url: v.string(),
+    isHelpful: v.boolean(),
+    scanId: v.optional(v.id("scans")),
+    userId: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_url", ["url"])
+    .index("by_created_at", ["createdAt"]),
+
+  guestScans: defineTable({
+    clientHash: v.string(),
+    count: v.number(),
+    lastScanAt: v.number(),
+  }).index("by_hash", ["clientHash"]),
 });
+
 

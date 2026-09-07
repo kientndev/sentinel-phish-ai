@@ -13,6 +13,9 @@ import {
 import { sendGAEvent } from "@next/third-parties/google";
 import { usePhishTank } from "../../hooks/usePhishTank";
 import { AnimatePresence, motion } from "framer-motion";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
 import SettingsModal, { AiMode } from "../SettingsModal";
 import { LangCode, translations } from "../translations";
 import XPBar from "../../components/XPBar";
@@ -25,6 +28,7 @@ interface RedirectHop {
 }
 
 interface ScanResult {
+  scanId?: Id<"scans">;
   score: number;
   status: string;
   engineTier?: 1 | 2 | 3;
@@ -108,6 +112,7 @@ function ScanningContent() {
   const [reported, setReported] = useState(false);
 
   // Quick 1-click accuracy feedback state
+  const submitScanFeedback = useMutation(api.feedback.submitScanFeedback);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   useEffect(() => {
@@ -123,7 +128,7 @@ function ScanningContent() {
     }
   }, [results, url]);
 
-  const handleAccuracyFeedback = (type: "helpful" | "inaccurate") => {
+  const handleAccuracyFeedback = async (isHelpful: boolean) => {
     // Instantly replace buttons with subtle thanks text to prevent multiple clicks
     setFeedbackSubmitted(true);
     try {
@@ -131,7 +136,7 @@ function ScanningContent() {
         localStorage.setItem(
           `sentinel_accuracy_${url.toLowerCase().trim()}`,
           JSON.stringify({
-            type,
+            isHelpful,
             score: results?.score,
             timestamp: Date.now(),
             targetUrl: url,
@@ -139,9 +144,15 @@ function ScanningContent() {
         );
       }
       sendGAEvent("event", "accuracy_feedback", {
-        feedback_type: type,
+        is_helpful: isHelpful,
         target_url: url,
         risk_score: results?.score,
+      });
+
+      await submitScanFeedback({
+        url,
+        isHelpful,
+        scanId: results?.scanId,
       });
     } catch (err) {
       console.warn("Accuracy feedback fallback:", err);
@@ -233,14 +244,36 @@ function ScanningContent() {
     setIsReporting(false);
 
     try {
+      let guestHash = "";
+      if (!isSignedIn) {
+        try {
+          guestHash = localStorage.getItem("sentinel_guest_client_hash") || "";
+          if (!guestHash) {
+            guestHash = "guest_" + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+            localStorage.setItem("sentinel_guest_client_hash", guestHash);
+          }
+        } catch {
+          guestHash = "";
+        }
+      }
+
       const res = await fetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: urlToScan, lang, turbo: turboMode }),
+        body: JSON.stringify({ 
+          url: urlToScan, 
+          lang, 
+          turbo: turboMode,
+          clientHash: guestHash || undefined,
+        }),
       });
 
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({ error: `Scan error (${res.status}): ${res.statusText}` }));
+        if (errJson.error === "GUEST_LIMIT_REACHED") {
+          setShowAuthModal(true);
+          return;
+        }
         throw new Error(errJson.error || `Scan error (${res.status}): ${res.statusText}`);
       }
 
@@ -823,7 +856,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => handleAccuracyFeedback("helpful")}
+                            onClick={() => handleAccuracyFeedback(true)}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-zinc-300 hover:text-emerald-300 font-medium transition-all active:scale-95 text-xs group"
                           >
                             <ThumbsUp size={13} className="text-emerald-400 group-hover:scale-110 transition-transform" />
@@ -831,7 +864,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleAccuracyFeedback("inaccurate")}
+                            onClick={() => handleAccuracyFeedback(false)}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-red-500/15 border border-white/10 hover:border-red-500/30 text-zinc-300 hover:text-red-300 font-medium transition-all active:scale-95 text-xs group"
                           >
                             <ThumbsDown size={13} className="text-red-400 group-hover:scale-110 transition-transform" />

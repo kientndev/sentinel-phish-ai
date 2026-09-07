@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { auth } from '@clerk/nextjs/server';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/../convex/_generated/api';
@@ -275,15 +276,33 @@ export async function POST(req: Request) {
   const startTime = Date.now();
   try {
     const { userId } = await auth();
-    const { url, lang = 'en', turbo = false } = await req.json();
+    const { url, lang = 'en', turbo = false, clientHash: bodyClientHash } = await req.json();
     const languageName = LANG_NAMES[lang] ?? 'English';
     if (!url) return jsonWithCors({ error: 'URL is required' }, { status: 400 });
+
+    // Server-Assisted Guest Quotas Check in Convex
+    if (!userId) {
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'guest-ip';
+      const ua = req.headers.get('user-agent') || 'guest-ua';
+      const clientHash = bodyClientHash || crypto.createHash('sha256').update(`${ip}:${ua}`).digest('hex');
+
+      try {
+        const quotaResult = await convex.mutation(api.guestScans.checkAndIncrementGuestScan, {
+          clientHash,
+        });
+        if (quotaResult && !quotaResult.allowed) {
+          return jsonWithCors({ error: 'GUEST_LIMIT_REACHED' }, { status: 403 });
+        }
+      } catch (err) {
+        console.warn("[Guest Quota] Failed to verify quota in Convex, falling back:", err);
+      }
+    }
 
     const sendScanResponse = async (payload: any, status = 200) => {
       if (status === 200 && payload.score !== undefined) {
         const latencyMs = Date.now() - startTime;
         try {
-          await convex.mutation(api.scans.recordScan, {
+          const scanId = await convex.mutation(api.scans.recordScan, {
             userId: userId ?? undefined,
             targetUrl: url,
             riskScore: payload.score,
@@ -292,6 +311,9 @@ export async function POST(req: Request) {
             latencyMs,
             threatDetails: payload.redFlags || [],
           });
+          if (scanId) {
+            payload.scanId = scanId;
+          }
         } catch (err) {
           console.error("[Convex Persistence] Failed to record scan:", err);
         }

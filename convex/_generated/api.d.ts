@@ -13,6 +13,7 @@ import type * as feedback from "../feedback.js";
 import type * as guestScans from "../guestScans.js";
 import type * as notifications from "../notifications.js";
 import type * as partners from "../partners.js";
+import type * as reports from "../reports.js";
 import type * as scans from "../scans.js";
 import type * as users from "../users.js";
 import type * as waitlist from "../waitlist.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   guestScans: typeof guestScans;
   notifications: typeof notifications;
   partners: typeof partners;
+  reports: typeof reports;
   scans: typeof scans;
   users: typeof users;
   waitlist: typeof waitlist;

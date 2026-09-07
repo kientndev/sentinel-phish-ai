@@ -114,6 +114,7 @@ function ScanningContent() {
 
   // Quick 1-click accuracy feedback state
   const submitScanFeedback = useMutation(api.feedback.submitScanFeedback);
+  const recordScanMutation = useMutation(api.scans.recordScan);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   useEffect(() => {
@@ -282,6 +283,25 @@ function ScanningContent() {
       setResults(scanData);
       addScan(scanData.score, scanData.score >= 70, urlToScan);
 
+      // Auto-Persistence: Ensure scan record exists in Convex for the public threat feed
+      if (!scanData.scanId) {
+        try {
+          const fallbackId = await recordScanMutation({
+            targetUrl: urlToScan,
+            url: urlToScan,
+            riskScore: scanData.score,
+            verdict: scanData.score >= 75 ? "MALICIOUS" : scanData.score >= 40 ? "SUSPICIOUS" : "CLEAN",
+            heuristics: scanData.redFlags || [],
+            isGuest: !isSignedIn,
+          });
+          if (fallbackId) {
+            scanData.scanId = fallbackId;
+          }
+        } catch (e) {
+          console.warn("[Auto-Persistence] Fallback recordScan failed:", e);
+        }
+      }
+
       // Increment guest quota on success
       if (!isSignedIn) {
         try {
@@ -307,7 +327,7 @@ function ScanningContent() {
     } finally {
       setIsScanning(false);
     }
-  }, [url, lang, turboMode, addScan, isLoaded, isSignedIn, guestScans]);
+  }, [url, lang, turboMode, addScan, isLoaded, isSignedIn, guestScans, recordScanMutation]);
 
   const handleDownloadReport = () => {
     if (!results) return;

@@ -47,17 +47,23 @@ export default defineSchema({
   }),
 
   scans: defineTable({
-    userId: v.optional(v.string()),
-    targetUrl: v.string(),
+    url: v.optional(v.string()),
+    domain: v.optional(v.string()),
+    verdict: v.optional(v.string()), // "MALICIOUS" | "SUSPICIOUS" | "BENIGN" | "CLEAN"
     riskScore: v.number(),
-    status: v.string(),
-    engineTier: v.number(),
-    latencyMs: v.number(),
-    threatDetails: v.array(v.string()),
+    heuristics: v.optional(v.array(v.string())),
+    userId: v.optional(v.string()),
+    isGuest: v.optional(v.boolean()),
+    targetUrl: v.optional(v.string()),
+    status: v.optional(v.string()),
+    engineTier: v.optional(v.number()),
+    latencyMs: v.optional(v.number()),
+    threatDetails: v.optional(v.array(v.string())),
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_created_at", ["createdAt"]),
+    .index("by_created_at", ["createdAt"])
+    .index("by_verdict", ["verdict"]),
 
   scanFeedback: defineTable({
     url: v.string(),

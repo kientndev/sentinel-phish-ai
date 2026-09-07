@@ -302,14 +302,27 @@ export async function POST(req: Request) {
       if (status === 200 && payload.score !== undefined) {
         const latencyMs = Date.now() - startTime;
         try {
+          let scanDomain = "unknown";
+          try {
+            scanDomain = new URL(normalizedInputUrl).hostname.replace(/^www\./, '');
+          } catch {
+            scanDomain = url.replace(/^https?:\/\//i, '').split('/')[0];
+          }
+          const scanVerdict = payload.score >= 75 ? 'MALICIOUS' : payload.score >= 40 ? 'SUSPICIOUS' : 'CLEAN';
+
           const scanId = await convex.mutation(api.scans.recordScan, {
             userId: userId ?? undefined,
             targetUrl: url,
+            url,
+            domain: scanDomain,
+            verdict: scanVerdict,
             riskScore: payload.score,
-            status: payload.status || 'SAFE',
+            status: payload.status || (scanVerdict === 'MALICIOUS' ? 'DANGEROUS' : scanVerdict === 'SUSPICIOUS' ? 'SUSPICIOUS' : 'SAFE'),
             engineTier: payload.engineTier || 1,
             latencyMs,
             threatDetails: payload.redFlags || [],
+            heuristics: payload.redFlags || [],
+            isGuest: !userId,
           });
           if (scanId) {
             payload.scanId = scanId;

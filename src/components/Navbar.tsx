@@ -27,6 +27,7 @@ export default function Navbar() {
     { name: "Scanning", href: "/scanning" },
     { name: "QR Shield", href: "/scan/qr", isNew: true },
     { name: "Reports", href: "/reports" },
+    { name: "Pricing", href: "/pricing" },
     { name: "Contact", href: "/contact" },
   ];
 

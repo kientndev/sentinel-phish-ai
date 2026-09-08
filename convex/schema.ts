@@ -33,8 +33,11 @@ export default defineSchema({
   
   waitlist: defineTable({
     email: v.string(),
-    plan: v.string(),
-    joinedAt: v.number(),
+    plan: v.string(), // "PRO_SECOPS"
+    source: v.optional(v.string()), // "pricing_modal"
+    notified: v.optional(v.boolean()),
+    createdAt: v.optional(v.number()),
+    joinedAt: v.optional(v.number()),
   }).index("by_email", ["email"]),
 
   contacts: defineTable({

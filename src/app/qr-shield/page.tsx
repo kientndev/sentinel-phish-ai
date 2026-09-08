@@ -411,8 +411,8 @@ export default function QRShieldPage() {
                   <span>Paste screenshot directly from clipboard</span>
                 </div>
 
-                {/* Mobile Camera Trigger */}
-                <div className="mt-4 flex items-center gap-2">
+                {/* Mobile Camera & Live Webcam Triggers */}
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -422,8 +422,16 @@ export default function QRShieldPage() {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium text-zinc-300 hover:text-white transition-colors"
                   >
                     <Camera className="w-3.5 h-3.5 text-[#00d2ff]" />
-                    <span>Use Camera Capture</span>
+                    <span>Take Mobile Photo</span>
                   </button>
+                  <Link
+                    href="/scan/qr"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00d2ff]/10 hover:bg-[#00d2ff]/20 border border-[#00d2ff]/30 text-xs font-medium text-[#00d2ff] hover:text-white transition-colors"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Open Live Webcam Scanner →</span>
+                  </Link>
                 </div>
               </div>
 

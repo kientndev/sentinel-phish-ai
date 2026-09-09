@@ -16,6 +16,9 @@ import {
   Webhook,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useUser, SignInButton } from "@clerk/nextjs";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import WaitlistModal from "../../components/WaitlistModal";
 
 export default function PricingPage() {
@@ -23,9 +26,39 @@ export default function PricingPage() {
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
+  const { user, isLoaded, isSignedIn } = useUser();
+  const quota = useQuery(api.users.getUserPlanAndQuota, user?.id ? { clerkId: user.id } : "skip");
+  const activateTrialMutation = useMutation(api.users.activateTrial);
+
+  const [isActivating, setIsActivating] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [trialError, setTrialError] = useState<string | null>(null);
+
+  const handleActivateTrial = async () => {
+    if (!user?.id) return;
+    setIsActivating(true);
+    setTrialError(null);
+    try {
+      const res = await activateTrialMutation({ clerkId: user.id });
+      if (res.success) {
+        setShowCelebration(true);
+        setTimeout(() => setShowCelebration(false), 7000);
+      } else if (res.reason === "ALREADY_USED") {
+        setTrialError("You have already used your 14-day Pro trial.");
+      }
+    } catch (err: unknown) {
+      setTrialError(err instanceof Error ? err.message : "Failed to activate trial");
+    } finally {
+      setIsActivating(false);
+    }
+  };
+
   useEffect(() => {
     document.title = "Pricing & Plans | SentinelPhish";
   }, []);
+
+  const isProTrialActive = quota?.plan === "pro_trial" && quota?.isPro;
+  const trialDaysRemaining = quota?.trialDaysRemaining ?? 14;
 
   const faqs = [
     {
@@ -47,6 +80,36 @@ export default function PricingPage() {
       {/* Ambient Cyber Grid Glows */}
       <div className="pointer-events-none absolute top-12 left-1/4 w-[500px] h-[500px] bg-[#00d2ff]/8 rounded-full blur-[140px]" />
       <div className="pointer-events-none absolute top-48 right-1/4 w-[500px] h-[500px] bg-[#a855f7]/8 rounded-full blur-[140px]" />
+
+      {/* Celebration Toast on Trial Activation */}
+      <AnimatePresence>
+        {showCelebration && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#0A0F1D] border border-emerald-500/50 rounded-2xl px-6 py-4 shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center gap-4 text-left max-w-lg w-full"
+          >
+            <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-black text-white flex items-center gap-2">
+                🎉 14-Day Pro Trial Activated!
+              </h4>
+              <p className="text-xs text-zinc-400">
+                Enjoy full multi-hop forensics, raw DOM heuristics, and deep threat intelligence across all scans.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCelebration(false)}
+              className="text-zinc-400 hover:text-white text-xs font-bold p-1"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="max-w-5xl w-full space-y-12 relative z-10">
         {/* Part 1: Header Section */}
@@ -178,9 +241,16 @@ export default function PricingPage() {
           {/* Tier 2: SecOps Pro (Early Access Beta) */}
           <div className="bg-gradient-to-b from-[#0A0F1D] to-[#121124] backdrop-blur-xl rounded-3xl border-2 border-[#a855f7]/40 p-6 sm:p-8 flex flex-col justify-between relative shadow-[0_0_35px_rgba(168,85,247,0.15)] hover:border-[#a855f7]/70 transition-all group">
             {/* Top Badge */}
-            <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-md">
-              Early Access Beta
-            </div>
+            {isProTrialActive ? (
+              <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-gradient-to-r from-emerald-400 to-[#00d2ff] text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-slate-950" />
+                <span>Pro Trial Active ({trialDaysRemaining}d remaining)</span>
+              </div>
+            ) : (
+              <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-md">
+                Early Access Beta
+              </div>
+            )}
 
             <div className="space-y-6">
               {/* Card Header */}
@@ -241,15 +311,53 @@ export default function PricingPage() {
             </div>
 
             {/* CTA Button */}
-            <div className="pt-8">
-              <button
-                type="button"
-                onClick={() => setShowWaitlistModal(true)}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-95 shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Request Early Access</span>
-              </button>
+            <div className="pt-8 space-y-2">
+              {trialError && (
+                <p className="text-xs text-red-400 font-mono text-center">
+                  {trialError}
+                </p>
+              )}
+
+              {isProTrialActive ? (
+                <Link
+                  href="/scanning"
+                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-[#00d2ff] text-slate-950 font-black text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all hover:opacity-95"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Pro Trial Active ({trialDaysRemaining}d remaining) →</span>
+                </Link>
+              ) : isLoaded && isSignedIn ? (
+                !quota?.trialAlreadyUsed ? (
+                  <button
+                    type="button"
+                    disabled={isActivating}
+                    onClick={handleActivateTrial}
+                    className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-95 shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all disabled:opacity-50"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>{isActivating ? "Activating 14-Day Trial..." : "Activate 14-Day Free Trial (No Card Required)"}</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowWaitlistModal(true)}
+                    className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-95 shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Request Early Access</span>
+                  </button>
+                )
+              ) : (
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-95 shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Sign In to Start 14-Day Pro Trial</span>
+                  </button>
+                </SignInButton>
+              )}
             </div>
           </div>
         </div>

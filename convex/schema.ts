@@ -3,10 +3,17 @@ import { v } from "convex/values";
 
 export default defineSchema({
   users: defineTable({
-    clerkId: v.string(),
+    clerkId: v.optional(v.string()),
+    tokenIdentifier: v.optional(v.string()),
     email: v.optional(v.string()),
     name: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+
+    // Plan & quota state (Guest: 2, Free: 9/day, Pro Trial: 14 days, Pro: Fair Use)
+    plan: v.optional(v.string()), // "free" | "pro_trial" | "pro"
+    trialEndsAt: v.optional(v.number()),
+    dailyScansCount: v.optional(v.number()),
+    lastScanReset: v.optional(v.number()),
 
     // Gamification metrics (must be optional for legacy accounts)
     level: v.optional(v.number()),
@@ -14,12 +21,14 @@ export default defineSchema({
     threatsBlocked: v.optional(v.number()),
     totalScans: v.optional(v.number()),
 
-    // Plan & quota metrics
-    plan: v.optional(v.string()),
+    // Legacy metrics
     auditCount: v.optional(v.number()),
     generateCount: v.optional(v.number()),
     resetDate: v.optional(v.number()),
-  }).index("by_clerk_id", ["clerkId"]),
+  })
+    .index("by_clerk_id", ["clerkId"])
+    .index("by_token", ["tokenIdentifier"])
+    .index("by_email", ["email"]),
   partners: defineTable({
     name: v.string(),
     slug: v.string(),

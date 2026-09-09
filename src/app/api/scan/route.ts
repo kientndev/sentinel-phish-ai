@@ -272,16 +272,30 @@ function jsonWithCors(body: any, init?: { status?: number }) {
   });
 }
 
+function defangUrl(rawUrl: string): string {
+  return rawUrl.replace(/^http:/i, 'hxxp:').replace(/^https:/i, 'hxxps:');
+}
+
 export async function POST(req: Request) {
   const startTime = Date.now();
+  const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
   try {
     const { userId } = await auth();
     const { url, lang = 'en', turbo = false, clientHash: bodyClientHash } = await req.json();
     const languageName = LANG_NAMES[lang] ?? 'English';
     if (!url) return jsonWithCors({ error: 'URL is required' }, { status: 400 });
 
-    // Server-Assisted Guest Quotas Check in Convex
+    // Step 1: Pre-flight URL normalization
+    let normalizedInputUrl = url.trim();
+    if (!/^https?:\/\//i.test(normalizedInputUrl)) {
+      normalizedInputUrl = `https://${normalizedInputUrl}`;
+    }
+
+    let isPro = false;
+
+    // Server-Side Quota Enforcement
     if (!userId) {
+      // Guest Quotas Check in Convex (limit: 2)
       const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'guest-ip';
       const ua = req.headers.get('user-agent') || 'guest-ua';
       const clientHash = bodyClientHash || crypto.createHash('sha256').update(`${ip}:${ua}`).digest('hex');
@@ -291,10 +305,27 @@ export async function POST(req: Request) {
           clientHash,
         });
         if (quotaResult && !quotaResult.allowed) {
-          return jsonWithCors({ error: 'GUEST_LIMIT_REACHED' }, { status: 403 });
+          return jsonWithCors({ error: 'GUEST_LIMIT_REACHED', limit: 2 }, { status: 403 });
         }
       } catch (err) {
         console.warn("[Guest Quota] Failed to verify quota in Convex, falling back:", err);
+      }
+    } else {
+      // Authenticated Users (Free: 9/day, Pro Trial: 14 days, Pro: Fair Use)
+      try {
+        const userQuota = await convex.mutation(api.users.verifyAndConsumeScanQuota, {
+          clerkId: userId,
+        });
+        if (userQuota && !userQuota.allowed) {
+          return jsonWithCors({
+            error: userQuota.error || 'DAILY_LIMIT_REACHED',
+            limit: userQuota.limit || 9,
+            resetsIn: userQuota.resetsIn,
+          }, { status: 403 });
+        }
+        isPro = !!userQuota?.isPro;
+      } catch (err) {
+        console.warn("[User Quota] Failed to verify user quota in Convex:", err);
       }
     }
 
@@ -330,17 +361,67 @@ export async function POST(req: Request) {
         } catch (err) {
           console.error("[Convex Persistence] Failed to record scan:", err);
         }
+
+        // Data Tiering & Masking
+        const defanged = defangUrl(normalizedInputUrl);
+        if (!isPro) {
+          // Free Tier Payload (mask deep intelligence)
+          const fullSummary = payload.geminiVerdict?.advisor?.summary || `${payload.status || 'Security heuristic evaluation'} completed.`;
+          const sentences = fullSummary.split(/(?<=[.!?])\s+/);
+          const basicSummary = sentences.slice(0, 2).join(' ') || fullSummary;
+
+          payload = {
+            scanId: payload.scanId,
+            score: payload.score,
+            status: payload.status,
+            engineTier: payload.engineTier,
+            latencyMs: payload.latencyMs,
+            connectionStatus: payload.connectionStatus,
+            defangedUrl: defanged,
+            screenshotUrl: payload.screenshotUrl,
+            isProReport: false,
+            // Mask SSL & Registrar forensics
+            domainAge: "Pro SecOps Intelligence Required",
+            expiryDate: "Pro SecOps Intelligence Required",
+            registrar: "Pro SecOps Intelligence Required",
+            // Strip multi-hop redirection hops
+            hops: undefined,
+            redirectCount: payload.redirectCount ?? 0,
+            // Filter out raw DOM / script heuristic indicators
+            redFlags: (payload.redFlags || []).filter((f: string) => 
+              !f.toLowerCase().includes('dom:') && 
+              !f.toLowerCase().includes('script') && 
+              !f.toLowerCase().includes('iframe') && 
+              !f.toLowerCase().includes('static:') &&
+              !f.toLowerCase().includes('circuit breaker:')
+            ),
+            // Strip Detailed AI Security Analysis
+            geminiVerdict: payload.geminiVerdict ? {
+              score: payload.geminiVerdict.score,
+              level: payload.geminiVerdict.level,
+              advisor: {
+                summary: basicSummary,
+                actionable_advice: undefined,
+              },
+              analysis_factors: undefined,
+              verdict: payload.geminiVerdict.verdict,
+            } : undefined,
+          };
+
+          if (!payload.redFlags || payload.redFlags.length === 0) {
+            payload.redFlags = ["Heuristic analysis completed with baseline security rules."];
+          }
+        } else {
+          // Pro Tier Payload
+          payload = {
+            ...payload,
+            defangedUrl: defanged,
+            isProReport: true,
+          };
+        }
       }
       return jsonWithCors(payload, { status });
     };
-
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
-
-    // Step 1: Pre-flight URL normalization
-    let normalizedInputUrl = url.trim();
-    if (!/^https?:\/\//i.test(normalizedInputUrl)) {
-      normalizedInputUrl = `https://${normalizedInputUrl}`;
-    }
 
     // Step 1.1: Fast Whitelist Short-Circuit on input host (<50ms) -> Engine Tier 1
     try {

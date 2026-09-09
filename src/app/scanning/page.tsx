@@ -8,12 +8,12 @@ import {
   Search, ShieldAlert, Activity, Globe,
   Brain, CheckCircle2, Settings, Download, Zap,
   Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, X, Route, Shield,
-  ThumbsUp, ThumbsDown
+  ThumbsUp, ThumbsDown, Sparkles
 } from "lucide-react";
 import { sendGAEvent } from "@next/third-parties/google";
 import { usePhishTank } from "../../hooks/usePhishTank";
 import { AnimatePresence, motion } from "framer-motion";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import SettingsModal, { AiMode } from "../SettingsModal";
@@ -34,6 +34,8 @@ interface ScanResult {
   engineTier?: 1 | 2 | 3;
   latencyMs?: number;
   connectionStatus?: 'REACHABLE' | 'UNREACHABLE' | 'TIMEOUT';
+  defangedUrl?: string;
+  isProReport?: boolean;
   domainAge: string;
   expiryDate: string;
   registrar: string;
@@ -44,17 +46,48 @@ interface ScanResult {
   geminiVerdict?: {
     score: number;
     level: string;
-    analysis_factors: {
-      visual: string;
-      technical: string;
-      behavior: string;
+    analysis_factors?: {
+      visual?: string;
+      technical?: string;
+      behavior?: string;
     };
-    advisor: {
-      summary: string;
-      actionable_advice: string[];
+    advisor?: {
+      summary?: string;
+      actionable_advice?: string[];
     };
-    verdict: string;
+    verdict?: string;
   };
+}
+
+function GatedProOverlay({
+  title = "Unlock Deep Multi-Hop Forensics & Remediation with Pro",
+  trialAvailable = true,
+}: {
+  title?: string;
+  trialAvailable?: boolean;
+}) {
+  return (
+    <div className="absolute inset-0 bg-[#0A0F1D]/80 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center p-6 text-center space-y-3 z-20 border border-white/10 shadow-2xl">
+      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00d2ff]/20 to-[#a855f7]/20 border border-[#a855f7]/30 flex items-center justify-center shadow-lg">
+        <Lock className="w-6 h-6 text-[#00d2ff]" />
+      </div>
+      <div className="space-y-1 max-w-sm">
+        <h4 className="text-sm md:text-base font-black text-white tracking-tight">
+          {title}
+        </h4>
+        <p className="text-xs text-zinc-400 leading-relaxed">
+          Deep SSL certificate forensics, multi-hop redirection chains, and actionable SOC remediation are exclusive to Pro.
+        </p>
+      </div>
+      <Link
+        href="/pricing"
+        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-mono font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:opacity-95 transition-all flex items-center gap-1.5"
+      >
+        <Sparkles className="w-3.5 h-3.5" />
+        <span>{trialAvailable ? "Start 14-Day Trial" : "Upgrade to Pro"}</span>
+      </Link>
+    </div>
+  );
 }
 
 const PIPELINE_STAGES = [
@@ -78,8 +111,13 @@ function ScanningContent() {
   const searchParams = useSearchParams();
   const [hasAutoScanned, setHasAutoScanned] = useState(false);
   
-  // Auth & Guest Quota State
-  const { isSignedIn, isLoaded } = useAuth();
+  // Auth & Quota State
+  const { isSignedIn, isLoaded, userId } = useAuth();
+  const quota = useQuery(api.users.getUserPlanAndQuota, userId ? { clerkId: userId } : "skip");
+  const isProUser = !!quota?.isPro;
+  const isFreeUser = isSignedIn && !isProUser;
+  const scansRemainingToday = quota?.remainingScans ?? 9;
+
   const [mounted, setMounted] = useState(false);
   const [guestScans, setGuestScans] = useState<number>(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -96,9 +134,6 @@ function ScanningContent() {
       console.error("Failed to read sentinel_guest_scans:", e);
     }
   }, []);
-
-  // Mock user tier - in production, this comes from Clerk/Convex
-  const isFreeUser = false;
 
   // Settings
   const [lang, setLang] = useState<LangCode>("en");
@@ -209,7 +244,7 @@ function ScanningContent() {
     e.preventDefault();
     if (!url) return;
 
-    // Guest quota enforcement: allow 3 free preview scans before auth lock
+    // Guest quota enforcement: allow 2 free preview scans before auth lock
     if (isLoaded && !isSignedIn) {
       let currentCount = 0;
       try {
@@ -218,7 +253,7 @@ function ScanningContent() {
         currentCount = guestScans;
       }
 
-      if (currentCount >= 3) {
+      if (currentCount >= 2) {
         setShowAuthModal(true);
         return;
       }
@@ -274,6 +309,10 @@ function ScanningContent() {
         const errJson = await res.json().catch(() => ({ error: `Scan error (${res.status}): ${res.statusText}` }));
         if (errJson.error === "GUEST_LIMIT_REACHED") {
           setShowAuthModal(true);
+          return;
+        }
+        if (errJson.error === "DAILY_LIMIT_REACHED") {
+          setError(`Daily scan limit reached (${errJson.limit || 9} of ${errJson.limit || 9} scans used today). Upgrade to Pro for unlimited scans or try again tomorrow.`);
           return;
         }
         throw new Error(errJson.error || `Scan error (${res.status}): ${res.statusText}`);
@@ -455,7 +494,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                   Sentinel Access Required
                 </h2>
                 <p className="text-zinc-400 text-sm leading-relaxed">
-                  You have used all 3 free preview scans. Please sign in or create an account for unlimited real-time threat analysis.
+                  You have used all 2 free guest preview scans. Please sign in or create an account for 9 daily scans and a 14-day Pro trial.
                 </p>
               </div>
 
@@ -543,21 +582,58 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
             </button>
           </form>
 
-          {/* Guest preview quota feedback badge */}
-          {mounted && isLoaded && !isSignedIn && (
+          {/* Quota feedback badges */}
+          {mounted && isLoaded && (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400 pt-3 border-t border-white/5">
-              <div className="inline-flex items-center gap-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#00d2ff]/10 text-[#00d2ff] border border-[#00d2ff]/20">
-                  Preview scan: {Math.max(0, 3 - guestScans)} remaining
-                </span>
-                <span>Sign up for unlimited analysis.</span>
-              </div>
-              <Link
-                href="/sign-up"
-                className="text-[#00d2ff] hover:text-[#00d2ff]/80 font-semibold underline underline-offset-2 transition-colors"
-              >
-                Sign up free →
-              </Link>
+              {!isSignedIn ? (
+                <>
+                  <div className="inline-flex items-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#00d2ff]/10 text-[#00d2ff] border border-[#00d2ff]/20">
+                      Preview scan: {Math.max(0, 2 - guestScans)} of 2 remaining
+                    </span>
+                    <span>Sign up for 9 daily scans &amp; 14-day Pro trial.</span>
+                  </div>
+                  <Link
+                    href="/sign-up"
+                    className="text-[#00d2ff] hover:text-[#00d2ff]/80 font-semibold underline underline-offset-2 transition-colors"
+                  >
+                    Sign up free →
+                  </Link>
+                </>
+              ) : isFreeUser ? (
+                <>
+                  <div className="inline-flex items-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-bold">
+                      {scansRemainingToday} of 9 scans remaining today
+                    </span>
+                    <span className="text-zinc-400">Community Tier</span>
+                  </div>
+                  <Link
+                    href="/pricing"
+                    className="text-[#00d2ff] hover:text-[#00d2ff]/80 font-semibold flex items-center gap-1.5 transition-colors"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#00d2ff]" />
+                    <span>Activate 14-Day Pro Trial →</span>
+                  </Link>
+                </>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between w-full gap-2">
+                  <div className="inline-flex items-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#a855f7]/15 text-[#a855f7] border border-[#a855f7]/30 font-mono">
+                      {quota?.plan === "pro_trial"
+                        ? `Pro Trial Active (${quota?.trialDaysRemaining ?? 14} days remaining)`
+                        : "SecOps Pro · Fair Use Active"}
+                    </span>
+                    <span className="text-zinc-500">Unlimited Multi-Hop Intelligence</span>
+                  </div>
+                  <Link
+                    href="/pricing"
+                    className="text-zinc-400 hover:text-white transition-colors text-[11px] font-mono"
+                  >
+                    Manage Plan →
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
@@ -625,38 +701,46 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                 </div>
 
                 {/* REDIRECT AUDIT & HOP TRACE */}
-                <div className="glass-card p-4 space-y-3">
-                  <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
-                    <Route size={18} className="text-yellow-400" />
-                    Pre-Flight Hop Audit
-                  </h3>
-                  <div className="p-3 rounded-lg border bg-white/2 border-white/5 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-mono">
-                      <span className="text-zinc-400">Total Redirects:</span>
-                      <span className="text-[#00d2ff] font-bold">{results.redirectCount ?? 0}</span>
-                    </div>
-                    {results.hops && results.hops.length > 0 ? (
-                      <div className="space-y-1.5 pt-2 border-t border-white/5">
-                        {results.hops.map((hop, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-[11px] font-mono">
-                            <span className="text-zinc-300 truncate max-w-[200px]" title={hop.url}>
-                              {idx === 0 ? "1. Start: " : `${idx + 1}. -> `}{hop.url.replace(/^https?:\/\//, '')}
-                            </span>
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                              [301, 302, 307, 308].includes(hop.status) 
-                                ? "bg-yellow-500/20 text-yellow-400" 
-                                : hop.status === 200 
-                                  ? "bg-emerald-500/20 text-emerald-400" 
-                                  : "bg-red-500/20 text-red-400"
-                            }`}>
-                              {hop.status || "FAIL"}
-                            </span>
-                          </div>
-                        ))}
+                <div className="glass-card p-4 space-y-3 relative overflow-hidden">
+                  {results.isProReport === false && (
+                    <GatedProOverlay
+                      title="Unlock Deep Multi-Hop Forensics with Pro"
+                      trialAvailable={!quota?.trialAlreadyUsed}
+                    />
+                  )}
+                  <div className={results.isProReport === false ? "filter blur-sm select-none pointer-events-none opacity-25" : ""}>
+                    <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
+                      <Route size={18} className="text-yellow-400" />
+                      Pre-Flight Hop Audit
+                    </h3>
+                    <div className="p-3 rounded-lg border bg-white/2 border-white/5 space-y-2 mt-3">
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <span className="text-zinc-400">Total Redirects:</span>
+                        <span className="text-[#00d2ff] font-bold">{results.redirectCount ?? 0}</span>
                       </div>
-                    ) : (
-                      <p className="text-[10px] text-zinc-500">Direct connection, no 3xx hops detected.</p>
-                    )}
+                      {results.hops && results.hops.length > 0 ? (
+                        <div className="space-y-1.5 pt-2 border-t border-white/5">
+                          {results.hops.map((hop, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-[11px] font-mono">
+                              <span className="text-zinc-300 truncate max-w-[200px]" title={hop.url}>
+                                {idx === 0 ? "1. Start: " : `${idx + 1}. -> `}{hop.url.replace(/^https?:\/\//, '')}
+                              </span>
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                [301, 302, 307, 308].includes(hop.status) 
+                                  ? "bg-yellow-500/20 text-yellow-400" 
+                                  : hop.status === 200 
+                                    ? "bg-emerald-500/20 text-emerald-400" 
+                                    : "bg-red-500/20 text-red-400"
+                              }`}>
+                                {hop.status || "FAIL"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-zinc-500">Direct connection, no 3xx hops detected.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -724,22 +808,30 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                   </div>
                 </div>
 
-                <div className="glass-card p-6 space-y-5">
-                  <h3 className="font-black text-xs uppercase tracking-widest text-[#a1a1aa] flex items-center gap-2">
-                    <ShieldAlert className="w-4 h-4 text-orange-400" />
-                    {t.domainIntel}
-                  </h3>
-                  <div className="space-y-4">
-                    {[
-                      { label: t.age, val: results.domainAge },
-                      { label: t.expiry, val: results.expiryDate },
-                      { label: t.registrar, val: results.registrar }
-                    ].map((item) => (
-                      <div key={item.label} className="flex justify-between items-center border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                        <span className="text-zinc-500 text-xs font-bold">{item.label}</span>
-                        <span className="text-white text-xs font-mono font-medium">{item.val}</span>
-                      </div>
-                    ))}
+                <div className="glass-card p-6 space-y-5 relative overflow-hidden">
+                  {results.isProReport === false && (
+                    <GatedProOverlay
+                      title="Unlock SSL Forensics & Registrar Validation"
+                      trialAvailable={!quota?.trialAlreadyUsed}
+                    />
+                  )}
+                  <div className={results.isProReport === false ? "filter blur-sm select-none pointer-events-none opacity-25" : ""}>
+                    <h3 className="font-black text-xs uppercase tracking-widest text-[#a1a1aa] flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-orange-400" />
+                      {t.domainIntel}
+                    </h3>
+                    <div className="space-y-4 mt-4">
+                      {[
+                        { label: t.age, val: results.domainAge },
+                        { label: t.expiry, val: results.expiryDate },
+                        { label: t.registrar, val: results.registrar }
+                      ].map((item) => (
+                        <div key={item.label} className="flex justify-between items-center border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                          <span className="text-zinc-500 text-xs font-bold">{item.label}</span>
+                          <span className="text-white text-xs font-mono font-medium">{item.val}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -793,68 +885,84 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                 </div>
 
                 {/* Gemini AI Result Part */}
-                <div className={`glass-card p-6 relative group ${isFreeUser ? "" : "border-[#00d2ff]/10"}`}>
-                  {isFreeUser && (
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-10 rounded-2xl flex flex-col items-center justify-center p-6">
-                      <div className="w-16 h-16 rounded-full bg-[#a855f7]/20 p-4 flex items-center justify-center mb-4">
-                        <Lock size={18} className="text-[#a855f7]" />
+                <div className="glass-card p-6 relative group border-[#00d2ff]/10">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-xl bg-[#00d2ff]/10 border border-[#00d2ff]/20">
+                        <Brain size={18} className="text-[#00d2ff]" />
                       </div>
-                      <h3 className="text-xl font-black text-white mb-2">AI Analysis Locked</h3>
-                      <p className="text-[#a1a1aa] text-sm text-center mb-4">
-                        AI Analysis available for Pro &amp; VIP subscribers.
-                      </p>
-                      <Link href="/pricing" className="px-6 py-2 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold rounded-lg glow-md hover:glow-lg transition-all uppercase tracking-widest text-xs">
-                        Upgrade to Pro
-                      </Link>
+                      <div>
+                        <h3 className="font-black text-white">{t.aiAnalysis}</h3>
+                        <p className="text-[10px] uppercase font-bold text-[#00d2ff] tracking-[0.2em]">Powered by Gemini Threat Intelligence</p>
+                      </div>
                     </div>
-                  )}
-                  <div className={`flex items-center gap-3 mb-6 ${isFreeUser ? "opacity-50" : ""}`}>
-                    <div className="p-2.5 rounded-xl bg-[#00d2ff]/10 border border-[#00d2ff]/20">
-                      <Brain size={18} className="text-[#00d2ff]" />
-                    </div>
-                    <div>
-                      <h3 className="font-black text-white">{t.aiAnalysis}</h3>
-                      <p className="text-[10px] uppercase font-bold text-[#00d2ff] tracking-[0.2em]">Powered by Gemini Threat Intelligence</p>
-                    </div>
+                    {results.isProReport ? (
+                      <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-emerald-500/20 to-[#00d2ff]/20 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                        <Sparkles className="w-3 h-3 text-emerald-400" />
+                        PRO INTELLIGENCE
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-zinc-400 font-mono text-[10px] font-bold uppercase tracking-wider">
+                        Baseline Report
+                      </span>
+                    )}
                   </div>
 
                   <div className="space-y-6">
+                    {/* Defanged URL indicator */}
+                    {results.defangedUrl && (
+                      <div className="px-3.5 py-2.5 rounded-xl bg-white/2 border border-white/5 font-mono text-xs flex items-center justify-between gap-2">
+                        <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">Defanged Target:</span>
+                        <span className="text-[#00d2ff] truncate font-medium">{results.defangedUrl}</span>
+                      </div>
+                    )}
+
+                    {/* Basic 2-Sentence AI Summary (Available to All Tiers) */}
                     <div className="bg-[#00d2ff]/5 border border-[#00d2ff]/10 rounded-2xl p-6">
                       <p className="text-sm text-[#bae6fd] leading-relaxed italic">
                         &quot;{results.geminiVerdict?.advisor?.summary || "Heuristic and pre-flight evaluation completed successfully."}&quot;
                       </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.analysisFactors}</h4>
-                        <div className="space-y-2">
-                          {results.geminiVerdict?.analysis_factors ? Object.entries(results.geminiVerdict.analysis_factors).map(([k, v]) => (
-                            <div key={k} className="p-3 bg-white/2 rounded-lg border border-white/5 text-[11px]">
-                              <span className="font-black text-[#00d2ff] uppercase block mb-1">{k}</span>
-                              <span className="text-zinc-400">{v as string}</span>
-                            </div>
-                          )) : (
-                            <div className="p-3 bg-white/2 rounded-lg border border-white/5 text-[11px] text-zinc-400">
-                              Direct heuristic verification.
-                            </div>
-                          )}
+                    {/* Deep Forensic Factors & Actionable Advice (Gated for Free Tier) */}
+                    <div className="relative overflow-hidden rounded-2xl">
+                      {results.isProReport === false && (
+                        <GatedProOverlay
+                          title="Unlock Deep Remediation & Threat Tactics with Pro"
+                          trialAvailable={!quota?.trialAlreadyUsed}
+                        />
+                      )}
+                      <div className={`grid md:grid-cols-2 gap-6 ${results.isProReport === false ? "filter blur-sm select-none pointer-events-none opacity-25" : ""}`}>
+                        <div className="space-y-3">
+                          <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.analysisFactors}</h4>
+                          <div className="space-y-2">
+                            {results.geminiVerdict?.analysis_factors ? Object.entries(results.geminiVerdict.analysis_factors).map(([k, v]) => (
+                              <div key={k} className="p-3 bg-white/2 rounded-lg border border-white/5 text-[11px]">
+                                <span className="font-black text-[#00d2ff] uppercase block mb-1">{k}</span>
+                                <span className="text-zinc-400">{v as string}</span>
+                              </div>
+                            )) : (
+                              <div className="p-3 bg-white/2 rounded-lg border border-white/5 text-[11px] text-zinc-400">
+                                Detailed heuristic verification vectors.
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="space-y-3">
-                        <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.recommendedActions}</h4>
-                        <div className="space-y-2">
-                          {results.geminiVerdict?.advisor?.actionable_advice ? results.geminiVerdict.advisor.actionable_advice.map((a: string, i: number) => (
-                            <div key={i} className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
-                              <CheckCircle2 size={18} className="shrink-0" />
-                              {a}
-                            </div>
-                          )) : (
-                            <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
-                              <CheckCircle2 size={18} className="shrink-0" />
-                              Target analyzed against live security criteria.
-                            </div>
-                          )}
+                        <div className="space-y-3">
+                          <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.recommendedActions}</h4>
+                          <div className="space-y-2">
+                            {results.geminiVerdict?.advisor?.actionable_advice ? results.geminiVerdict.advisor.actionable_advice.map((a: string, i: number) => (
+                              <div key={i} className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
+                                <CheckCircle2 size={18} className="shrink-0" />
+                                {a}
+                              </div>
+                            )) : (
+                              <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
+                                <CheckCircle2 size={18} className="shrink-0" />
+                                Deep tactical threat mitigation steps.
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

@@ -21,21 +21,21 @@ export const checkAndIncrementGuestScan = mutation({
       .first();
 
     if (existing) {
-      if (existing.count >= 3) {
-        return { allowed: false, count: existing.count };
+      if (existing.count >= 2) {
+        return { allowed: false, count: existing.count, limit: 2 };
       }
       await ctx.db.patch(existing._id, {
         count: existing.count + 1,
         lastScanAt: Date.now(),
       });
-      return { allowed: true, count: existing.count + 1 };
+      return { allowed: true, count: existing.count + 1, limit: 2 };
     } else {
       await ctx.db.insert("guestScans", {
         clientHash: args.clientHash,
         count: 1,
         lastScanAt: Date.now(),
       });
-      return { allowed: true, count: 1 };
+      return { allowed: true, count: 1, limit: 2 };
     }
   },
 });

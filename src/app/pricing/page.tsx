@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -20,11 +20,13 @@ import { useUser, SignInButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import WaitlistModal from "../../components/WaitlistModal";
+import { trackEvent } from "@/lib/analytics";
 
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const hasFiredMountEvents = useRef(false);
 
   const { user, isLoaded, isSignedIn } = useUser();
   const quota = useQuery(api.users.getUserPlanAndQuota, user?.id ? { clerkId: user.id } : "skip");
@@ -41,6 +43,9 @@ export default function PricingPage() {
     try {
       const res = await activateTrialMutation({ clerkId: user.id });
       if (res.success) {
+        trackEvent("trial_activated", {
+          source: "pricing_card",
+        });
         setShowCelebration(true);
         setTimeout(() => setShowCelebration(false), 7000);
       } else if (res.reason === "ALREADY_USED") {
@@ -55,6 +60,15 @@ export default function PricingPage() {
 
   useEffect(() => {
     document.title = "Pricing & Plans | SentinelPhish";
+    if (!hasFiredMountEvents.current) {
+      hasFiredMountEvents.current = true;
+      trackEvent("pricing_page_view", {
+        source: "pricing_page",
+      });
+      trackEvent("trial_offer_viewed", {
+        offer_type: "14_day_pro_trial",
+      });
+    }
   }, []);
 
   const isProTrialActive = quota?.plan === "pro_trial" && quota?.isPro;
@@ -340,7 +354,13 @@ export default function PricingPage() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setShowWaitlistModal(true)}
+                    onClick={() => {
+                      trackEvent("checkout_started", {
+                        current_plan: quota?.plan ?? "free",
+                        days_left_in_trial: quota?.trialDaysRemaining ?? 0,
+                      });
+                      setShowWaitlistModal(true);
+                    }}
                     className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-95 shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all"
                   >
                     <Sparkles className="w-4 h-4" />
@@ -351,6 +371,11 @@ export default function PricingPage() {
                 <SignInButton mode="modal">
                   <button
                     type="button"
+                    onClick={() => {
+                      trackEvent("signup_started", {
+                        source: "pricing_trial_cta",
+                      });
+                    }}
                     className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-95 shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all"
                   >
                     <Sparkles className="w-4 h-4" />

@@ -121,13 +121,62 @@ export const activateTrial = mutation({
     }
 
     const trialEndsAt = Date.now() + 14 * 24 * 60 * 60 * 1000;
+    const today = new Date().toISOString().split("T")[0];
 
     await ctx.db.patch(user._id, {
       plan: "pro_trial",
       trialEndsAt,
+      trialActivatedAt: Date.now(),
+      trialScansCount: 0,
+      trialActiveDays: 1,
+      lastActiveTrialDate: today,
+      proFeaturesUsed: [],
     });
 
     return { success: true, trialEndsAt };
+  },
+});
+
+export const recordTrialEngagement = mutation({
+  args: {
+    clerkId: v.optional(v.string()),
+    featureUsed: v.optional(v.string()), // e.g. "redirect_chain", "dom_heuristics", "ai_deep_analysis"
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const clerkId = identity?.subject || args.clerkId;
+    if (!clerkId) return;
+
+    let user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", clerkId))
+      .first();
+
+    if (!user) {
+      user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkId))
+        .first();
+    }
+
+    if (!user || user.plan !== "pro_trial" || (user.trialEndsAt && user.trialEndsAt < Date.now())) {
+      return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    const shouldIncrementDay = user.lastActiveTrialDate !== today;
+
+    const updatedFeatures = new Set(user.proFeaturesUsed ?? []);
+    if (args.featureUsed) {
+      updatedFeatures.add(args.featureUsed);
+    }
+
+    await ctx.db.patch(user._id, {
+      trialScansCount: (user.trialScansCount ?? 0) + 1,
+      trialActiveDays: shouldIncrementDay ? (user.trialActiveDays ?? 0) + 1 : (user.trialActiveDays ?? 1),
+      lastActiveTrialDate: today,
+      proFeaturesUsed: Array.from(updatedFeatures),
+    });
   },
 });
 
@@ -171,10 +220,25 @@ export const verifyAndConsumeScanQuota = mutation({
           isPro: true,
         };
       }
-      await ctx.db.patch(user._id, {
+
+      const today = new Date().toISOString().split("T")[0];
+      const isTrial = user.plan === "pro_trial" && user.trialEndsAt && user.trialEndsAt > now;
+      const shouldIncrementTrialDay = isTrial && user.lastActiveTrialDate !== today;
+
+      const patchData: any = {
         dailyScansCount: count + 1,
         lastScanReset: isReset ? now : user.lastScanReset,
-      });
+      };
+
+      if (isTrial) {
+        patchData.trialScansCount = (user.trialScansCount ?? 0) + 1;
+        if (shouldIncrementTrialDay) {
+          patchData.trialActiveDays = (user.trialActiveDays ?? 0) + 1;
+          patchData.lastActiveTrialDate = today;
+        }
+      }
+
+      await ctx.db.patch(user._id, patchData);
       return { allowed: true, isPro: true, remaining: 300 - (count + 1), limit: 300 };
     }
 

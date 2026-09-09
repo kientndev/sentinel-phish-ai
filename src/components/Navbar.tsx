@@ -10,6 +10,7 @@ import { usePartner } from "../../contexts/PartnerContext";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { trackEvent } from "@/lib/analytics";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -122,7 +123,11 @@ export default function Navbar() {
                 <Link href="/sign-in" className="px-3 py-1.5 text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-white/5 rounded-lg transition-all">
                   Sign In
                 </Link>
-                <Link href="/sign-up" className="px-4 py-1.5 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white text-sm font-medium rounded-lg glow-md hover:shadow-[0_0_20px_rgba(0,210,255,0.4)] transition-all">
+                <Link
+                  href="/sign-up"
+                  onClick={() => trackEvent("signup_started", { source: "navbar" })}
+                  className="px-4 py-1.5 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white text-sm font-medium rounded-lg glow-md hover:shadow-[0_0_20px_rgba(0,210,255,0.4)] transition-all"
+                >
                   Sign Up
                 </Link>
               </div>
@@ -226,7 +231,10 @@ export default function Navbar() {
                   </Link>
                   <Link
                     href="/sign-up"
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => {
+                      trackEvent("signup_started", { source: "navbar_mobile" });
+                      setIsOpen(false);
+                    }}
                     className="w-full px-4 py-3 rounded-xl text-center bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-medium glow-md"
                   >
                     Sign Up

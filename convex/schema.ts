@@ -15,6 +15,14 @@ export default defineSchema({
     dailyScansCount: v.optional(v.number()),
     lastScanReset: v.optional(v.number()),
 
+    // Trial Analytics Layer
+    trialActivatedAt: v.optional(v.number()),
+    trialScansCount: v.optional(v.number()),        // Scans executed during the trial window
+    trialActiveDays: v.optional(v.number()),        // Distinct days the user logged in/scanned
+    lastActiveTrialDate: v.optional(v.string()),    // "YYYY-MM-DD" to increment trialActiveDays once/day
+    proFeaturesUsed: v.optional(v.array(v.string())), // Unique list: ["redirect_chain", "dom_heuristics", "ai_deep_analysis"]
+    convertedToPaidAt: v.optional(v.number()),
+
     // Gamification metrics (must be optional for legacy accounts)
     level: v.optional(v.number()),
     xp: v.optional(v.number()),

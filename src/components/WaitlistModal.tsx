@@ -5,6 +5,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { X, Mail, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { trackEvent } from "@/lib/analytics";
 
 interface WaitlistModalProps {
   isOpen: boolean;
@@ -50,6 +51,10 @@ export default function WaitlistModal({
       });
 
       if (result.success) {
+        trackEvent("subscription_completed", {
+          plan,
+          source,
+        });
         setIsSuccess(true);
       } else {
         setErrorMessage("Unable to join waitlist. Please try again.");

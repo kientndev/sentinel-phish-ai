@@ -11,6 +11,7 @@ import {
   ThumbsUp, ThumbsDown, Sparkles
 } from "lucide-react";
 import { sendGAEvent } from "@next/third-parties/google";
+import { trackEvent } from "@/lib/analytics";
 import { usePhishTank } from "../../hooks/usePhishTank";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery } from "convex/react";
@@ -81,6 +82,11 @@ function GatedProOverlay({
       </div>
       <Link
         href="/pricing"
+        onClick={() => {
+          trackEvent("pro_gate_clicked", {
+            feature_locked: title,
+          });
+        }}
         className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-mono font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:opacity-95 transition-all flex items-center gap-1.5"
       >
         <Sparkles className="w-3.5 h-3.5" />
@@ -150,6 +156,7 @@ function ScanningContent() {
   // Quick 1-click accuracy feedback state
   const submitScanFeedback = useMutation(api.feedback.submitScanFeedback);
   const recordScanMutation = useMutation(api.scans.recordScan);
+  const recordTrialEngagementMutation = useMutation(api.users.recordTrialEngagement);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   useEffect(() => {
@@ -322,6 +329,28 @@ function ScanningContent() {
       setResults(scanData);
       addScan(scanData.score, scanData.score >= 70, urlToScan);
 
+      // Track Pro Feature Engagement & Record Trial Usage
+      if (scanData.isProReport) {
+        if (quota?.plan === "pro_trial") {
+          recordTrialEngagementMutation({
+            clerkId: userId ?? undefined,
+            featureUsed: "ai_deep_analysis",
+          }).catch((e) => console.warn("[TrialEngagement] AI analysis log failed:", e));
+
+          if (scanData.hops && scanData.hops.length > 0) {
+            recordTrialEngagementMutation({
+              clerkId: userId ?? undefined,
+              featureUsed: "redirect_chain",
+            }).catch((e) => console.warn("[TrialEngagement] Redirect chain log failed:", e));
+          }
+        }
+
+        trackEvent("pro_feature_engaged", {
+          feature_name: "pro_deep_forensics",
+          has_redirect_hops: (scanData.hops?.length ?? 0) > 0,
+        });
+      }
+
       // Auto-Persistence: Ensure scan record exists in Convex for the public threat feed
       if (!scanData.scanId) {
         try {
@@ -366,7 +395,7 @@ function ScanningContent() {
     } finally {
       setIsScanning(false);
     }
-  }, [url, lang, turboMode, addScan, isLoaded, isSignedIn, guestScans, recordScanMutation]);
+  }, [url, lang, turboMode, addScan, isLoaded, isSignedIn, guestScans, recordScanMutation, recordTrialEngagementMutation, quota?.plan, userId]);
 
   const handleDownloadReport = () => {
     if (!results) return;
@@ -501,6 +530,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
               <div className="flex flex-col gap-3 pt-2">
                 <Link
                   href="/sign-up"
+                  onClick={() => trackEvent("signup_started", { source: "scan_guest_limit_modal" })}
                   className="w-full py-3.5 px-4 bg-gradient-to-r from-[#00d2ff] to-[#a855f7] hover:opacity-95 text-white font-bold rounded-xl transition-all shadow-lg text-sm flex items-center justify-center gap-2"
                 >
                   Sign Up Free
@@ -595,6 +625,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                   </div>
                   <Link
                     href="/sign-up"
+                    onClick={() => trackEvent("signup_started", { source: "scan_quota_badge" })}
                     className="text-[#00d2ff] hover:text-[#00d2ff]/80 font-semibold underline underline-offset-2 transition-colors"
                   >
                     Sign up free →

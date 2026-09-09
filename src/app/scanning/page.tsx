@@ -22,6 +22,7 @@ import { LangCode, translations } from "../translations";
 import XPBar from "../../components/XPBar";
 import { checkLicenseBeforeScan, getLicenseErrorMessage } from "../../../lib/licenseGatekeeper";
 import AiChatDrawer from "../../components/AiChatDrawer";
+import ProFeatureGate from "../../components/ProFeatureGate";
 
 interface RedirectHop {
   url: string;
@@ -58,42 +59,6 @@ interface ScanResult {
     };
     verdict?: string;
   };
-}
-
-function GatedProOverlay({
-  title = "Unlock Deep Multi-Hop Forensics & Remediation with Pro",
-  trialAvailable = true,
-}: {
-  title?: string;
-  trialAvailable?: boolean;
-}) {
-  return (
-    <div className="absolute inset-0 bg-[#0A0F1D]/80 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center p-6 text-center space-y-3 z-20 border border-white/10 shadow-2xl">
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00d2ff]/20 to-[#a855f7]/20 border border-[#a855f7]/30 flex items-center justify-center shadow-lg">
-        <Lock className="w-6 h-6 text-[#00d2ff]" />
-      </div>
-      <div className="space-y-1 max-w-sm">
-        <h4 className="text-sm md:text-base font-black text-white tracking-tight">
-          {title}
-        </h4>
-        <p className="text-xs text-zinc-400 leading-relaxed">
-          Deep SSL certificate forensics, multi-hop redirection chains, and actionable SOC remediation are exclusive to Pro.
-        </p>
-      </div>
-      <Link
-        href="/pricing"
-        onClick={() => {
-          trackEvent("pro_gate_clicked", {
-            feature_locked: title,
-          });
-        }}
-        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#a855f7] text-white font-mono font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:opacity-95 transition-all flex items-center gap-1.5"
-      >
-        <Sparkles className="w-3.5 h-3.5" />
-        <span>{trialAvailable ? "Start 14-Day Trial" : "Upgrade to Pro"}</span>
-      </Link>
-    </div>
-  );
 }
 
 const PIPELINE_STAGES = [
@@ -732,14 +697,12 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                 </div>
 
                 {/* REDIRECT AUDIT & HOP TRACE */}
-                <div className="glass-card p-4 space-y-3 relative overflow-hidden">
-                  {results.isProReport === false && (
-                    <GatedProOverlay
-                      title="Unlock Deep Multi-Hop Forensics with Pro"
-                      trialAvailable={!quota?.trialAlreadyUsed}
-                    />
-                  )}
-                  <div className={results.isProReport === false ? "filter blur-sm select-none pointer-events-none opacity-25" : ""}>
+                <ProFeatureGate
+                  isPro={!!results.isProReport}
+                  featureTitle="Pre-Flight Hop Audit & Redirect Forensics"
+                  featureDescription="Unmask multi-hop redirection chains, stealthy cloaking gates, and weaponized middleman redirects."
+                >
+                  <div className="glass-card p-4 space-y-3">
                     <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
                       <Route size={18} className="text-yellow-400" />
                       Pre-Flight Hop Audit
@@ -773,7 +736,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                       )}
                     </div>
                   </div>
-                </div>
+                </ProFeatureGate>
 
                 {/* VISUAL PREVIEW */}
                 <div className="glass-card p-4 space-y-3">
@@ -839,14 +802,12 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                   </div>
                 </div>
 
-                <div className="glass-card p-6 space-y-5 relative overflow-hidden">
-                  {results.isProReport === false && (
-                    <GatedProOverlay
-                      title="Unlock SSL Forensics & Registrar Validation"
-                      trialAvailable={!quota?.trialAlreadyUsed}
-                    />
-                  )}
-                  <div className={results.isProReport === false ? "filter blur-sm select-none pointer-events-none opacity-25" : ""}>
+                <ProFeatureGate
+                  isPro={!!results.isProReport}
+                  featureTitle="Domain Intel & Deep SSL Forensics"
+                  featureDescription="Verify certificate authority validation, newly registered domains (NRDs), and registration lifespan."
+                >
+                  <div className="glass-card p-6 space-y-5">
                     <h3 className="font-black text-xs uppercase tracking-widest text-[#a1a1aa] flex items-center gap-2">
                       <ShieldAlert className="w-4 h-4 text-orange-400" />
                       {t.domainIntel}
@@ -864,7 +825,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                       ))}
                     </div>
                   </div>
-                </div>
+                </ProFeatureGate>
 
                 <button 
                   onClick={handleDownloadReport}
@@ -956,14 +917,12 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                     </div>
 
                     {/* Deep Forensic Factors & Actionable Advice (Gated for Free Tier) */}
-                    <div className="relative overflow-hidden rounded-2xl">
-                      {results.isProReport === false && (
-                        <GatedProOverlay
-                          title="Unlock Deep Remediation & Threat Tactics with Pro"
-                          trialAvailable={!quota?.trialAlreadyUsed}
-                        />
-                      )}
-                      <div className={`grid md:grid-cols-2 gap-6 ${results.isProReport === false ? "filter blur-sm select-none pointer-events-none opacity-25" : ""}`}>
+                    <ProFeatureGate
+                      isPro={!!results.isProReport}
+                      featureTitle="Deep Remediation & Threat Tactics"
+                      featureDescription="Access automated SOC defense playbooks, technical attack factors, and actionable threat mitigations."
+                    >
+                      <div className="grid md:grid-cols-2 gap-6">
                         <div className="space-y-3">
                           <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.analysisFactors}</h4>
                           <div className="space-y-2">
@@ -996,7 +955,7 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </ProFeatureGate>
 
                     {/* 1-Click Accuracy Feedback Bar */}
                     <div className="pt-5 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">

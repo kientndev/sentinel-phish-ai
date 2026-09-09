@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ConvexClientProvider } from "../components/ConvexClientProvider";
 import { AppProvider } from "../context/AppContext";
@@ -107,6 +108,7 @@ export default function RootLayout({
               <ClientOnly fallback={null}>
                 <GoogleAnalytics gaId="G-WR6V55XDBM" />
               </ClientOnly>
+              <Analytics />
             </body>
           </html>
         </PartnerProvider>

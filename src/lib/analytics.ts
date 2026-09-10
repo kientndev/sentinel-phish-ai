@@ -1,4 +1,5 @@
 import { sendGAEvent } from "@next/third-parties/google";
+import { track as vaTrack } from "@vercel/analytics";
 
 export type AnalyticsEventName =
   | "pricing_page_view"
@@ -48,7 +49,7 @@ function sanitizeParams(params?: AnalyticsParams): Record<string, string | numbe
 
 /**
  * Centralized telemetry tracking for SentinelPhish.
- * Integrates with GA4 and logs cleanly during local development.
+ * Integrates with GA4 & Vercel Analytics, logging cleanly during local development.
  */
 export function trackEvent(eventName: AnalyticsEventName, params?: AnalyticsParams): void {
   const sanitized = sanitizeParams(params);
@@ -61,6 +62,7 @@ export function trackEvent(eventName: AnalyticsEventName, params?: AnalyticsPara
     return;
   }
 
+  // 1. Dispatch to Google Analytics (gtag / sendGAEvent)
   try {
     const windowWithGtag = window as unknown as { gtag?: (...args: unknown[]) => void };
     if (typeof windowWithGtag.gtag === "function") {
@@ -71,6 +73,15 @@ export function trackEvent(eventName: AnalyticsEventName, params?: AnalyticsPara
   } catch (err) {
     if (process.env.NODE_ENV === "development") {
       console.warn("[Analytics Dev] Failed to dispatch GA event:", err);
+    }
+  }
+
+  // 2. Dispatch to Vercel Analytics custom events
+  try {
+    vaTrack(eventName, sanitized);
+  } catch (err) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Analytics Dev] Failed to dispatch Vercel Analytics event:", err);
     }
   }
 }

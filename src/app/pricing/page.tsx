@@ -21,6 +21,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import WaitlistModal from "../../components/WaitlistModal";
 import { trackEvent } from "@/lib/analytics";
+import { Reveal, RevealStagger } from "@/components/motion";
 
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
@@ -184,7 +185,7 @@ export default function PricingPage() {
         </section>
 
         {/* Part 2: Tier Cards (2-Column Grid) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+        <RevealStagger interval={100} className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
           {/* Tier 1: Community (Active / Free) */}
           <div className="bg-[#0A0F1D]/80 backdrop-blur-xl rounded-3xl border border-white/10 p-6 sm:p-8 flex flex-col justify-between relative shadow-xl hover:border-white/20 transition-all group">
             <div className="space-y-6">
@@ -385,10 +386,10 @@ export default function PricingPage() {
               )}
             </div>
           </div>
-        </div>
+        </RevealStagger>
 
         {/* Part 4: Mini FAQ Accordion */}
-        <section className="bg-[#0A0F1D]/80 backdrop-blur-xl rounded-3xl border border-white/10 p-6 sm:p-10 space-y-6">
+        <Reveal delay={150} as="section" className="bg-[#0A0F1D]/80 backdrop-blur-xl rounded-3xl border border-white/10 p-6 sm:p-10 space-y-6">
           <div className="space-y-1 text-center sm:text-left">
             <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center justify-center sm:justify-start gap-2">
               <HelpCircle className="w-5 h-5 text-[#00d2ff]" />
@@ -438,7 +439,7 @@ export default function PricingPage() {
               );
             })}
           </div>
-        </section>
+        </Reveal>
 
         {/* Pro Waitlist Modal */}
         <WaitlistModal

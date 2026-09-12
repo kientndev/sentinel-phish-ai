@@ -10,6 +10,7 @@ import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { usePhishTank } from "../../hooks/usePhishTank";
+import { Reveal, RevealStagger } from "@/components/motion";
 
 interface DisplayScanItem {
   url: string;
@@ -111,38 +112,34 @@ export default function DashboardMetrics() {
   return (
     <div className="space-y-10">
       {/* Global Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="glass-card p-6 flex flex-col items-center justify-center text-center">
+      <RevealStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="glass-card p-6 flex flex-col items-center justify-center text-center">
           <BarChart2 className="w-8 h-8 text-[#00d2ff] mb-4" />
           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#a1a1aa] mb-1">Total Scans</span>
           <span className="text-4xl font-black text-white">{totalScans}</span>
-        </motion.div>
+        </div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="glass-card p-6 flex flex-col items-center justify-center text-center">
+        <div className="glass-card p-6 flex flex-col items-center justify-center text-center">
           <ShieldAlert className="w-8 h-8 text-red-500 mb-4" />
           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#a1a1aa] mb-1">Threats Blocked</span>
           <span className="text-4xl font-black text-white">{threatsBlocked}</span>
-        </motion.div>
+        </div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="glass-card p-6 flex flex-col items-center justify-center text-center">
+        <div className="glass-card p-6 flex flex-col items-center justify-center text-center">
           <Zap className="w-8 h-8 text-cyan-400 mb-4" />
           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#a1a1aa] mb-1">Avg Resolution</span>
           <span className="text-4xl font-black text-white">{avgLatency}ms</span>
-        </motion.div>
+        </div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          className="glass-card p-6 flex flex-col items-center justify-center text-center">
+        <div className="glass-card p-6 flex flex-col items-center justify-center text-center">
           <Flame className="w-8 h-8 text-orange-500 mb-4" />
           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#a1a1aa] mb-1">Daily Activity</span>
           <span className="text-4xl font-black text-white">{dailyScans}</span>
-        </motion.div>
-      </div>
+        </div>
+      </RevealStagger>
 
       {/* Threat Trend Chart */}
-      <section className="glass-card p-8">
+      <Reveal delay={100} as="section" className="glass-card p-8">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-xl font-black text-white flex items-center gap-2">
             <Activity className="w-5 h-5 text-[#00d2ff]" />
@@ -188,10 +185,10 @@ export default function DashboardMetrics() {
             ))}
           </svg>
         </div>
-      </section>
+      </Reveal>
 
       {/* Detailed History Table */}
-      <section className="glass-card p-6 overflow-hidden">
+      <Reveal delay={200} as="section" className="glass-card p-6 overflow-hidden">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-black text-white flex items-center gap-2">
             <Clock className="w-5 h-5 text-zinc-500" />
@@ -267,7 +264,7 @@ export default function DashboardMetrics() {
             </table>
           </div>
         )}
-      </section>
+      </Reveal>
     </div>
   );
 }

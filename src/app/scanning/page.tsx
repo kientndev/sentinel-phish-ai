@@ -23,6 +23,7 @@ import XPBar from "../../components/XPBar";
 import { checkLicenseBeforeScan, getLicenseErrorMessage } from "../../../lib/licenseGatekeeper";
 import AiChatDrawer from "../../components/AiChatDrawer";
 import ProFeatureGate from "../../components/ProFeatureGate";
+import { Reveal } from "@/components/motion";
 
 interface RedirectHop {
   url: string;
@@ -707,314 +708,328 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
                 </div>
 
                 {/* REDIRECT AUDIT & HOP TRACE */}
-                <ProFeatureGate
-                  isPro={!!results.isProReport}
-                  featureTitle="Pre-Flight Hop Audit & Redirect Forensics"
-                  featureDescription="Unmask multi-hop redirection chains, stealthy cloaking gates, and weaponized middleman redirects."
-                >
-                  <div className="glass-card p-4 space-y-3">
-                    <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
-                      <Route size={18} className="text-yellow-400" />
-                      Pre-Flight Hop Audit
-                    </h3>
-                    <div className="p-3 rounded-lg border bg-white/2 border-white/5 space-y-2 mt-3">
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-zinc-400">Total Redirects:</span>
-                        <span className="text-[#00d2ff] font-bold">{results.redirectCount ?? 0}</span>
-                      </div>
-                      {results.hops && results.hops.length > 0 ? (
-                        <div className="space-y-1.5 pt-2 border-t border-white/5">
-                          {results.hops.map((hop, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-[11px] font-mono">
-                              <span className="text-zinc-300 truncate max-w-[200px]" title={hop.url}>
-                                {idx === 0 ? "1. Start: " : `${idx + 1}. -> `}{hop.url.replace(/^https?:\/\//, '')}
-                              </span>
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                                [301, 302, 307, 308].includes(hop.status) 
-                                  ? "bg-yellow-500/20 text-yellow-400" 
-                                  : hop.status === 200 
-                                    ? "bg-emerald-500/20 text-emerald-400" 
-                                    : "bg-red-500/20 text-red-400"
-                              }`}>
-                                {hop.status || "FAIL"}
-                              </span>
-                            </div>
-                          ))}
+                <Reveal delay={100}>
+                  <ProFeatureGate
+                    isPro={!!results.isProReport}
+                    featureTitle="Pre-Flight Hop Audit & Redirect Forensics"
+                    featureDescription="Unmask multi-hop redirection chains, stealthy cloaking gates, and weaponized middleman redirects."
+                  >
+                    <div className="glass-card p-4 space-y-3">
+                      <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
+                        <Route size={18} className="text-yellow-400" />
+                        Pre-Flight Hop Audit
+                      </h3>
+                      <div className="p-3 rounded-lg border bg-white/2 border-white/5 space-y-2 mt-3">
+                        <div className="flex items-center justify-between text-xs font-mono">
+                          <span className="text-zinc-400">Total Redirects:</span>
+                          <span className="text-[#00d2ff] font-bold">{results.redirectCount ?? 0}</span>
                         </div>
-                      ) : (
-                        <p className="text-[10px] text-zinc-500">Direct connection, no 3xx hops detected.</p>
-                      )}
+                        {results.hops && results.hops.length > 0 ? (
+                          <div className="space-y-1.5 pt-2 border-t border-white/5">
+                            {results.hops.map((hop, idx) => (
+                              <div key={idx} className="flex items-center justify-between text-[11px] font-mono">
+                                <span className="text-zinc-300 truncate max-w-[200px]" title={hop.url}>
+                                  {idx === 0 ? "1. Start: " : `${idx + 1}. -> `}{hop.url.replace(/^https?:\/\//, '')}
+                                </span>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                  [301, 302, 307, 308].includes(hop.status) 
+                                    ? "bg-yellow-500/20 text-yellow-400" 
+                                    : hop.status === 200 
+                                      ? "bg-emerald-500/20 text-emerald-400" 
+                                      : "bg-red-500/20 text-red-400"
+                                }`}>
+                                  {hop.status || "FAIL"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[10px] text-zinc-500">Direct connection, no 3xx hops detected.</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </ProFeatureGate>
+                  </ProFeatureGate>
+                </Reveal>
 
                 {/* VISUAL PREVIEW */}
-                <div className="glass-card p-4 space-y-3">
-                  <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
-                    <Eye size={18} className="text-[#00d2ff]" />
-                    Visual Logo-Analysis
-                  </h3>
-                  <div className="relative aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={results.screenshotUrl || `https://api.microlink.io/?url=${encodeURIComponent(url.startsWith("http") ? url : `https://${url}`)}&screenshot=true&embed=screenshot.url`}
-                      alt="Site Preview"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://placehold.co/600x400/0b0e14/ffffff?text=Direct+Scan+Clean";
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
-                      <span className="text-[10px] font-medium text-white/80 line-clamp-1">{url}</span>
+                <Reveal delay={150}>
+                  <div className="glass-card p-4 space-y-3">
+                    <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
+                      <Eye size={18} className="text-[#00d2ff]" />
+                      Visual Logo-Analysis
+                    </h3>
+                    <div className="relative aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 group">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={results.screenshotUrl || `https://api.microlink.io/?url=${encodeURIComponent(url.startsWith("http") ? url : `https://${url}`)}&screenshot=true&embed=screenshot.url`}
+                        alt="Site Preview"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://placehold.co/600x400/0b0e14/ffffff?text=Direct+Scan+Clean";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
+                        <span className="text-[10px] font-medium text-white/80 line-clamp-1">{url}</span>
+                      </div>
+                    </div>
+                    <div className={`p-3 rounded-lg border ${
+                      results.score >= 70 ? "bg-red-500/10 border-red-500/30" : "bg-emerald-500/10 border-emerald-500/30"
+                    }`}>
+                      {results.score >= 70 && (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle size={18} className="text-red-500" />
+                          <span className="text-xs font-bold text-red-400">Threat Indicators Detected</span>
+                        </div>
+                      )}
+                      <p className={`text-[10px] mt-1 ${
+                        results.score >= 70 ? "text-red-300" : "text-emerald-300"
+                      }`}>
+                        {results.score >= 70 
+                          ? "High-confidence spoofing or credential harvester detected."
+                          : "No malicious brand impersonation detected."
+                        }
+                      </p>
                     </div>
                   </div>
-                  <div className={`p-3 rounded-lg border ${
-                    results.score >= 70 ? "bg-red-500/10 border-red-500/30" : "bg-emerald-500/10 border-emerald-500/30"
-                  }`}>
-                    {results.score >= 70 && (
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle size={18} className="text-red-500" />
-                        <span className="text-xs font-bold text-red-400">Threat Indicators Detected</span>
-                      </div>
-                    )}
-                    <p className={`text-[10px] mt-1 ${
-                      results.score >= 70 ? "text-red-300" : "text-emerald-300"
-                    }`}>
-                      {results.score >= 70 
-                        ? "High-confidence spoofing or credential harvester detected."
-                        : "No malicious brand impersonation detected."
-                      }
-                    </p>
-                  </div>
-                </div>
+                </Reveal>
 
                 {/* INTENT SCRAPER */}
-                <div className="glass-card p-4 space-y-3">
-                  <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
-                    <ZapIcon size={18} className="text-[#a855f7]" />
-                    Intent Scraper
-                  </h3>
-                  <div className={`p-3 rounded-lg border ${
-                    results.score >= 50 ? "bg-orange-500/10 border-orange-500/30" : "bg-emerald-500/10 border-emerald-500/30"
-                  }`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold text-[#a1a1aa] uppercase">Social Engineering Risk</span>
-                      <span className={`text-xs font-bold ${
-                        results.score >= 50 ? "text-orange-400" : "text-emerald-400"
-                      }`}>{results.score >= 50 ? "High" : "Low"}</span>
-                    </div>
-                    <p className="text-[10px] text-zinc-400">
-                      {results.score >= 50 
-                        ? "Detected urgency keywords or deceptive intent markers."
-                        : "No aggressive social engineering patterns detected."
-                      }
-                    </p>
-                  </div>
-                </div>
-
-                <ProFeatureGate
-                  isPro={!!results.isProReport}
-                  featureTitle="Domain Intel & Deep SSL Forensics"
-                  featureDescription="Verify certificate authority validation, newly registered domains (NRDs), and registration lifespan."
-                >
-                  <div className="glass-card p-6 space-y-5">
-                    <h3 className="font-black text-xs uppercase tracking-widest text-[#a1a1aa] flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-orange-400" />
-                      {t.domainIntel}
+                <Reveal delay={200}>
+                  <div className="glass-card p-4 space-y-3">
+                    <h3 className="font-black text-[10px] uppercase tracking-[0.25em] text-[#a1a1aa] flex items-center gap-2">
+                      <ZapIcon size={18} className="text-[#a855f7]" />
+                      Intent Scraper
                     </h3>
-                    <div className="space-y-4 mt-4">
-                      {[
-                        { label: t.age, val: results.domainAge },
-                        { label: t.expiry, val: results.expiryDate },
-                        { label: t.registrar, val: results.registrar }
-                      ].map((item) => (
-                        <div key={item.label} className="flex justify-between items-center border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                          <span className="text-zinc-500 text-xs font-bold">{item.label}</span>
-                          <span className="text-white text-xs font-mono font-medium">{item.val}</span>
-                        </div>
-                      ))}
+                    <div className={`p-3 rounded-lg border ${
+                      results.score >= 50 ? "bg-orange-500/10 border-orange-500/30" : "bg-emerald-500/10 border-emerald-500/30"
+                    }`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold text-[#a1a1aa] uppercase">Social Engineering Risk</span>
+                        <span className={`text-xs font-bold ${
+                          results.score >= 50 ? "text-orange-400" : "text-emerald-400"
+                        }`}>{results.score >= 50 ? "High" : "Low"}</span>
+                      </div>
+                      <p className="text-[10px] text-zinc-400">
+                        {results.score >= 50 
+                          ? "Detected urgency keywords or deceptive intent markers."
+                          : "No aggressive social engineering patterns detected."
+                        }
+                      </p>
                     </div>
                   </div>
-                </ProFeatureGate>
+                </Reveal>
 
-                <button 
-                  onClick={handleDownloadReport}
-                  className="w-full py-4 rounded-xl font-bold bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-2 group"
-                >
-                  <Download size={18} className="text-gray-400 group-hover:text-white" />
-                  {t.downloadReport}
-                </button>
+                <Reveal delay={250} className="space-y-4">
+                  <ProFeatureGate
+                    isPro={!!results.isProReport}
+                    featureTitle="Domain Intel & Deep SSL Forensics"
+                    featureDescription="Verify certificate authority validation, newly registered domains (NRDs), and registration lifespan."
+                  >
+                    <div className="glass-card p-6 space-y-5">
+                      <h3 className="font-black text-xs uppercase tracking-widest text-[#a1a1aa] flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 text-orange-400" />
+                        {t.domainIntel}
+                      </h3>
+                      <div className="space-y-4 mt-4">
+                        {[
+                          { label: t.age, val: results.domainAge },
+                          { label: t.expiry, val: results.expiryDate },
+                          { label: t.registrar, val: results.registrar }
+                        ].map((item) => (
+                          <div key={item.label} className="flex justify-between items-center border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                            <span className="text-zinc-500 text-xs font-bold">{item.label}</span>
+                            <span className="text-white text-xs font-mono font-medium">{item.val}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </ProFeatureGate>
 
-                <button 
-                  onClick={handleReportPhish}
-                  disabled={isReporting || reported || results.score < 30}
-                  className={`w-full py-4 rounded-xl font-bold border transition-all flex items-center justify-center gap-2 
-                    ${reported 
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500 cursor-default" 
-                      : results.score >= 30
-                        ? "bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 glow-md hover:glow-lg"
-                        : "bg-white/5 border-white/10 text-gray-500 cursor-not-allowed"
-                    }`}
-                >
-                  {isReporting ? (
-                    <RefreshCw size={18} className="animate-spin" />
-                  ) : reported ? (
-                    <ShieldCheck size={18} />
-                  ) : (
-                    <Bug size={18} />
-                  )}
-                  {reported ? "Threat Reported" : "Report as Phish"}
-                </button>
+                  <button 
+                    onClick={handleDownloadReport}
+                    className="w-full py-4 rounded-xl font-bold bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-2 group"
+                  >
+                    <Download size={18} className="text-gray-400 group-hover:text-white" />
+                    {t.downloadReport}
+                  </button>
+
+                  <button 
+                    onClick={handleReportPhish}
+                    disabled={isReporting || reported || results.score < 30}
+                    className={`w-full py-4 rounded-xl font-bold border transition-all flex items-center justify-center gap-2 
+                      ${reported 
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500 cursor-default" 
+                        : results.score >= 30
+                          ? "bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 glow-md hover:glow-lg"
+                          : "bg-white/5 border-white/10 text-gray-500 cursor-not-allowed"
+                      }`}
+                  >
+                    {isReporting ? (
+                      <RefreshCw size={18} className="animate-spin" />
+                    ) : reported ? (
+                      <ShieldCheck size={18} />
+                    ) : (
+                      <Bug size={18} />
+                    )}
+                    {reported ? "Threat Reported" : "Report as Phish"}
+                  </button>
+                </Reveal>
               </div>
 
               {/* Analysis & AI */}
               <div className="lg:col-span-8 space-y-6">
-                <div className="glass-card p-6">
-                  <h3 className="font-bold text-white mb-6 flex items-center gap-2">
-                    <CheckCircle2 size={18} className="text-[#00d2ff]" />
-                    {t.redFlags}
-                  </h3>
-                  <div className="grid gap-3">
-                    {results.redFlags.map((flag: string, i: number) => (
-                      <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-white/2 border border-white/5 hover:border-white/10 transition-colors">
-                        <div className={`p-2 rounded-lg mt-0.5 ${results.score >= 70 ? "bg-red-500/10" : "bg-emerald-500/10"}`}>
-                          <ShieldAlert size={18} className={`text-[#a1a1aa] ${results.score >= 70 ? "text-red-500" : "text-emerald-500"}`} />
+                <Reveal delay={100}>
+                  <div className="glass-card p-6">
+                    <h3 className="font-bold text-white mb-6 flex items-center gap-2">
+                      <CheckCircle2 size={18} className="text-[#00d2ff]" />
+                      {t.redFlags}
+                    </h3>
+                    <div className="grid gap-3">
+                      {results.redFlags.map((flag: string, i: number) => (
+                        <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-white/2 border border-white/5 hover:border-white/10 transition-colors">
+                          <div className={`p-2 rounded-lg mt-0.5 ${results.score >= 70 ? "bg-red-500/10" : "bg-emerald-500/10"}`}>
+                            <ShieldAlert size={18} className={`text-[#a1a1aa] ${results.score >= 70 ? "text-red-500" : "text-emerald-500"}`} />
+                          </div>
+                          <p className="text-sm font-medium text-zinc-300 leading-relaxed">{flag}</p>
                         </div>
-                        <p className="text-sm font-medium text-zinc-300 leading-relaxed">{flag}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                </Reveal>
 
                 {/* Gemini AI Result Part */}
-                <div className="glass-card p-6 relative group border-[#00d2ff]/10">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 rounded-xl bg-[#00d2ff]/10 border border-[#00d2ff]/20">
-                        <Brain size={18} className="text-[#00d2ff]" />
-                      </div>
-                      <div>
-                        <h3 className="font-black text-white">{t.aiAnalysis}</h3>
-                        <p className="text-[10px] uppercase font-bold text-[#00d2ff] tracking-[0.2em]">Powered by Gemini Threat Intelligence</p>
-                      </div>
-                    </div>
-                    {results.isProReport ? (
-                      <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-emerald-500/20 to-[#00d2ff]/20 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-                        <Sparkles className="w-3 h-3 text-emerald-400" />
-                        PRO INTELLIGENCE
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-zinc-400 font-mono text-[10px] font-bold uppercase tracking-wider">
-                        Baseline Report
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-6">
-                    {/* Defanged URL indicator */}
-                    {results.defangedUrl && (
-                      <div className="px-3.5 py-2.5 rounded-xl bg-white/2 border border-white/5 font-mono text-xs flex items-center justify-between gap-2">
-                        <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">Defanged Target:</span>
-                        <span className="text-[#00d2ff] truncate font-medium">{results.defangedUrl}</span>
-                      </div>
-                    )}
-
-                    {/* Basic 2-Sentence AI Summary (Available to All Tiers) */}
-                    <div className="bg-[#00d2ff]/5 border border-[#00d2ff]/10 rounded-2xl p-6">
-                      <p className="text-sm text-[#bae6fd] leading-relaxed italic">
-                        &quot;{results.geminiVerdict?.advisor?.summary || "Heuristic and pre-flight evaluation completed successfully."}&quot;
-                      </p>
-                    </div>
-
-                    {/* Deep Forensic Factors & Actionable Advice (Gated for Free Tier) */}
-                    <ProFeatureGate
-                      isPro={!!results.isProReport}
-                      featureTitle="Deep Remediation & Threat Tactics"
-                      featureDescription="Access automated SOC defense playbooks, technical attack factors, and actionable threat mitigations."
-                    >
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <div className="space-y-3">
-                          <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.analysisFactors}</h4>
-                          <div className="space-y-2">
-                            {results.geminiVerdict?.analysis_factors ? Object.entries(results.geminiVerdict.analysis_factors).map(([k, v]) => (
-                              <div key={k} className="p-3 bg-white/2 rounded-lg border border-white/5 text-[11px]">
-                                <span className="font-black text-[#00d2ff] uppercase block mb-1">{k}</span>
-                                <span className="text-zinc-400">{v as string}</span>
-                              </div>
-                            )) : (
-                              <div className="p-3 bg-white/2 rounded-lg border border-white/5 text-[11px] text-zinc-400">
-                                Detailed heuristic verification vectors.
-                              </div>
-                            )}
-                          </div>
+                <Reveal delay={150}>
+                  <div className="glass-card p-6 relative group border-[#00d2ff]/10">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-[#00d2ff]/10 border border-[#00d2ff]/20">
+                          <Brain size={18} className="text-[#00d2ff]" />
                         </div>
-                        <div className="space-y-3">
-                          <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.recommendedActions}</h4>
-                          <div className="space-y-2">
-                            {results.geminiVerdict?.advisor?.actionable_advice ? results.geminiVerdict.advisor.actionable_advice.map((a: string, i: number) => (
-                              <div key={i} className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
-                                <CheckCircle2 size={18} className="shrink-0" />
-                                {a}
-                              </div>
-                            )) : (
-                              <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
-                                <CheckCircle2 size={18} className="shrink-0" />
-                                Deep tactical threat mitigation steps.
-                              </div>
-                            )}
-                          </div>
+                        <div>
+                          <h3 className="font-black text-white">{t.aiAnalysis}</h3>
+                          <p className="text-[10px] uppercase font-bold text-[#00d2ff] tracking-[0.2em]">Powered by Gemini Threat Intelligence</p>
                         </div>
                       </div>
-                    </ProFeatureGate>
-
-                    {/* 1-Click Accuracy Feedback Bar */}
-                    <div className="pt-5 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
-                      <span className="text-xs font-medium text-zinc-400">
-                        Was this intelligence accurate?
-                      </span>
-                      {feedbackSubmitted ? (
-                        <motion.span
-                          initial={{ opacity: 0, y: 2 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="text-xs text-zinc-400 font-medium flex items-center gap-1.5"
-                        >
-                          <CheckCircle2 size={13} className="text-[#00d2ff]" />
-                          Thanks for helping train SentinelPhish!
-                        </motion.span>
+                      {results.isProReport ? (
+                        <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-emerald-500/20 to-[#00d2ff]/20 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                          <Sparkles className="w-3 h-3 text-emerald-400" />
+                          PRO INTELLIGENCE
+                        </span>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleAccuracyFeedback(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-zinc-300 hover:text-emerald-300 font-medium transition-all active:scale-95 text-xs group"
-                          >
-                            <ThumbsUp size={13} className="text-emerald-400 group-hover:scale-110 transition-transform" />
-                            <span>👍 Helpful</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleAccuracyFeedback(false)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-red-500/15 border border-white/10 hover:border-red-500/30 text-zinc-300 hover:text-red-300 font-medium transition-all active:scale-95 text-xs group"
-                          >
-                            <ThumbsDown size={13} className="text-red-400 group-hover:scale-110 transition-transform" />
-                            <span>👎 Inaccurate</span>
-                          </button>
-                        </div>
+                        <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-zinc-400 font-mono text-[10px] font-bold uppercase tracking-wider">
+                          Baseline Report
+                        </span>
                       )}
                     </div>
+
+                    <div className="space-y-6">
+                      {/* Defanged URL indicator */}
+                      {results.defangedUrl && (
+                        <div className="px-3.5 py-2.5 rounded-xl bg-white/2 border border-white/5 font-mono text-xs flex items-center justify-between gap-2">
+                          <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">Defanged Target:</span>
+                          <span className="text-[#00d2ff] truncate font-medium">{results.defangedUrl}</span>
+                        </div>
+                      )}
+
+                      <div className="p-4 bg-[#00d2ff]/5 rounded-xl border border-[#00d2ff]/10 space-y-2">
+                        <span className="text-[10px] font-black uppercase text-[#00d2ff] tracking-widest block">Executive AI Narrative</span>
+                        <p className="text-sm font-medium leading-relaxed text-zinc-200">
+                          {results.geminiVerdict?.advisor?.summary || results.geminiVerdict?.verdict || "Deep multi-layer heuristic scan verified zero-day anomalies."}
+                        </p>
+                      </div>
+
+                      {/* Deep Forensic Factors & Actionable Advice (Gated for Free Tier) */}
+                      <ProFeatureGate
+                        isPro={!!results.isProReport}
+                        featureTitle="Deep Remediation & Threat Tactics"
+                        featureDescription="Access automated SOC defense playbooks, technical attack factors, and actionable threat mitigations."
+                      >
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div className="space-y-3">
+                            <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.analysisFactors}</h4>
+                            <div className="space-y-2">
+                              {results.geminiVerdict?.analysis_factors ? Object.entries(results.geminiVerdict.analysis_factors).map(([k, v]) => (
+                                <div key={k} className="p-3 bg-white/2 rounded-lg border border-white/5 text-[11px]">
+                                  <span className="font-black text-[#00d2ff] uppercase block mb-1">{k}</span>
+                                  <span className="text-zinc-400">{v as string}</span>
+                                </div>
+                              )) : (
+                                <div className="p-3 bg-white/2 rounded-lg border border-white/5 text-[11px] text-zinc-400">
+                                  Detailed heuristic verification vectors.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            <h4 className="text-[10px] font-black uppercase text-[#a1a1aa] tracking-widest">{t.recommendedActions}</h4>
+                            <div className="space-y-2">
+                              {results.geminiVerdict?.advisor?.actionable_advice ? results.geminiVerdict.advisor.actionable_advice.map((a: string, i: number) => (
+                                <div key={i} className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
+                                  <CheckCircle2 size={18} className="shrink-0" />
+                                  {a}
+                                </div>
+                              )) : (
+                                <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[11px] text-emerald-200">
+                                  <CheckCircle2 size={18} className="shrink-0" />
+                                  Deep tactical threat mitigation steps.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </ProFeatureGate>
+
+                      {/* 1-Click Accuracy Feedback Bar */}
+                      <div className="pt-5 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+                        <span className="text-xs font-medium text-zinc-400">
+                          Was this intelligence accurate?
+                        </span>
+                        {feedbackSubmitted ? (
+                          <motion.span
+                            initial={{ opacity: 0, y: 2 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-xs text-zinc-400 font-medium flex items-center gap-1.5"
+                          >
+                            <CheckCircle2 size={13} className="text-[#00d2ff]" />
+                            Thanks for helping train SentinelPhish!
+                          </motion.span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleAccuracyFeedback(true)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-zinc-300 hover:text-emerald-300 font-medium transition-all active:scale-95 text-xs group"
+                            >
+                              <ThumbsUp size={13} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+                              <span>👍 Helpful</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAccuracyFeedback(false)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-red-500/15 border border-white/10 hover:border-red-500/30 text-zinc-300 hover:text-red-300 font-medium transition-all active:scale-95 text-xs group"
+                            >
+                              <ThumbsDown size={13} className="text-red-400 group-hover:scale-110 transition-transform" />
+                              <span>👎 Inaccurate</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </Reveal>
 
                 {/* Deferred On-Demand AI Chat Drawer */}
-                <AiChatDrawer
-                  results={results}
-                  lang={lang}
-                  aiMode={aiMode}
-                  isFreeUser={isFreeUser}
-                  chatPlaceholder={t.chatPlaceholder}
-                  askAiTitle={t.askAiTitle}
-                  chatEmptyMsg={t.chatEmptyMsg}
-                />
+                <Reveal delay={200}>
+                  <AiChatDrawer
+                    results={results}
+                    lang={lang}
+                    aiMode={aiMode}
+                    isFreeUser={isFreeUser}
+                    chatPlaceholder={t.chatPlaceholder}
+                    askAiTitle={t.askAiTitle}
+                    chatEmptyMsg={t.chatEmptyMsg}
+                  />
+                </Reveal>
               </div>
             </motion.div>
           )}

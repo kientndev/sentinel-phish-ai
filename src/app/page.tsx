@@ -10,14 +10,25 @@ import {
   Globe, 
   Search 
 } from "lucide-react";
-import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
+import { Reveal, RevealStagger } from "@/components/motion";
 import HeroProductPreview from "@/components/home/HeroProductPreview";
 import MarketingVideo from "@/components/home/MarketingVideo";
 import AnalysisPipeline from "@/components/landing/AnalysisPipeline";
 import EvidenceShowcase from "@/components/landing/EvidenceShowcase";
-import ThreatFeedPreview from "@/components/landing/ThreatFeedPreview";
 import LandingPricing from "@/components/landing/LandingPricing";
 import FinalCTA from "@/components/landing/FinalCTA";
+
+const ThreatFeedPreview = dynamic(
+  () => import("@/components/landing/ThreatFeedPreview"),
+  {
+    loading: () => (
+      <div className="w-full max-w-7xl mx-auto my-24 px-4 sm:px-6">
+        <div className="h-64 rounded-2xl bg-slate-900/40 border border-slate-800 animate-pulse" />
+      </div>
+    ),
+  }
+);
 
 const features = [
   {
@@ -153,7 +164,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Live Product Video Demonstration ───────────────────── */}
-      <section className="w-full max-w-5xl mx-auto mt-20 mb-20 px-4 text-center">
+      <Reveal className="w-full max-w-5xl mx-auto mt-20 mb-20 px-4 text-center">
         <div className="mb-8">
           <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-white/5 border border-white/10 text-slate-400 uppercase tracking-widest">
             Platform Demo
@@ -166,25 +177,28 @@ export default function LandingPage() {
           </p>
         </div>
         <MarketingVideo />
-      </section>
+      </Reveal>
 
       {/* ── Verified Analysis Pipeline ─────────────────────────── */}
-      <AnalysisPipeline />
+      <Reveal className="w-full">
+        <AnalysisPipeline />
+      </Reveal>
 
       {/* ── Evidence-Based Results Showcase ─────────────────────── */}
-      <EvidenceShowcase />
+      <Reveal className="w-full">
+        <EvidenceShowcase />
+      </Reveal>
 
       {/* ── Live Threat Telemetry & Community Findings ──────────── */}
-      <ThreatFeedPreview />
+      <Reveal className="w-full">
+        <ThreatFeedPreview />
+      </Reveal>
 
       {/* ── Core Platform Architecture Features ────────────────── */}
-      <section className="grid md:grid-cols-3 gap-6 max-w-6xl w-full mb-24 px-2">
-        {features.map((f, i) => (
-          <motion.div
+      <RevealStagger className="grid md:grid-cols-3 gap-6 max-w-6xl w-full mb-24 px-2">
+        {features.map((f) => (
+          <div
             key={f.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + i * 0.08, duration: 0.4 }}
             className="glass-card p-8 border border-white/5 hover:border-white/15 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-900/50 transition-all duration-200 ease-out group"
             style={{ "--glow-color": f.glow } as React.CSSProperties}
           >
@@ -193,15 +207,19 @@ export default function LandingPage() {
             </div>
             <h3 className="text-xl font-bold text-white mb-3">{f.title}</h3>
             <p className="text-[#a1a1aa] leading-relaxed text-sm">{f.description}</p>
-          </motion.div>
+          </div>
         ))}
-      </section>
+      </RevealStagger>
 
       {/* ── Transparent Security Pricing ───────────────────────── */}
-      <LandingPricing onStartFreeScan={handleFocusHeroScanner} />
+      <Reveal className="w-full">
+        <LandingPricing onStartFreeScan={handleFocusHeroScanner} />
+      </Reveal>
 
       {/* ── Final Conversion CTA ───────────────────────────────── */}
-      <FinalCTA />
+      <Reveal className="w-full">
+        <FinalCTA />
+      </Reveal>
     </main>
   );
 }

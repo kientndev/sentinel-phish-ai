@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { Reveal } from "@/components/motion";
 
 type VerdictFilter = "ALL" | "MALICIOUS" | "SUSPICIOUS" | "CLEAN";
 type ScoreFilter = "all" | "critical" | "elevated" | "low";
@@ -423,7 +424,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Threat Feed Table */}
-        <div className="bg-[#0A0F1D]/90 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+        <Reveal delay={100} className="bg-[#0A0F1D]/90 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -473,7 +474,7 @@ export default function ReportsPage() {
                         key={scan._id || idx}
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: Math.min(idx * 0.02, 0.25) }}
+                        transition={{ delay: Math.min(idx * 0.05, 0.4) }}
                         className="hover:bg-white/[0.03] transition-colors group"
                       >
                         {/* Status Badge */}
@@ -600,10 +601,10 @@ export default function ReportsPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Reveal>
 
         {/* Community Defense Callout */}
-        <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-[#00d2ff]/5 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <Reveal delay={150} as="section" className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-[#00d2ff]/5 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-1.5 text-center md:text-left">
             <h3 className="text-lg font-black text-white flex items-center justify-center md:justify-start gap-2">
               <ShieldAlert className="w-5 h-5 text-[#00d2ff]" />
@@ -619,7 +620,7 @@ export default function ReportsPage() {
           >
             Submit a Target URL →
           </Link>
-        </section>
+        </Reveal>
       </div>
     </main>
   );

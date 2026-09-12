@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import jsQR from "jsqr";
+import { Reveal, RevealStagger } from "@/components/motion";
 
 interface DecodedResult {
   rawPayload: string;
@@ -514,7 +515,7 @@ export default function QRShieldPage() {
               </div>
 
               {/* Target Domain & Protocol Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <RevealStagger className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Domain Card */}
                 <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1">
                   <div className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 flex items-center gap-1.5">
@@ -536,10 +537,10 @@ export default function QRShieldPage() {
                     {decodedResult.scheme}
                   </div>
                 </div>
-              </div>
+              </RevealStagger>
 
               {/* Decoded Defanged Payload Box */}
-              <div className="space-y-2">
+              <Reveal delay={100} className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-mono text-zinc-400 uppercase text-[10px] tracking-wider">
                     Decoded Payload (Defanged for Safety)
@@ -550,12 +551,12 @@ export default function QRShieldPage() {
                   >
                     {copied ? (
                       <>
-                        <Check className="w-3 h-3 text-emerald-400" />
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
                         <span className="text-emerald-400 font-bold">Copied</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="w-3 h-3" />
+                        <Copy className="w-3.5 h-3.5" />
                         <span>Copy Original</span>
                       </>
                     )}
@@ -565,7 +566,7 @@ export default function QRShieldPage() {
                 <div className="p-4 rounded-2xl bg-black/40 border border-white/10 font-mono text-xs text-[#00d2ff] break-all leading-relaxed select-all">
                   {decodedResult.defangedPayload}
                 </div>
-              </div>
+              </Reveal>
 
               {/* Quishing Security Warning if suspicious scheme */}
               {decodedResult.payloadType === "Suspicious Scheme" && (
@@ -614,7 +615,7 @@ export default function QRShieldPage() {
         </AnimatePresence>
 
         {/* Quishing Education Module */}
-        <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-[#00d2ff]/5 p-6 md:p-8 space-y-4">
+        <Reveal delay={150} as="section" className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-[#00d2ff]/5 p-6 md:p-8 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#00d2ff]/10 border border-[#00d2ff]/20 flex items-center justify-center">
               <Info className="w-5 h-5 text-[#00d2ff]" />
@@ -629,7 +630,7 @@ export default function QRShieldPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <RevealStagger className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="font-bold text-[#00d2ff] font-mono">01. Gateway Bypass</span>
               <p className="text-zinc-400 leading-relaxed">
@@ -648,8 +649,8 @@ export default function QRShieldPage() {
                 QR Shield renders the payload on an isolated canvas and defangs the destination before any network request or redirect occurs.
               </p>
             </div>
-          </div>
-        </section>
+          </RevealStagger>
+        </Reveal>
       </div>
     </main>
   );

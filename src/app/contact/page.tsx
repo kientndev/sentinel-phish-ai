@@ -7,6 +7,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Reveal } from "@/components/motion";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -163,9 +164,8 @@ export default function ContactPage() {
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left: Contact Form (7 cols) */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+          <Reveal
+            delay={50}
             className="lg:col-span-7 bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 p-6 md:p-10 glow-sm"
           >
             <div className="flex items-center justify-between pb-6 mb-6 border-b border-white/5">
@@ -305,10 +305,10 @@ export default function ContactPage() {
                 )}
               </button>
             </form>
-          </motion.div>
+          </Reveal>
 
           {/* Right: Direct Channels & Social Intel (5 cols) */}
-          <div className="lg:col-span-5 space-y-6">
+          <Reveal delay={150} className="lg:col-span-5 space-y-6">
             {/* Direct Email Card */}
             <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 p-6 md:p-8 space-y-4">
               <div className="flex items-center gap-3">
@@ -398,7 +398,7 @@ export default function ContactPage() {
                 Scan URL
               </Link>
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
     </main>

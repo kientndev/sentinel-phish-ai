@@ -2,16 +2,13 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { 
-  ShieldAlert, 
   Zap, 
   Globe2, 
   Activity, 
-  ArrowRight, 
   Lock, 
   Globe, 
-  Search
+  Search 
 } from "lucide-react";
 import { motion } from "framer-motion";
 import HeroProductPreview from "@/components/home/HeroProductPreview";
@@ -19,6 +16,8 @@ import MarketingVideo from "@/components/home/MarketingVideo";
 import AnalysisPipeline from "@/components/landing/AnalysisPipeline";
 import EvidenceShowcase from "@/components/landing/EvidenceShowcase";
 import ThreatFeedPreview from "@/components/landing/ThreatFeedPreview";
+import LandingPricing from "@/components/landing/LandingPricing";
+import FinalCTA from "@/components/landing/FinalCTA";
 
 const features = [
   {
@@ -55,6 +54,19 @@ export default function LandingPage() {
     }
 
     router.push(`/scanning?url=${encodeURIComponent(cleanUrl)}`);
+  };
+
+  const handleFocusHeroScanner = () => {
+    const el = document.getElementById("scanner-input");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    const input = document.getElementById("hero-url-input") as HTMLInputElement | null;
+    if (input) {
+      setTimeout(() => input.focus(), 600);
+    }
   };
 
   return (
@@ -102,12 +114,13 @@ export default function LandingPage() {
           </p>
 
           {/* Direct URL Scanner Input Form */}
-          <form onSubmit={handleHeroScan} className="w-full max-w-2xl mx-auto mb-4">
+          <form id="scanner-input" onSubmit={handleHeroScan} className="w-full max-w-2xl mx-auto mb-4">
             <div className="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-2xl bg-slate-900/80 border border-slate-700/80 shadow-2xl shadow-cyan-950/30 focus-within:border-cyan-500/80 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all backdrop-blur-md">
               <div className="flex items-center flex-1 px-3.5 py-2.5 sm:py-1 gap-2.5">
                 <Globe className="w-5 h-5 text-cyan-400 shrink-0" />
                 <span className="hidden sm:inline font-mono text-xs text-slate-500 select-none">https://</span>
                 <input
+                  id="hero-url-input"
                   type="text"
                   value={heroUrl}
                   onChange={(e) => setHeroUrl(e.target.value)}
@@ -169,7 +182,7 @@ export default function LandingPage() {
       {/* ── Live Threat Telemetry & Community Findings ──────────── */}
       <ThreatFeedPreview />
 
-      {/* ── Features Grid ─────────────────────────────────────── */}
+      {/* ── Core Platform Architecture Features ────────────────── */}
       <section className="grid md:grid-cols-3 gap-6 max-w-6xl w-full mb-24 px-2">
         {features.map((f, i) => (
           <motion.div
@@ -189,28 +202,11 @@ export default function LandingPage() {
         ))}
       </section>
 
-      {/* ── CTA Banner ────────────────────────────────────────── */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="w-full max-w-4xl mb-24 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-[#00d2ff]/5 p-12 text-center"
-      >
-        <ShieldAlert className="w-12 h-12 text-red-500 mx-auto mb-4 drop-shadow-[0_0_16px_rgba(239,68,68,0.5)]" />
-        <h2 className="text-3xl font-black text-white mb-3">Ready to Defend Your Network?</h2>
-        <p className="text-[#a1a1aa] mb-8 max-w-lg mx-auto">
-          Equip your organization with real-time heuristic scanning and automated phishing defense.
-        </p>
-        <Link
-          href="/scanning"
-          className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg
-            bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 transition-all
-            hover:shadow-[0_0_30px_rgba(239,68,68,0.3)]"
-        >
-          Launch Scanner
-          <ArrowRight className="w-5 h-5" />
-        </Link>
-      </motion.section>
+      {/* ── Transparent Security Pricing ───────────────────────── */}
+      <LandingPricing onStartFreeScan={handleFocusHeroScanner} />
+
+      {/* ── Final Conversion CTA ───────────────────────────────── */}
+      <FinalCTA />
     </main>
   );
 }

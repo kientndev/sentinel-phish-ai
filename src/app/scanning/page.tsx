@@ -212,9 +212,10 @@ function ScanningContent() {
   };
 
   // ── Live Unified Scan Handler ───────────────────────────
-  const handleScan = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url) return;
+  const handleScan = useCallback(async (e?: React.FormEvent, targetUrlOverride?: string) => {
+    if (e?.preventDefault) e.preventDefault();
+    const activeUrl = targetUrlOverride || url;
+    if (!activeUrl) return;
 
     // Guest quota enforcement: allow 2 free preview scans before auth lock
     if (isLoaded && !isSignedIn) {
@@ -238,13 +239,14 @@ function ScanningContent() {
       return;
     }
 
-    sendGAEvent({ event: "security_scan_start", value: url });
+    sendGAEvent({ event: "security_scan_start", value: activeUrl });
 
     // Automatic Protocol Prepend
-    let urlToScan = url.trim();
+    let urlToScan = activeUrl.trim();
     if (!/^https?:\/\//i.test(urlToScan)) {
       urlToScan = `https://${urlToScan}`;
     }
+    setUrl(urlToScan);
 
     setIsScanning(true);
     setResults(null);
@@ -407,16 +409,17 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
     return "text-emerald-400";
   };
 
-  // Auto-scan if URL is passed from QR scanner
+  // Auto-scan if URL is passed from QR scanner or Hero
   useEffect(() => {
     const urlFromParams = searchParams.get("url");
     if (urlFromParams && !hasAutoScanned && !isScanning) {
       setUrl(urlFromParams);
       setHasAutoScanned(true);
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const event = { preventDefault: () => {} } as React.FormEvent;
-        handleScan(event);
-      }, 500);
+        handleScan(event, urlFromParams);
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [searchParams, hasAutoScanned, isScanning, handleScan]);
 

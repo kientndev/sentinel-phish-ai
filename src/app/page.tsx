@@ -1,164 +1,165 @@
 "use client";
 
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ShieldAlert, Zap, Globe2, Activity, ArrowRight, Lock } from "lucide-react";
+import { 
+  ShieldAlert, 
+  Zap, 
+  Globe2, 
+  Activity, 
+  ArrowRight, 
+  Lock, 
+  Globe, 
+  Search,
+  CheckCircle2
+} from "lucide-react";
 import { motion } from "framer-motion";
-import CustomerTestimonials from "@/components/CustomerTestimonials";
+import HeroProductPreview from "@/components/home/HeroProductPreview";
+import MarketingVideo from "@/components/home/MarketingVideo";
 
 const features = [
   {
     icon: <Zap className="w-8 h-8 text-yellow-400" />,
     title: "Real-time Heuristics",
-    description: "Analyze URLs with lightning speed. Our engine breaks down threats as they emerge in real-time.",
+    description: "Analyze URLs with lightning speed. Our engine breaks down threats and obfuscations as they emerge.",
     glow: "rgba(234,179,8,0.15)",
   },
   {
     icon: <Activity className="w-8 h-8 text-[#00d2ff]" />,
-    title: "Deep Analysis",
-    description: "Leverage advanced AI to detect visual trickery, brand impersonation, and complex phishing patterns.",
+    title: "Deep Vision Analysis",
+    description: "Leverage vision AI to detect brand impersonation, visual trickery, and deceptive DOM elements.",
     glow: "rgba(0,210,255,0.15)",
   },
   {
     icon: <Globe2 className="w-8 h-8 text-indigo-400" />,
-    title: "Global Threat Network",
-    description: "Cross-reference against millions of live threat intelligence data points worldwide.",
+    title: "Layered Intelligence",
+    description: "Cross-reference against real-time threat intelligence data feeds, DNS anomalies, and redirect chains.",
     glow: "rgba(99,102,241,0.15)",
   },
 ];
 
 export default function LandingPage() {
+  const [heroUrl, setHeroUrl] = useState("");
+  const router = useRouter();
+
+  const handleHeroScan = (e: React.FormEvent) => {
+    e.preventDefault();
+    let cleanUrl = heroUrl.trim();
+    if (!cleanUrl) return;
+
+    if (!/^https?:\/\//i.test(cleanUrl)) {
+      cleanUrl = `https://${cleanUrl}`;
+    }
+
+    router.push(`/scanning?url=${encodeURIComponent(cleanUrl)}`);
+  };
+
   return (
     <main className="flex flex-col flex-1 items-center px-4 relative overflow-hidden text-[#fafafa]">
       {/* Ambient Background Glows */}
-      <div className="pointer-events-none absolute top-20 left-1/4 w-[500px] h-[500px] bg-[#00d2ff]/8 rounded-full blur-[120px]" />
-      <div className="pointer-events-none absolute top-40 right-1/4 w-[500px] h-[500px] bg-indigo-500/8 rounded-full blur-[120px]" />
+      <div className="pointer-events-none absolute top-10 left-1/4 w-[500px] h-[500px] bg-[#00d2ff]/8 rounded-full blur-[140px]" />
+      <div className="pointer-events-none absolute top-32 right-1/4 w-[500px] h-[500px] bg-indigo-500/8 rounded-full blur-[140px]" />
 
-      {/* ── Hero Section ─────────────────────────────────────── */}
-      <section className="relative w-full max-w-7xl mx-auto mt-16 mb-20 px-4">
-        {/* 3D Recessed Video Container */}
-        <div 
-          className="relative w-full h-[600px] md:h-[700px] overflow-hidden rounded-3xl"
-          style={{
-            boxShadow: 'inset 0 0 60px rgba(0,0,0,1)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            perspective: '1000px',
-          }}
+      {/* ── Product-Led Hero Section ─────────────────────────── */}
+      <section className="relative w-full max-w-6xl mx-auto pt-16 pb-12 px-4 flex flex-col items-center text-center">
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-full max-w-4xl flex flex-col items-center"
         >
-          {/* Video with 3D Transform */}
-          <div 
-            className="relative w-full h-full"
-            style={{
-              transform: 'rotateX(2deg)',
-              transformOrigin: 'center center',
-            }}
-          >
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="metadata"
-              poster="/images/dashboard-preview.png"
-              className="w-full h-full object-cover"
-            >
-              <source src="/marketing_video_horizontal.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-            
-            {/* Gradient Mask at Top */}
-            <div 
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: 'linear-gradient(to bottom, rgba(11,14,20,0.8) 0%, rgba(11,14,20,0.4) 30%, transparent 100%)',
-              }}
-            />
+          {/* Badge / Pill */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 mb-6 backdrop-blur-md">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
+            </span>
+            <span className="text-xs font-semibold tracking-wide text-cyan-300">
+              Instant URL Inspection • No Account Required
+            </span>
           </div>
-        </div>
 
-        {/* Content Overlay - Above Video */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-4" style={{ zIndex: 10 }}>
-          <motion.div
-            initial={{ y: 24, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="text-center max-w-4xl"
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm">
-              <Lock className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-xs font-bold tracking-widest text-gray-300 uppercase">Sentinel-SaaS Platform · Live</span>
+          {/* Headline */}
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.1] mb-6">
+            <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-white/95 to-slate-400">
+              AI-Powered Phishing Protection
+            </span>
+            <br />
+            <span
+              className="bg-clip-text text-transparent"
+              style={{ backgroundImage: "linear-gradient(90deg, #00d2ff, #a855f7)" }}
+            >
+              for the Modern Web
+            </span>
+          </h1>
+
+          {/* Subheadline */}
+          <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-10 max-w-3xl mx-auto leading-relaxed font-normal">
+            Analyze suspicious links with layered threat intelligence, URL heuristics, headless sandbox analysis, and AI-assisted visual inspection before they reach your team.
+          </p>
+
+          {/* Direct URL Scanner Input Form */}
+          <form onSubmit={handleHeroScan} className="w-full max-w-2xl mx-auto mb-4">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-2xl bg-slate-900/80 border border-slate-700/80 shadow-2xl shadow-cyan-950/30 focus-within:border-cyan-500/80 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all backdrop-blur-md">
+              <div className="flex items-center flex-1 px-3.5 py-2.5 sm:py-1 gap-2.5">
+                <Globe className="w-5 h-5 text-cyan-400 shrink-0" />
+                <span className="hidden sm:inline font-mono text-xs text-slate-500 select-none">https://</span>
+                <input
+                  type="text"
+                  value={heroUrl}
+                  onChange={(e) => setHeroUrl(e.target.value)}
+                  placeholder="Enter suspicious URL (e.g., auth-verification-portal.net)..."
+                  className="w-full bg-transparent text-white placeholder:text-slate-500 font-mono text-sm sm:text-base focus:outline-none"
+                  aria-label="Target URL to inspect"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-[0_0_20px_rgba(0,210,255,0.3)] transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+              >
+                <Search className="w-4 h-4" />
+                Scan URL
+              </button>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] mb-6">
-              <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-white/90 to-gray-500">
-                The World&apos;s First{" "}
+            {/* Sub-input Trust Indicators */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-3 text-xs text-slate-400 font-medium">
+              <span className="flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                2 Free Guest Scans Included
               </span>
-              <br className="hidden md:block" />
-              <span
-                className="bg-clip-text text-transparent"
-                style={{ backgroundImage: "linear-gradient(90deg, #00d2ff, #a855f7)" }}
-              >
-                AI-Driven Phishing Shield
-              </span>
-            </h1>
-
-            <p className="text-lg md:text-xl text-[#a1a1aa] mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-lg">
-              High-fidelity AI phishing detection for the modern web. 
-              No account required. Scan instantly.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/scanning"
-                className="group px-8 py-4 w-full sm:w-auto rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all
-                  bg-[#00d2ff]/15 hover:bg-[#00d2ff]/25 text-[#00d2ff] border border-[#00d2ff]/30
-                  hover:shadow-[0_0_32px_rgba(0,210,255,0.35)] backdrop-blur-sm"
-              >
-                Start Scanning
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="/dashboard"
-                className="px-8 py-4 w-full sm:w-auto rounded-xl font-bold text-lg flex items-center justify-center
-                  bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all backdrop-blur-sm"
-              >
-                View Dashboard
-              </Link>
+              <span className="hidden sm:inline text-slate-600">•</span>
+              <span>Layered Threat Intelligence</span>
+              <span className="hidden sm:inline text-slate-600">•</span>
+              <span>Zero Software Installation</span>
             </div>
-          </motion.div>
-        </div>
+          </form>
+
+          {/* ── Product Preview Visual (Sentinel Analysis Card) ── */}
+          <HeroProductPreview />
+        </motion.div>
       </section>
 
-      {/* ── Customer Testimonials (Below-the-fold) ──────────────── */}
-      <div className="w-full max-w-6xl lazy-section-container">
-        <CustomerTestimonials />
-      </div>
-
-      {/* ── Social Proof ──────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.6 }}
-        className="w-full max-w-6xl border-y border-white/10 py-12 mb-20 bg-black/20 backdrop-blur-sm lazy-section-container"
-      >
-        <p className="text-center text-[#a1a1aa] text-[10px] uppercase font-bold tracking-[0.2em] mb-8">
-          Trusted by Security Teams Worldwide
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-12 md:gap-24 text-center">
-          {[
-            { value: "1,402,041+", label: "Total Scans Protected" },
-            { value: "99.9%", label: "Detection Accuracy" },
-            { value: "<400ms", label: "Average Analysis Time" },
-          ].map(({ value, label }) => (
-            <div key={label}>
-              <div className="text-4xl font-black text-white mb-1">{value}</div>
-              <div className="text-[#a1a1aa] text-sm">{label}</div>
-            </div>
-          ))}
+      {/* ── Live Product Video Demonstration ───────────────────── */}
+      <section className="w-full max-w-5xl mx-auto mt-20 mb-20 px-4 text-center">
+        <div className="mb-8">
+          <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-white/5 border border-white/10 text-slate-400 uppercase tracking-widest">
+            Platform Demo
+          </span>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mt-3 mb-2">
+            Automated Headless Sandbox In Action
+          </h2>
+          <p className="text-sm md:text-base text-slate-400 max-w-xl mx-auto">
+            Observe our headless browser navigate intermediate redirect hops and extract DOM heuristics without executing malicious payloads locally.
+          </p>
         </div>
-      </motion.div>
+        <MarketingVideo />
+      </section>
 
       {/* ── Features Grid ─────────────────────────────────────── */}
-      <section className="grid md:grid-cols-3 gap-6 max-w-6xl w-full mb-24 px-2 lazy-section-container">
+      <section className="grid md:grid-cols-3 gap-6 max-w-6xl w-full mb-24 px-2">
         {features.map((f, i) => (
           <motion.div
             key={f.title}
@@ -181,13 +182,13 @@ export default function LandingPage() {
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="w-full max-w-4xl mb-24 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-[#00d2ff]/5 p-12 text-center lazy-section-container"
+        transition={{ delay: 0.2 }}
+        className="w-full max-w-4xl mb-24 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-[#00d2ff]/5 p-12 text-center"
       >
         <ShieldAlert className="w-12 h-12 text-red-500 mx-auto mb-4 drop-shadow-[0_0_16px_rgba(239,68,68,0.5)]" />
         <h2 className="text-3xl font-black text-white mb-3">Ready to Defend Your Network?</h2>
         <p className="text-[#a1a1aa] mb-8 max-w-lg mx-auto">
-          Join thousands of security professionals using SentinelPhish to stay one step ahead of attackers.
+          Equip your organization with real-time heuristic scanning and automated phishing defense.
         </p>
         <Link
           href="/scanning"

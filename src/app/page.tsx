@@ -16,6 +16,7 @@ import {
 import { motion } from "framer-motion";
 import HeroProductPreview from "@/components/home/HeroProductPreview";
 import MarketingVideo from "@/components/home/MarketingVideo";
+import AnalysisPipeline from "@/components/landing/AnalysisPipeline";
 
 const features = [
   {
@@ -156,6 +157,9 @@ export default function LandingPage() {
         </div>
         <MarketingVideo />
       </section>
+
+      {/* ── Verified Analysis Pipeline ─────────────────────────── */}
+      <AnalysisPipeline />
 
       {/* ── Features Grid ─────────────────────────────────────── */}
       <section className="grid md:grid-cols-3 gap-6 max-w-6xl w-full mb-24 px-2">

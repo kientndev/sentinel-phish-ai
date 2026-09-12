@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import {
-  Search, ShieldAlert, Activity, Globe,
+  Search, ShieldAlert, Globe,
   Brain, CheckCircle2, Settings, Download, Zap,
   Eye, Bug, ShieldCheck, RefreshCw, Lock, AlertTriangle, Zap as ZapIcon, X, Route, Shield,
   ThumbsUp, ThumbsDown, Sparkles
@@ -112,7 +112,6 @@ function ScanningContent() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [turboMode, setTurboMode] = useState(false);
   const [liveGlow, setLiveGlow] = useState(false);
-  const [spinnerColor, setSpinnerColor] = useState("text-[#00d2ff]");
 
   // Reporting state
   const [isReporting, setIsReporting] = useState(false);
@@ -175,21 +174,6 @@ function ScanningContent() {
     addScan
   } = usePhishTank();
 
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (isScanning && liveGlow) {
-      const colors = ["text-emerald-400", "text-yellow-400", "text-red-500"];
-      let i = 0;
-      setSpinnerColor(colors[i]);
-      interval = setInterval(() => {
-        i = (i + 1) % colors.length;
-        setSpinnerColor(colors[i]);
-      }, 1500);
-    } else {
-      setSpinnerColor("text-[#00d2ff]");
-    }
-    return () => clearInterval(interval);
-  }, [isScanning, liveGlow]);
 
   // Advance scan pipeline animation
   useEffect(() => {
@@ -637,11 +621,34 @@ ${adviceHtml ? `<h2>${t.reportAiAdvice}</h2><ul>${adviceHtml}</ul>` : ""}
           )}
 
           {isScanning && (
-            <div className="mt-8 flex flex-col items-center justify-center space-y-4 py-8 text-[#a1a1aa]">
-              <Activity size={24} className={`animate-spin ${spinnerColor}`} />
-              <div className="space-y-1 text-center">
-                <p className="font-bold text-xl text-[#fafafa] tracking-tight">{PIPELINE_STAGES[pipelineStage]}</p>
-                <p className="text-xs font-mono text-[#00d2ff]">Pipeline Stage {pipelineStage + 1} of {PIPELINE_STAGES.length}</p>
+            <div className="mt-8 flex flex-col items-center justify-center space-y-5 py-8 max-w-md mx-auto text-[#a1a1aa]">
+              {/* Quiet, focused status pill */}
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 backdrop-blur-sm shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
+                </span>
+                <span className="font-mono text-xs text-cyan-300 font-semibold tracking-wide">
+                  Active Forensic Pipeline
+                </span>
+              </div>
+
+              {/* Pipeline Stage Heading */}
+              <div className="space-y-1.5 text-center">
+                <p className="font-bold text-xl sm:text-2xl text-[#fafafa] tracking-tight">
+                  {PIPELINE_STAGES[pipelineStage]}
+                </p>
+                <p className="text-xs font-mono text-cyan-400/80">
+                  Stage {pipelineStage + 1} of {PIPELINE_STAGES.length}
+                </p>
+              </div>
+
+              {/* Indeterminate / calibrated progress bar */}
+              <div className="w-full max-w-sm h-1.5 bg-slate-800/80 rounded-full overflow-hidden border border-slate-700/50 shadow-inner">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(0,210,255,0.6)]"
+                  style={{ width: `${Math.round(((pipelineStage + 1) / PIPELINE_STAGES.length) * 100)}%` }}
+                />
               </div>
             </div>
           )}

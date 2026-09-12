@@ -48,7 +48,7 @@ export default function EvidenceShowcase() {
           <span className="text-slate-500 px-2 font-semibold">Tier Preview:</span>
           <button
             onClick={() => setActiveTierPreview("free")}
-            className={`px-3 py-1.5 rounded-lg transition-all ${
+            className={`px-3 py-1.5 rounded-lg active:scale-[0.98] transition-all duration-100 ease-out ${
               activeTierPreview === "free"
                 ? "bg-slate-800 text-white font-bold shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
@@ -58,7 +58,7 @@ export default function EvidenceShowcase() {
           </button>
           <button
             onClick={() => setActiveTierPreview("pro")}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg active:scale-[0.98] transition-all duration-100 ease-out flex items-center gap-1.5 ${
               activeTierPreview === "pro"
                 ? "bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
@@ -74,7 +74,7 @@ export default function EvidenceShowcase() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         {/* LEFT: The "Black Box" Approach (Compact Card) */}
-        <div className="lg:col-span-4 flex flex-col justify-between bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden">
+        <div className="lg:col-span-4 flex flex-col justify-between bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-700 hover:shadow-xl hover:shadow-slate-900/50">
           <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
@@ -130,7 +130,7 @@ export default function EvidenceShowcase() {
         </div>
 
         {/* RIGHT: The Sentinel Evidence Engine (Primary Focus Card) */}
-        <div className="lg:col-span-8 flex flex-col bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-8 backdrop-blur-md shadow-2xl shadow-cyan-950/20 relative overflow-hidden">
+        <div className="lg:col-span-8 flex flex-col bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-8 backdrop-blur-md shadow-2xl shadow-cyan-950/20 relative overflow-hidden transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-700 hover:shadow-slate-900/50">
           {/* Top highlight bar */}
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent" />
 
@@ -287,7 +287,7 @@ export default function EvidenceShowcase() {
 
             <button
               onClick={handleCopyIoc}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono transition-colors shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 text-xs font-mono transition-all duration-100 ease-out shrink-0 cursor-pointer"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
               <span>{copied ? "IOC Copied" : "Copy Forensic IOC"}</span>
@@ -299,7 +299,7 @@ export default function EvidenceShowcase() {
 
       {/* ── Supporting Capability Points (3-Column Micro-Grid) ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
-        <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 backdrop-blur-sm">
+        <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 backdrop-blur-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-700 hover:shadow-xl hover:shadow-slate-900/50">
           <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-4">
             <Lock className="w-5 h-5" />
           </div>
@@ -309,7 +309,7 @@ export default function EvidenceShowcase() {
           </p>
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 backdrop-blur-sm">
+        <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 backdrop-blur-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-700 hover:shadow-xl hover:shadow-slate-900/50">
           <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4">
             <Brain className="w-5 h-5" />
           </div>
@@ -319,7 +319,7 @@ export default function EvidenceShowcase() {
           </p>
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 backdrop-blur-sm">
+        <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 backdrop-blur-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-700 hover:shadow-xl hover:shadow-slate-900/50">
           <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
             <FileText className="w-5 h-5" />
           </div>

@@ -74,10 +74,12 @@ export default function AnalysisPipeline() {
         <div className="hidden lg:block absolute top-[52px] left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-cyan-500/20 via-indigo-500/20 to-emerald-500/20 z-0 pointer-events-none" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
-          {STAGES.map((stage, idx) => (
-            <div key={stage.step} className="flex flex-col relative group">
-              {/* Card Container */}
-              <div className="flex-1 flex flex-col bg-slate-900/60 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-all duration-200 backdrop-blur-sm relative">
+          {STAGES.map((stage, idx) => {
+            const delayClasses = ["delay-75", "delay-150", "delay-225", "delay-300"][idx] || "";
+            return (
+              <div key={stage.step} className="flex flex-col relative group">
+                {/* Card Container */}
+                <div className={`flex-1 flex flex-col bg-slate-900/60 border border-slate-800 rounded-xl p-5 hover:border-slate-700 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-900/50 transition-all duration-200 ease-out backdrop-blur-sm relative ${delayClasses}`}>
                 {/* Header: Stage Tag + Icon */}
                 <div className="flex items-center justify-between gap-3 mb-4">
                   <span className="font-mono text-xs font-semibold text-slate-400 tracking-wider bg-slate-950/60 border border-slate-800 px-2.5 py-1 rounded-md">
@@ -121,7 +123,8 @@ export default function AnalysisPipeline() {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

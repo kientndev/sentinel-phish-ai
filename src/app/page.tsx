@@ -77,12 +77,7 @@ export default function LandingPage() {
 
       {/* ── Product-Led Hero Section ─────────────────────────── */}
       <section className="relative w-full max-w-6xl mx-auto pt-16 pb-12 px-4 flex flex-col items-center text-center">
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-4xl flex flex-col items-center"
-        >
+        <div className="w-full max-w-4xl flex flex-col items-center">
           {/* Badge / Pill */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 mb-6 backdrop-blur-md">
             <span className="relative flex h-2 w-2">
@@ -114,8 +109,8 @@ export default function LandingPage() {
           </p>
 
           {/* Direct URL Scanner Input Form */}
-          <form id="scanner-input" onSubmit={handleHeroScan} className="w-full max-w-2xl mx-auto mb-4">
-            <div className="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-2xl bg-slate-900/80 border border-slate-700/80 shadow-2xl shadow-cyan-950/30 focus-within:border-cyan-500/80 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all backdrop-blur-md">
+          <form id="scanner-input" onSubmit={handleHeroScan} className="w-full max-w-2xl mx-auto mb-4 scroll-mt-28">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-2xl bg-slate-900/80 border border-slate-700/80 shadow-2xl shadow-cyan-950/30 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/40 focus-within:shadow-[0_0_35px_rgba(0,210,255,0.25)] transition-all duration-200 backdrop-blur-md">
               <div className="flex items-center flex-1 px-3.5 py-2.5 sm:py-1 gap-2.5">
                 <Globe className="w-5 h-5 text-cyan-400 shrink-0" />
                 <span className="hidden sm:inline font-mono text-xs text-slate-500 select-none">https://</span>
@@ -132,7 +127,7 @@ export default function LandingPage() {
               </div>
               <button
                 type="submit"
-                className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-[0_0_20px_rgba(0,210,255,0.3)] transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] shadow-[0_0_20px_rgba(0,210,255,0.3)] transition-all duration-100 ease-out flex items-center justify-center gap-2 shrink-0 cursor-pointer"
               >
                 <Search className="w-4 h-4" />
                 Scan URL
@@ -154,7 +149,7 @@ export default function LandingPage() {
 
           {/* ── Product Preview Visual (Sentinel Analysis Card) ── */}
           <HeroProductPreview />
-        </motion.div>
+        </div>
       </section>
 
       {/* ── Live Product Video Demonstration ───────────────────── */}
@@ -190,7 +185,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + i * 0.08, duration: 0.4 }}
-            className="glass-card p-8 border border-white/5 hover:border-white/15 transition-all duration-300 group"
+            className="glass-card p-8 border border-white/5 hover:border-white/15 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-900/50 transition-all duration-200 ease-out group"
             style={{ "--glow-color": f.glow } as React.CSSProperties}
           >
             <div className="p-4 bg-white/5 w-fit rounded-2xl mb-6 border border-white/10 group-hover:bg-white/10 transition-colors">

@@ -77,7 +77,7 @@ export default function LandingPricing({ onStartFreeScan }: LandingPricingProps)
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-5xl mx-auto">
         
         {/* Tier 1: Free Community */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 sm:p-8 flex flex-col justify-between relative backdrop-blur-md shadow-xl hover:border-slate-700 transition-all">
+        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 sm:p-8 flex flex-col justify-between relative backdrop-blur-md shadow-xl hover:border-slate-700 hover:-translate-y-0.5 hover:shadow-slate-900/50 transition-all duration-200 ease-out">
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -135,7 +135,7 @@ export default function LandingPricing({ onStartFreeScan }: LandingPricingProps)
             <button
               type="button"
               onClick={handleFreeScan}
-              className="w-full py-3.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-white font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+              className="w-full py-3.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 active:scale-[0.98] border border-slate-700 text-white font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-100 ease-out cursor-pointer"
             >
               <span>Start Free Scan</span>
               <ArrowUp className="w-4 h-4 text-cyan-400" />
@@ -144,7 +144,7 @@ export default function LandingPricing({ onStartFreeScan }: LandingPricingProps)
         </div>
 
         {/* Tier 2: Pro SecOps */}
-        <div className="bg-slate-900/80 border-2 border-cyan-500/40 rounded-2xl p-6 sm:p-8 flex flex-col justify-between relative backdrop-blur-md shadow-2xl shadow-cyan-950/30 hover:border-cyan-500/70 transition-all">
+        <div className="bg-slate-900/80 border-2 border-cyan-500/40 rounded-2xl p-6 sm:p-8 flex flex-col justify-between relative backdrop-blur-md shadow-2xl shadow-cyan-950/30 hover:border-cyan-500/70 hover:-translate-y-0.5 hover:shadow-slate-900/50 transition-all duration-200 ease-out">
           {/* Highlight Badge */}
           <div className="absolute -top-3.5 right-6 px-3 py-1 rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 text-[10px] font-mono font-black uppercase tracking-wider shadow-md flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-slate-950" />
@@ -209,7 +209,7 @@ export default function LandingPricing({ onStartFreeScan }: LandingPricingProps)
           <div className="pt-8">
             <Link
               href="/pricing"
-              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,210,255,0.3)] transition-all"
+              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] text-white font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,210,255,0.3)] transition-all duration-100 ease-out"
             >
               <span>Activate 14-Day Free Trial</span>
               <ArrowRight className="w-4 h-4" />

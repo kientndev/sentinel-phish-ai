@@ -111,7 +111,7 @@ export default function ThreatFeedPreview() {
 
         <Link
           href="/reports"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white font-mono text-xs font-semibold transition-all shadow-sm shrink-0 group"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 active:scale-[0.98] text-slate-300 hover:text-white font-mono text-xs font-semibold transition-all duration-100 ease-out shadow-sm shrink-0 group"
         >
           <span>View Complete Threat Archive</span>
           <ArrowRight className="w-4 h-4 text-cyan-400 group-hover:translate-x-0.5 transition-transform" />
@@ -157,7 +157,7 @@ export default function ThreatFeedPreview() {
               return (
                 <div
                   key={scan._id}
-                  className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-slate-950/20 px-3 rounded-xl transition-colors"
+                  className="animate-fade-in py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-slate-950/40 px-3 rounded-xl transition-all duration-300 ease-out"
                 >
                   {/* Left: Defanged Domain & Category Tags */}
                   <div className="flex items-start gap-3 min-w-0">
@@ -201,7 +201,7 @@ export default function ThreatFeedPreview() {
 
                     <Link
                       href={`/scanning?url=${encodeURIComponent(scan.url)}`}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 hover:text-cyan-300 font-bold transition-all group-hover:border-cyan-500/60"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 active:scale-[0.98] border border-cyan-500/30 text-cyan-400 hover:text-cyan-300 font-bold transition-all duration-100 ease-out group-hover:border-cyan-500/60"
                       title="Inspect full forensic report"
                     >
                       <span>Report</span>
@@ -230,7 +230,7 @@ export default function ThreatFeedPreview() {
 
             <button
               onClick={handleScrollToScanner}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-mono text-xs font-bold transition-all shadow-[0_0_15px_rgba(0,210,255,0.25)] cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] text-white font-mono text-xs font-bold transition-all duration-100 ease-out shadow-[0_0_15px_rgba(0,210,255,0.25)] cursor-pointer"
             >
               <Search className="w-3.5 h-3.5" />
               <span>Scan a suspicious link to test the pipeline</span>

@@ -13,7 +13,10 @@ export default function FinalCTA() {
     }
     const input = document.getElementById("hero-url-input") as HTMLInputElement | null;
     if (input) {
-      setTimeout(() => input.focus(), 600);
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 600);
     }
   };
 
@@ -40,7 +43,7 @@ export default function FinalCTA() {
           <button
             type="button"
             onClick={handleScrollToScanner}
-            className="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-base text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-[0_0_25px_rgba(0,210,255,0.35)] transition-all flex items-center justify-center gap-2 cursor-pointer group"
+            className="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-base text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] shadow-[0_0_25px_rgba(0,210,255,0.35)] transition-all duration-100 ease-out flex items-center justify-center gap-2 cursor-pointer group"
           >
             <Search className="w-4 h-4" />
             <span>Scan a URL</span>

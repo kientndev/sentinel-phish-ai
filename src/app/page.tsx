@@ -11,8 +11,7 @@ import {
   ArrowRight, 
   Lock, 
   Globe, 
-  Search,
-  CheckCircle2
+  Search
 } from "lucide-react";
 import { motion } from "framer-motion";
 import HeroProductPreview from "@/components/home/HeroProductPreview";

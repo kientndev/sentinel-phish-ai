@@ -57,6 +57,8 @@ export default function LandingPage() {
               loop
               muted
               playsInline
+              preload="metadata"
+              poster="/images/dashboard-preview.png"
               className="w-full h-full object-cover"
             >
               <source src="/marketing_video_horizontal.mp4" type="video/mp4" />

@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import HeroProductPreview from "@/components/home/HeroProductPreview";
 import MarketingVideo from "@/components/home/MarketingVideo";
 import AnalysisPipeline from "@/components/landing/AnalysisPipeline";
+import EvidenceShowcase from "@/components/landing/EvidenceShowcase";
 
 const features = [
   {
@@ -160,6 +161,9 @@ export default function LandingPage() {
 
       {/* ── Verified Analysis Pipeline ─────────────────────────── */}
       <AnalysisPipeline />
+
+      {/* ── Evidence-Based Results Showcase ─────────────────────── */}
+      <EvidenceShowcase />
 
       {/* ── Features Grid ─────────────────────────────────────── */}
       <section className="grid md:grid-cols-3 gap-6 max-w-6xl w-full mb-24 px-2">

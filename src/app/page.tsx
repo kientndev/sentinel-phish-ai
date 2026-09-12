@@ -18,6 +18,7 @@ import HeroProductPreview from "@/components/home/HeroProductPreview";
 import MarketingVideo from "@/components/home/MarketingVideo";
 import AnalysisPipeline from "@/components/landing/AnalysisPipeline";
 import EvidenceShowcase from "@/components/landing/EvidenceShowcase";
+import ThreatFeedPreview from "@/components/landing/ThreatFeedPreview";
 
 const features = [
   {
@@ -164,6 +165,9 @@ export default function LandingPage() {
 
       {/* ── Evidence-Based Results Showcase ─────────────────────── */}
       <EvidenceShowcase />
+
+      {/* ── Live Threat Telemetry & Community Findings ──────────── */}
+      <ThreatFeedPreview />
 
       {/* ── Features Grid ─────────────────────────────────────── */}
       <section className="grid md:grid-cols-3 gap-6 max-w-6xl w-full mb-24 px-2">

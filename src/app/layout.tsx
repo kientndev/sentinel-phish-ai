@@ -11,6 +11,7 @@ import Footer from "../components/Footer";
 import { Toaster } from "sonner";
 import { ClientOnly } from "../components/ClientOnly";
 import CapacitorListener from "../components/CapacitorListener";
+import ChunkLoadRecovery from "../components/ChunkLoadRecovery";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -94,6 +95,7 @@ export default function RootLayout({
             className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
           >
             <body className="min-h-full flex flex-col bg-[#0b0e14] text-[#fafafa]">
+              <ChunkLoadRecovery />
               <AppProvider>
                 <CapacitorListener />
                 <Toaster position="bottom-right" richColors theme="dark" />

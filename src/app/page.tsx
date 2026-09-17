@@ -10,25 +10,14 @@ import {
   Globe, 
   Search 
 } from "lucide-react";
-import dynamic from "next/dynamic";
 import { Reveal, RevealStagger } from "@/components/motion";
 import HeroProductPreview from "@/components/home/HeroProductPreview";
 import MarketingVideo from "@/components/home/MarketingVideo";
 import AnalysisPipeline from "@/components/landing/AnalysisPipeline";
 import EvidenceShowcase from "@/components/landing/EvidenceShowcase";
+import ThreatFeedPreview from "@/components/landing/ThreatFeedPreview";
 import LandingPricing from "@/components/landing/LandingPricing";
 import FinalCTA from "@/components/landing/FinalCTA";
-
-const ThreatFeedPreview = dynamic(
-  () => import("@/components/landing/ThreatFeedPreview"),
-  {
-    loading: () => (
-      <div className="w-full max-w-7xl mx-auto my-24 px-4 sm:px-6">
-        <div className="h-64 rounded-2xl bg-slate-900/40 border border-slate-800 animate-pulse" />
-      </div>
-    ),
-  }
-);
 
 const features = [
   {

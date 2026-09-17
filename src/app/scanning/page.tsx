@@ -313,20 +313,25 @@ function ScanningContent() {
       setResults(scanData);
       addScan(scanData.score, scanData.score >= 70, urlToScan);
 
-      // Track Pro Feature Engagement & Record Trial Usage
+      // Track Pro Feature Engagement & Record Trial Usage (Sequential & Non-blocking)
       if (scanData.isProReport) {
         if (quota?.plan === "pro_trial") {
-          recordTrialEngagementMutation({
-            clerkId: userId ?? undefined,
-            featureUsed: "ai_deep_analysis",
-          }).catch((e) => console.warn("[TrialEngagement] AI analysis log failed:", e));
-
-          if (scanData.hops && scanData.hops.length > 0) {
-            recordTrialEngagementMutation({
-              clerkId: userId ?? undefined,
-              featureUsed: "redirect_chain",
-            }).catch((e) => console.warn("[TrialEngagement] Redirect chain log failed:", e));
-          }
+          (async () => {
+            try {
+              await recordTrialEngagementMutation({
+                clerkId: userId ?? undefined,
+                featureUsed: "ai_deep_analysis",
+              });
+              if (scanData.hops && scanData.hops.length > 0) {
+                await recordTrialEngagementMutation({
+                  clerkId: userId ?? undefined,
+                  featureUsed: "redirect_chain",
+                });
+              }
+            } catch (e) {
+              console.debug("[TrialEngagement] Telemetry note:", e);
+            }
+          })();
         }
 
         trackEvent("pro_feature_engaged", {

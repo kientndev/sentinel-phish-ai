@@ -143,40 +143,44 @@ export const recordTrialEngagement = mutation({
     featureUsed: v.optional(v.string()), // e.g. "redirect_chain", "dom_heuristics", "ai_deep_analysis"
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    const clerkId = identity?.subject || args.clerkId;
-    if (!clerkId) return;
+    try {
+      const identity = await ctx.auth.getUserIdentity();
+      const clerkId = identity?.subject || args.clerkId;
+      if (!clerkId) return;
 
-    let user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", clerkId))
-      .first();
-
-    if (!user) {
-      user = await ctx.db
+      let user = await ctx.db
         .query("users")
         .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkId))
         .first();
+
+      if (!user) {
+        user = await ctx.db
+          .query("users")
+          .withIndex("by_token", (q) => q.eq("tokenIdentifier", clerkId))
+          .first();
+      }
+
+      if (!user || user.plan !== "pro_trial" || (user.trialEndsAt && user.trialEndsAt < Date.now())) {
+        return;
+      }
+
+      const today = new Date().toISOString().split("T")[0];
+      const shouldIncrementDay = user.lastActiveTrialDate !== today;
+
+      const updatedFeatures = new Set(user.proFeaturesUsed ?? []);
+      if (args.featureUsed) {
+        updatedFeatures.add(args.featureUsed);
+      }
+
+      await ctx.db.patch(user._id, {
+        trialScansCount: (user.trialScansCount ?? 0) + 1,
+        trialActiveDays: shouldIncrementDay ? (user.trialActiveDays ?? 0) + 1 : (user.trialActiveDays ?? 1),
+        lastActiveTrialDate: today,
+        proFeaturesUsed: Array.from(updatedFeatures),
+      });
+    } catch (err) {
+      console.warn("[recordTrialEngagement] Soft failure:", err);
     }
-
-    if (!user || user.plan !== "pro_trial" || (user.trialEndsAt && user.trialEndsAt < Date.now())) {
-      return;
-    }
-
-    const today = new Date().toISOString().split("T")[0];
-    const shouldIncrementDay = user.lastActiveTrialDate !== today;
-
-    const updatedFeatures = new Set(user.proFeaturesUsed ?? []);
-    if (args.featureUsed) {
-      updatedFeatures.add(args.featureUsed);
-    }
-
-    await ctx.db.patch(user._id, {
-      trialScansCount: (user.trialScansCount ?? 0) + 1,
-      trialActiveDays: shouldIncrementDay ? (user.trialActiveDays ?? 0) + 1 : (user.trialActiveDays ?? 1),
-      lastActiveTrialDate: today,
-      proFeaturesUsed: Array.from(updatedFeatures),
-    });
   },
 });
 
